@@ -7,6 +7,129 @@ const port = process.env.PORT || 3000;
 app.use(express.static("public"));
 app.use(express.json({ limit: "1mb" }));
 
+// -----------------------------
+// 1) TRANSCRIBE AUDIO
+// -----------------------------
+
+app.post(
+  "/transcribe",
+  express.raw({
+    type: [
+      "audio/webm",
+      "audio/mp4",
+      "audio/mpeg",
+      "audio/wav",
+      "application/octet-stream"
+    ],
+    limit: "25mb"
+  }),
+  async (req, res) => {
+    try {
+      if (!process.env.ELEVENLABS_API_KEY) {
+        return res.status(500).json({
+          error: "Missing ELEVENLABS_API_KEY"
+        });
+      }
+
+      if (!req.body || !req.body.length) {
+        return res.status(400).json({
+          error: "No audio received"
+        });
+      }
+
+      const contentType =
+        req.headers["content-type"] || "audio/webm";
+
+      let extension = "webm";
+
+      if (contentType.includes("mp4")) extension = "m4a";
+      if (contentType.includes("mpeg")) extension = "mp3";
+      if (contentType.includes("wav")) extension = "wav";
+
+      const audioBlob = new Blob(
+        [req.body],
+        { type: contentType }
+      );
+
+      const formData = new FormData();
+
+      formData.append(
+        "file",
+        audioBlob,
+        `answer.${extension}`
+      );
+
+      formData.append(
+        "model_id",
+        "scribe_v2"
+      );
+
+      // This lesson is English speaking practice.
+      formData.append(
+        "language_code",
+        "eng"
+      );
+
+      // We do not need things like [laughter] in learner answers.
+      formData.append(
+        "tag_audio_events",
+        "false"
+      );
+
+      const elevenResponse = await fetch(
+        "https://api.elevenlabs.io/v1/speech-to-text",
+        {
+          method: "POST",
+          headers: {
+            "xi-api-key":
+              process.env.ELEVENLABS_API_KEY
+          },
+          body: formData
+        }
+      );
+
+      const data =
+        await elevenResponse.json();
+
+      if (!elevenResponse.ok) {
+        console.error(
+          "ElevenLabs transcription error:",
+          data
+        );
+
+        return res
+          .status(elevenResponse.status)
+          .json({
+            error:
+              "ElevenLabs transcription failed",
+            details: data
+          });
+      }
+
+      const transcript =
+        data?.text?.trim() || "";
+
+      return res.json({
+        transcript
+      });
+
+    } catch (error) {
+      console.error(
+        "Transcription error:",
+        error
+      );
+
+      return res.status(500).json({
+        error: "Could not transcribe audio"
+      });
+    }
+  }
+);
+
+// -----------------------------
+// 2) CORRECT + NEXT QUESTION
+// -----------------------------
+
 app.post("/correct", async (req, res) => {
   try {
     const {
@@ -22,13 +145,17 @@ app.post("/correct", async (req, res) => {
       });
     }
 
-    if (!transcript || typeof transcript !== "string") {
+    if (
+      !transcript ||
+      typeof transcript !== "string"
+    ) {
       return res.status(400).json({
         error: "Missing transcript"
       });
     }
 
-    const isFinalTurn = Number(turn) >= 5;
+    const isFinalTurn =
+      Number(turn) >= 5;
 
     const prompt = `
 You are an English speaking coach for Thai beginner learners.
@@ -58,24 +185,11 @@ Your job has TWO parts:
 CORRECTION RULES:
 
 - Preserve the learner's intended meaning.
-- NEVER invent facts or information the learner did not say.
+- NEVER invent facts the learner did not say.
 - NEVER invent colors, places, people, activities, objects, times, reasons, or opinions.
-- Do not change the factual meaning just to make a nicer sentence.
-- If something is unclear, correct only what you can confidently correct.
+- Do not change factual meaning.
 - Do not guess missing information.
-
-Example:
-
-Learner says:
-"My car is black."
-
-You must NEVER change black to blue, red, white, or any other color.
-
-Learner says:
-"I go shopping yesterday."
-
-Correct:
-"I went shopping yesterday."
+- Correct only mistakes you can confidently identify.
 
 Only correct meaningful SPOKEN English mistakes such as:
 - wrong tense
@@ -108,11 +222,11 @@ When correction_needed is false:
 
 NEXT QUESTION:
 
-Use the CURRENT QUESTION, CURRENT ANSWER, and PREVIOUS CONVERSATION to decide what to ask next.
+Use the CURRENT QUESTION, CURRENT ANSWER, and PREVIOUS CONVERSATION.
 
 The next question must:
 - follow naturally from what the learner actually said
-- stay related to the Weekend topic
+- stay related to their weekend
 - be easy for a beginner
 - ask only ONE thing
 - sound like a real conversation
@@ -122,7 +236,7 @@ Do NOT ask strange definition questions such as:
 "What is shopping?"
 "What is tired?"
 
-Instead, ask about the learner's experience.
+Instead ask about the learner's experience.
 
 Examples:
 
@@ -133,10 +247,10 @@ Good:
 "What did you buy?"
 
 Learner:
-"I bought a new bag."
+"I bought a black bag."
 
 Good:
-"What color is the bag?"
+"Where did you buy it?"
 
 Learner:
 "My car is black."
@@ -179,37 +293,55 @@ Return ONLY valid JSON:
       {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": process.env.GEMINI_API_KEY
+          "Content-Type":
+            "application/json",
+
+          "x-goog-api-key":
+            process.env.GEMINI_API_KEY
         },
+
         body: JSON.stringify({
           contents: [
             {
-              parts: [{ text: prompt }]
+              parts: [
+                {
+                  text: prompt
+                }
+              ]
             }
           ],
+
           generationConfig: {
             temperature: 0.2,
-            responseMimeType: "application/json",
+
+            responseMimeType:
+              "application/json",
+
             responseSchema: {
               type: "OBJECT",
+
               properties: {
                 corrected_sentence: {
                   type: "STRING"
                 },
+
                 thai_explanation: {
                   type: "STRING"
                 },
+
                 correction_needed: {
                   type: "BOOLEAN"
                 },
+
                 next_question: {
                   type: "STRING"
                 },
+
                 closing_message: {
                   type: "STRING"
                 }
               },
+
               required: [
                 "corrected_sentence",
                 "thai_explanation",
@@ -223,42 +355,66 @@ Return ONLY valid JSON:
       }
     );
 
-    const data = await geminiResponse.json();
+    const data =
+      await geminiResponse.json();
 
     if (!geminiResponse.ok) {
-      console.error("Gemini error:", data);
+      console.error(
+        "Gemini error:",
+        data
+      );
 
-      return res.status(geminiResponse.status).json({
-        error: "Gemini request failed",
-        details: data
-      });
+      return res
+        .status(geminiResponse.status)
+        .json({
+          error:
+            "Gemini request failed",
+          details: data
+        });
     }
 
     const text =
-      data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      data?.candidates?.[0]?.content
+        ?.parts?.[0]?.text;
 
     if (!text) {
       return res.status(500).json({
-        error: "Gemini returned no text"
+        error:
+          "Gemini returned no text"
       });
     }
 
-    const result = JSON.parse(text);
+    const result =
+      JSON.parse(text);
 
     return res.json({
       transcript,
-      corrected_sentence: result.corrected_sentence,
-      thai_explanation: result.thai_explanation,
-      correction_needed: result.correction_needed,
-      next_question: result.next_question,
-      closing_message: result.closing_message
+
+      corrected_sentence:
+        result.corrected_sentence,
+
+      thai_explanation:
+        result.thai_explanation,
+
+      correction_needed:
+        result.correction_needed,
+
+      next_question:
+        result.next_question,
+
+      closing_message:
+        result.closing_message
     });
 
   } catch (error) {
-    console.error("Correction error:", error);
+    console.error(
+      "Correction error:",
+      error
+    );
 
     return res.status(500).json({
-      error: "Could not process learner answer"
+      error:
+        "Could not process learner answer"
     });
   }
 });
