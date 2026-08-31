@@ -1,257 +1,228 @@
-const $ = (id) => document.getElementById(id);
+import "dotenv/config";
+import express from "express";
 
-const micBtn = $("mic");
-const statusEl = $("status");
-const feedback = $("feedback");
-const youSaid = $("youSaid");
-const better = $("better");
-const why = $("why");
-const questionEl = $("question");
-const turnEl = $("turn");
-const listenBtn = $("listen");
-const hearCorrectionBtn = $("hearCorrection");
-const tryAgainBtn = $("tryAgain");
-const continueBtn = $("continueBtn");
+const app = express();
+const port = process.env.PORT || 3000;
 
-let turn = 1;
-let recognition = null;
-let isListening = false;
-let lastCorrected = "";
-let nextQuestion = "";
-let closingMessage = "";
+app.use(express.static("public"));
+app.use(express.json({ limit: "1mb" }));
 
-function speak(text) {
-  if (!("speechSynthesis" in window)) return;
+app.post("/correct", async (req, res) => {
+  try {
+    const { transcript, turn = 1 } = req.body;
 
-  speechSynthesis.cancel();
+    if (!process.env.GEMINI_API_KEY) {
+      return res.status(500).json({
+        error: "Missing GEMINI_API_KEY"
+      });
+    }
 
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = "en-US";
-  utterance.rate = 0.92;
+    if (!transcript || typeof transcript !== "string") {
+      return res.status(400).json({
+        error: "Missing transcript"
+      });
+    }
 
-  speechSynthesis.speak(utterance);
+    const isFinalTurn = Number(turn) >= 5;
+
+    const prompt = `
+You are an English speaking coach for Thai beginner learners.
+
+LESSON:
+My Weekend
+
+LEARNER ANSWER:
+"${transcript}"
+
+CURRENT TURN:
+${turn} of 5
+
+Your tasks:
+
+1. Keep the learner's intended meaning.
+2. Correct only meaningful SPOKEN English mistakes.
+3. Make the sentence sound natural in everyday spoken English.
+4. Do not over-correct tiny mistakes if the learner is understandable and sounds natural enough.
+
+IMPORTANT: This is SPOKEN English practice, not writing practice.
+
+Do NOT correct or comment on:
+- punctuation
+- commas
+- periods
+- capitalization
+- spelling-style formatting
+- sentence separation caused only by speech-to-text transcription
+
+Never mark punctuation or capitalization as a correction.
+
+Only correct mistakes that matter when spoken aloud, such as:
+- wrong tense
+- wrong verb form
+- missing an important verb
+- incorrect sentence structure
+- unnatural word choice
+- mistakes that change or confuse the meaning
+
+If the learner's spoken English sounds natural and understandable, set correction_needed to false even if the transcript has no punctuation.
+
+5. Give a short beginner-friendly Thai explanation only when a meaningful spoken-English correction is needed.
+
+Never mention punctuation, commas, periods, capitalization, spelling-style formatting, or writing rules in the Thai explanation.
+
+6. Create ONE short, natural follow-up question based directly on what the learner actually said.
+7. Do not ask a generic scripted question if a more relevant follow-up is possible.
+8. Keep the next question simple enough for a beginner.
+9. Ask only ONE question at a time.
+
+FOLLOW-UP EXAMPLES:
+
+Learner:
+"I went shopping with my friends."
+
+Good next question:
+"What did you buy?"
+
+Learner:
+"I stayed home because I was tired."
+
+Good next question:
+"What did you do at home?"
+
+Learner:
+"I watched a movie."
+
+Good next question:
+"What movie did you watch?"
+
+Learner:
+"I went to a cafe with my boyfriend."
+
+Good next question:
+"What did you have at the cafe?"
+
+Learner:
+"Good."
+
+Good next question:
+"What did you do?"
+
+ENDING RULE:
+
+${isFinalTurn
+  ? `This is the final learner answer.
+Do NOT ask another question.
+Set next_question to an empty string.
+Create a short, warm closing_message in English.`
+  : `This is not the final turn.
+Create ONE natural next_question based on the learner's answer.
+Set closing_message to an empty string.`}
+
+Return ONLY valid JSON with exactly these fields:
+
+{
+  "corrected_sentence": "string",
+  "thai_explanation": "string",
+  "correction_needed": true,
+  "next_question": "string",
+  "closing_message": "string"
 }
+`.trim();
 
-async function getAICorrection(transcript) {
-  const response = await fetch("/correct", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      transcript,
-      turn
-    })
-  });
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(
-      data?.error || "Could not get AI correction"
+    const geminiResponse = await fetch(
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": process.env.GEMINI_API_KEY
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                {
+                  text: prompt
+                }
+              ]
+            }
+          ],
+          generationConfig: {
+            temperature: 0.35,
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: "OBJECT",
+              properties: {
+                corrected_sentence: {
+                  type: "STRING"
+                },
+                thai_explanation: {
+                  type: "STRING"
+                },
+                correction_needed: {
+                  type: "BOOLEAN"
+                },
+                next_question: {
+                  type: "STRING"
+                },
+                closing_message: {
+                  type: "STRING"
+                }
+              },
+              required: [
+                "corrected_sentence",
+                "thai_explanation",
+                "correction_needed",
+                "next_question",
+                "closing_message"
+              ]
+            }
+          }
+        })
+      }
     );
-  }
 
-  return data;
-}
+    const data = await geminiResponse.json();
 
-async function showFeedback(transcript) {
-  youSaid.textContent = transcript;
+    if (!geminiResponse.ok) {
+      console.error("Gemini error:", data);
 
-  better.textContent = "Checking…";
-  why.textContent = "AI is reviewing your sentence…";
-
-  feedback.style.display = "block";
-  statusEl.textContent = "Checking your English…";
-
-  continueBtn.disabled = true;
-  continueBtn.textContent = "Checking…";
-
-  try {
-    const result = await getAICorrection(transcript);
-
-    lastCorrected = result.corrected_sentence;
-    nextQuestion = result.next_question || "";
-    closingMessage = result.closing_message || "";
-
-    if (result.correction_needed) {
-      better.textContent = result.corrected_sentence;
-
-      why.textContent =
-        result.thai_explanation ||
-        "มีจุดที่ปรับให้เป็นธรรมชาติมากขึ้นค่ะ";
-
-      statusEl.textContent =
-        "มีจุดที่ปรับให้เป็นธรรมชาติมากขึ้น ดูด้านล่างได้เลย";
-    } else {
-      better.textContent = "Sounds good! ✅";
-
-      why.textContent =
-        "ประโยคนี้ใช้ได้ดีแล้วค่ะ ไม่ต้องแก้อะไร";
-
-      statusEl.textContent =
-        "Nice! Your answer was clear.";
+      return res.status(geminiResponse.status).json({
+        error: "Gemini request failed",
+        details: data
+      });
     }
 
-    if (turn >= 5) {
-      continueBtn.textContent = "Finish →";
-    } else {
-      continueBtn.textContent = "Continue →";
+    const text =
+      data?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+    if (!text) {
+      return res.status(500).json({
+        error: "Gemini returned no text"
+      });
     }
 
-    continueBtn.disabled = false;
+    const result = JSON.parse(text);
+
+    return res.json({
+      transcript,
+      corrected_sentence: result.corrected_sentence,
+      thai_explanation: result.thai_explanation,
+      correction_needed: result.correction_needed,
+      next_question: result.next_question,
+      closing_message: result.closing_message
+    });
   } catch (error) {
-    console.error(error);
+    console.error("Correction error:", error);
 
-    better.textContent =
-      "Could not check this sentence.";
-
-    why.textContent =
-      "ตอนนี้ AI correction มีปัญหาชั่วคราว ลองใหม่อีกครั้งได้ค่ะ";
-
-    statusEl.textContent =
-      "AI correction error.";
-
-    continueBtn.textContent = "Try again";
-    continueBtn.disabled = true;
-  }
-
-  feedback.scrollIntoView({
-    behavior: "smooth",
-    block: "nearest"
-  });
-}
-
-function createRecognition() {
-  const SpeechRecognition =
-    window.SpeechRecognition ||
-    window.webkitSpeechRecognition;
-
-  if (!SpeechRecognition) {
-    return null;
-  }
-
-  const r = new SpeechRecognition();
-
-  r.lang = "en-US";
-  r.interimResults = false;
-  r.continuous = false;
-  r.maxAlternatives = 1;
-
-  r.onstart = () => {
-    isListening = true;
-
-    micBtn.classList.add("recording");
-
-    statusEl.textContent =
-      "Listening… speak now.";
-  };
-
-  r.onresult = (event) => {
-    const transcript =
-      event.results[0][0].transcript.trim();
-
-    if (transcript) {
-      showFeedback(transcript);
-    } else {
-      statusEl.textContent =
-        "I didn’t catch that. Tap the mic and try again.";
-    }
-  };
-
-  r.onerror = (event) => {
-    if (event.error === "no-speech") {
-      statusEl.textContent =
-        "I didn’t hear anything. Tap the mic when you're ready.";
-    } else if (event.error === "not-allowed") {
-      statusEl.textContent =
-        "Please allow microphone access in your browser.";
-    } else {
-      statusEl.textContent =
-        "Microphone error. Please try again.";
-    }
-  };
-
-  r.onend = () => {
-    isListening = false;
-    micBtn.classList.remove("recording");
-  };
-
-  return r;
-}
-
-recognition = createRecognition();
-
-micBtn.addEventListener("click", () => {
-  feedback.style.display = "none";
-
-  if (!recognition) {
-    statusEl.textContent =
-      "This browser does not support speech recognition. Please try Chrome.";
-    return;
-  }
-
-  if (isListening) {
-    recognition.stop();
-    return;
-  }
-
-  try {
-    recognition.start();
-  } catch (error) {
-    console.error(error);
+    return res.status(500).json({
+      error: "Could not process learner answer"
+    });
   }
 });
 
-listenBtn.addEventListener("click", () => {
-  speak(questionEl.textContent);
-});
-
-hearCorrectionBtn.addEventListener("click", () => {
-  if (lastCorrected) {
-    speak(lastCorrected);
-  }
-});
-
-tryAgainBtn.addEventListener("click", () => {
-  feedback.style.display = "none";
-
-  statusEl.textContent =
-    "Tap the microphone and say it again.";
-});
-
-continueBtn.addEventListener("click", () => {
-  if (turn >= 5) {
-    questionEl.textContent =
-      closingMessage ||
-      "Great job today! You finished your Weekend speaking practice.";
-
-    feedback.style.display = "none";
-
-    micBtn.disabled = true;
-    micBtn.style.opacity = "0.45";
-
-    statusEl.textContent =
-      "Practice complete 🎉";
-
-    speak(questionEl.textContent);
-
-    return;
-  }
-
-  turn += 1;
-
-  turnEl.textContent =
-    String(turn);
-
-  questionEl.textContent =
-    nextQuestion ||
-    "Tell me a little more about your weekend.";
-
-  feedback.style.display = "none";
-
-  statusEl.textContent =
-    "Tap the microphone to answer.";
-
-  speak(questionEl.textContent);
+app.listen(port, () => {
+  console.log(
+    `Weekend AI Speaking Lab running at http://localhost:${port}`
+  );
 });
