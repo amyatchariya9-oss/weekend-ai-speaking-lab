@@ -13,18 +13,12 @@ const hearCorrectionBtn = $("hearCorrection");
 const tryAgainBtn = $("tryAgain");
 const continueBtn = $("continueBtn");
 
-const questions = [
-  "Hey! How was your weekend?",
-  "Nice! What did you do?",
-  "Who did you go with?",
-  "What was your favorite part?",
-  "Would you do it again next weekend?"
-];
-
-let turn = 0;
+let turn = 1;
 let recognition = null;
 let isListening = false;
 let lastCorrected = "";
+let nextQuestion = "";
+let closingMessage = "";
 
 function speak(text) {
   if (!("speechSynthesis" in window)) return;
@@ -44,7 +38,10 @@ async function getAICorrection(transcript) {
     headers: {
       "Content-Type": "application/json"
     },
-    body: JSON.stringify({ transcript })
+    body: JSON.stringify({
+      transcript,
+      turn
+    })
   });
 
   const data = await response.json();
@@ -60,24 +57,23 @@ async function getAICorrection(transcript) {
 
 async function showFeedback(transcript) {
   youSaid.textContent = transcript;
-
   better.textContent = "Checking…";
   why.textContent = "AI is reviewing your sentence…";
 
   feedback.style.display = "block";
+  statusEl.textContent = "Checking your English…";
 
-  statusEl.textContent =
-    "Checking your English…";
+  continueBtn.disabled = true;
+  continueBtn.textContent = "Checking…";
 
   try {
-    const result =
-      await getAICorrection(transcript);
+    const result = await getAICorrection(transcript);
 
-    better.textContent =
-      result.corrected_sentence;
+    better.textContent = result.corrected_sentence;
+    lastCorrected = result.corrected_sentence;
 
-    lastCorrected =
-      result.corrected_sentence;
+    nextQuestion = result.next_question || "";
+    closingMessage = result.closing_message || "";
 
     if (result.correction_needed) {
       why.textContent =
@@ -85,7 +81,7 @@ async function showFeedback(transcript) {
         "มีจุดที่ปรับให้เป็นธรรมชาติมากขึ้นค่ะ";
 
       statusEl.textContent =
-        "มีจุดที่ปรับให้นaturalขึ้น ดู correction ด้านล่างได้เลย";
+        "มีจุดที่ปรับให้เป็นธรรมชาติมากขึ้น ดูด้านล่างได้เลย";
     } else {
       why.textContent =
         "ประโยคนี้ใช้ได้ดีแล้วค่ะ ✅";
@@ -93,6 +89,14 @@ async function showFeedback(transcript) {
       statusEl.textContent =
         "Nice! Your answer was clear.";
     }
+
+    if (turn >= 5) {
+      continueBtn.textContent = "Finish →";
+    } else {
+      continueBtn.textContent = "Continue →";
+    }
+
+    continueBtn.disabled = false;
   } catch (error) {
     console.error(error);
 
@@ -104,6 +108,9 @@ async function showFeedback(transcript) {
 
     statusEl.textContent =
       "AI correction error.";
+
+    continueBtn.textContent = "Try again";
+    continueBtn.disabled = true;
   }
 
   feedback.scrollIntoView({
@@ -164,7 +171,6 @@ function createRecognition() {
 
   r.onend = () => {
     isListening = false;
-
     micBtn.classList.remove("recording");
   };
 
@@ -212,13 +218,10 @@ tryAgainBtn.addEventListener("click", () => {
 });
 
 continueBtn.addEventListener("click", () => {
-  turn += 1;
-
-  if (turn >= questions.length) {
+  if (turn >= 5) {
     questionEl.textContent =
+      closingMessage ||
       "Great job today! You finished your Weekend speaking practice.";
-
-    turnEl.textContent = "5";
 
     feedback.style.display = "none";
 
@@ -233,14 +236,16 @@ continueBtn.addEventListener("click", () => {
     return;
   }
 
+  turn += 1;
+
   turnEl.textContent =
-    String(turn + 1);
+    String(turn);
 
   questionEl.textContent =
-    questions[turn];
+    nextQuestion ||
+    "Tell me a little more about your weekend.";
 
-  feedback.style.display =
-    "none";
+  feedback.style.display = "none";
 
   statusEl.textContent =
     "Tap the microphone to answer.";
