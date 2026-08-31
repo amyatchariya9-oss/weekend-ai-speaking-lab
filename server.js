@@ -43,17 +43,9 @@ app.post(
 
       let extension = "webm";
 
-      if (contentType.includes("mp4")) {
-        extension = "m4a";
-      }
-
-      if (contentType.includes("mpeg")) {
-        extension = "mp3";
-      }
-
-      if (contentType.includes("wav")) {
-        extension = "wav";
-      }
+      if (contentType.includes("mp4")) extension = "m4a";
+      if (contentType.includes("mpeg")) extension = "mp3";
+      if (contentType.includes("wav")) extension = "wav";
 
       const audioBlob = new Blob(
         [req.body],
@@ -68,32 +60,19 @@ app.post(
         `answer.${extension}`
       );
 
-      formData.append(
-        "model_id",
-        "scribe_v2"
-      );
-
-      formData.append(
-        "language_code",
-        "eng"
-      );
-
-      formData.append(
-        "tag_audio_events",
-        "false"
-      );
+      formData.append("model_id", "scribe_v2");
+      formData.append("language_code", "eng");
+      formData.append("tag_audio_events", "false");
 
       const elevenResponse =
         await fetch(
           "https://api.elevenlabs.io/v1/speech-to-text",
           {
             method: "POST",
-
             headers: {
               "xi-api-key":
                 process.env.ELEVENLABS_API_KEY
             },
-
             body: formData
           }
         );
@@ -112,7 +91,6 @@ app.post(
           .json({
             error:
               "ElevenLabs transcription failed",
-
             details: data
           });
       }
@@ -160,7 +138,7 @@ app.post("/tts", async (req, res) => {
     }
 
     const voiceId =
-      "4cQ2mfgiJ51P5DoueVge";
+      "YOUR_CURRENT_VOICE_ID";
 
     const elevenResponse =
       await fetch(
@@ -171,14 +149,12 @@ app.post("/tts", async (req, res) => {
           headers: {
             "xi-api-key":
               process.env.ELEVENLABS_API_KEY,
-
             "Content-Type":
               "application/json"
           },
 
           body: JSON.stringify({
             text,
-
             model_id:
               "eleven_multilingual_v2",
 
@@ -206,7 +182,6 @@ app.post("/tts", async (req, res) => {
         .json({
           error:
             "ElevenLabs TTS failed",
-
           details: errorText
         });
     }
@@ -243,7 +218,7 @@ app.post("/tts", async (req, res) => {
 
 
 // ==========================================
-// GEMINI CORRECTION + NEXT QUESTION
+// GEMINI CORRECTION + RELEVANCE + NEXT QUESTION
 // ==========================================
 
 app.post("/correct", async (req, res) => {
@@ -291,14 +266,72 @@ LEARNER'S CURRENT SPOKEN ANSWER:
 CURRENT TURN:
 ${turn} of 5
 
+
 IMPORTANT:
 This is SPOKEN English practice, not writing practice.
 
-Your job has TWO parts:
-1. Evaluate the learner's spoken English.
-2. Continue the conversation naturally.
+You must evaluate TWO separate things:
+
+1. LANGUAGE QUALITY
+Is the learner's spoken English understandable and natural enough?
+
+2. ANSWER RELEVANCE
+Does the learner's answer actually respond to the current question?
+
+
+ANSWER RELEVANCE RULES:
+
+- answer_relevant = true when the answer responds to the question directly OR gives clearly related information.
+- answer_relevant = false when the answer is unrelated, random, or clearly does not answer what was asked.
+
+Examples:
+
+Question:
+"Did you win the game?"
+
+Answer:
+"Yes, I did."
+answer_relevant = true
+
+Answer:
+"No, we lost."
+answer_relevant = true
+
+Answer:
+"It was really difficult."
+answer_relevant = true
+
+Answer:
+"I love vegetables."
+answer_relevant = false
+
+
+Question:
+"What did you buy?"
+
+Answer:
+"I bought a black bag."
+answer_relevant = true
+
+Answer:
+"I went with my friend."
+answer_relevant = false
+
+
+If the answer is NOT relevant:
+
+- Set answer_relevant to false.
+- Do NOT pretend the answer is good just because the grammar is correct.
+- Give a short Thai relevance_explanation explaining what the question was asking.
+- Give ONE simple example_answer that correctly answers the question.
+- Do NOT invent personal facts about the learner.
+- The example_answer is only an example, not a claim about what the learner actually did.
+- Set next_question to an empty string because the learner should answer the SAME question again.
+- correction_needed may still be true or false depending on grammar.
+
 
 CORRECTION RULES:
+
 - Preserve the learner's intended meaning.
 - NEVER invent facts the learner did not say.
 - NEVER invent colors, places, people, activities, objects, times, reasons, or opinions.
@@ -312,7 +345,7 @@ Only correct meaningful SPOKEN English mistakes such as:
 - missing an important verb
 - incorrect sentence structure
 - unnatural word choice
-- errors that make the spoken meaning unclear
+- errors that make spoken meaning unclear
 
 Do NOT correct or comment on:
 - punctuation
@@ -325,7 +358,9 @@ Do NOT correct or comment on:
 If the learner's spoken English is understandable and natural enough,
 set correction_needed to false.
 
+
 THAI EXPLANATION:
+
 When correction_needed is true:
 - Explain the important correction briefly in Thai.
 - Keep it beginner-friendly.
@@ -334,7 +369,11 @@ When correction_needed is true:
 When correction_needed is false:
 - thai_explanation must be an empty string.
 
+
 NEXT QUESTION:
+
+Only create a new next_question when answer_relevant = true.
+
 Use the CURRENT QUESTION, CURRENT ANSWER, and PREVIOUS CONVERSATION.
 
 The next question must:
@@ -344,12 +383,7 @@ The next question must:
 - ask only ONE thing
 - sound like a real conversation
 
-Do NOT ask strange definition questions such as:
-"What is black?"
-"What is shopping?"
-"What is tired?"
-
-Instead ask about the learner's experience.
+Do NOT ask strange definition questions.
 
 Examples:
 
@@ -377,8 +411,14 @@ Learner:
 Good:
 "What did you do at home?"
 
+
 ENDING:
 
+If answer_relevant = false:
+- next_question must be ""
+- closing_message must be ""
+
+If answer_relevant = true:
 ${
   isFinalTurn
     ? `
@@ -392,12 +432,16 @@ Set closing_message to an empty string.
 `
 }
 
+
 Return ONLY valid JSON:
 
 {
   "corrected_sentence": "string",
   "thai_explanation": "string",
   "correction_needed": true,
+  "answer_relevant": true,
+  "relevance_explanation": "string",
+  "example_answer": "string",
   "next_question": "string",
   "closing_message": "string"
 }
@@ -412,7 +456,6 @@ Return ONLY valid JSON:
           headers: {
             "Content-Type":
               "application/json",
-
             "x-goog-api-key":
               process.env.GEMINI_API_KEY
           },
@@ -429,7 +472,7 @@ Return ONLY valid JSON:
             ],
 
             generationConfig: {
-              temperature: 0.2,
+              temperature: 0.1,
 
               responseMimeType:
                 "application/json",
@@ -450,6 +493,18 @@ Return ONLY valid JSON:
                     type: "BOOLEAN"
                   },
 
+                  answer_relevant: {
+                    type: "BOOLEAN"
+                  },
+
+                  relevance_explanation: {
+                    type: "STRING"
+                  },
+
+                  example_answer: {
+                    type: "STRING"
+                  },
+
                   next_question: {
                     type: "STRING"
                   },
@@ -463,6 +518,9 @@ Return ONLY valid JSON:
                   "corrected_sentence",
                   "thai_explanation",
                   "correction_needed",
+                  "answer_relevant",
+                  "relevance_explanation",
+                  "example_answer",
                   "next_question",
                   "closing_message"
                 ]
@@ -486,7 +544,6 @@ Return ONLY valid JSON:
         .json({
           error:
             "Gemini request failed",
-
           details: data
         });
     }
@@ -516,6 +573,15 @@ Return ONLY valid JSON:
 
       correction_needed:
         result.correction_needed,
+
+      answer_relevant:
+        result.answer_relevant,
+
+      relevance_explanation:
+        result.relevance_explanation,
+
+      example_answer:
+        result.example_answer,
 
       next_question:
         result.next_question,
