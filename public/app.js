@@ -48,15 +48,15 @@ async function speak(text) {
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({
-        text
-      })
+      body: JSON.stringify({ text })
     });
 
     if (!response.ok) {
       console.error("TTS failed");
+
       statusEl.textContent =
-        "Could not play the tutor voice.";
+        "Voice is unavailable right now.";
+
       return;
     }
 
@@ -168,7 +168,7 @@ async function showFeedback(transcript) {
     "Checking…";
 
   why.textContent =
-    "AI is reviewing your answer…";
+    "Looking at your answer…";
 
   feedback.style.display =
     "block";
@@ -209,7 +209,7 @@ async function showFeedback(transcript) {
     if (result.answer_relevant === false) {
 
       better.textContent =
-        "Try answering the question again 💬";
+        "Let's try that question again 💬";
 
       let explanation =
         result.relevance_explanation ||
@@ -217,7 +217,7 @@ async function showFeedback(transcript) {
 
       if (result.example_answer) {
         explanation +=
-          `\n\nตัวอย่างคำตอบ: ${result.example_answer}`;
+          `\n\nลองตอบแบบนี้ได้ เช่น: ${result.example_answer}`;
       }
 
       why.textContent =
@@ -227,16 +227,16 @@ async function showFeedback(transcript) {
         "pre-line";
 
       statusEl.textContent =
-        "Your English may be correct, but the answer doesn't match the question.";
-
-      // Do NOT add this answer to conversation history
-      // Do NOT move to the next turn
+        "Almost! Try answering this question.";
 
       continueBtn.style.display =
         "none";
 
       tryAgainBtn.textContent =
         "🎙️ Answer again";
+
+      tryAgainBtn.style.fontWeight =
+        "700";
 
       feedback.scrollIntoView({
         behavior: "smooth",
@@ -258,13 +258,13 @@ async function showFeedback(transcript) {
 
       why.textContent =
         result.thai_explanation ||
-        "มีจุดที่ปรับให้เป็นธรรมชาติมากขึ้นค่ะ";
+        "ปรับนิดเดียวให้ฟังเป็นธรรมชาติมากขึ้นค่ะ";
 
       why.style.whiteSpace =
         "normal";
 
       statusEl.textContent =
-        "Good answer! Here's a small correction.";
+        "Good answer! Just one small fix ✨";
 
     }
 
@@ -278,18 +278,17 @@ async function showFeedback(transcript) {
         "Sounds good! ✅";
 
       why.textContent =
-        "ประโยคนี้ใช้ได้ดีแล้วค่ะ ไม่ต้องแก้อะไร";
+        "ประโยคนี้เป็นธรรมชาติและตอบคำถามได้ดีค่ะ";
 
       why.style.whiteSpace =
         "normal";
 
       statusEl.textContent =
-        "Nice! Your answer was clear.";
+        "Nice! Your answer works well.";
     }
 
 
-    // Only save answers that actually
-    // responded to the question
+    // SAVE ONLY RELEVANT ANSWERS
 
     history.push({
       question:
@@ -307,6 +306,9 @@ async function showFeedback(transcript) {
     tryAgainBtn.textContent =
       "🎙️ Try again";
 
+    tryAgainBtn.style.fontWeight =
+      "400";
+
     continueBtn.style.display =
       "block";
 
@@ -323,13 +325,13 @@ async function showFeedback(transcript) {
     console.error(error);
 
     better.textContent =
-      "Could not check this answer.";
+      "Let's try again.";
 
     why.textContent =
-      "ลองพูดใหม่อีกครั้งค่ะ";
+      "ระบบตรวจคำตอบมีปัญหาชั่วคราว ลองพูดอีกครั้งค่ะ";
 
     statusEl.textContent =
-      "AI correction error.";
+      "Something went wrong.";
 
     continueBtn.disabled =
       true;
@@ -437,7 +439,7 @@ async function startRecording() {
       "⏹️";
 
     statusEl.textContent =
-      "Recording… take your time. Tap again when you're done.";
+      "Listening… take your time.";
 
   } catch (error) {
 
@@ -477,7 +479,7 @@ function stopRecording() {
     true;
 
   statusEl.textContent =
-    "Got it! Transcribing your answer…";
+    "Got it! Checking your answer…";
 
   mediaRecorder.stop();
 
@@ -521,11 +523,9 @@ async function handleRecordingFinished() {
     if (
       audioBlob.size < 500
     ) {
-
       throw new Error(
         "Recording was too short"
       );
-
     }
 
 
@@ -538,7 +538,7 @@ async function handleRecordingFinished() {
     if (!transcript.trim()) {
 
       statusEl.textContent =
-        "I couldn't hear your answer. Please try again.";
+        "I couldn't hear that. Try again.";
 
       micBtn.disabled =
         false;
@@ -548,7 +548,7 @@ async function handleRecordingFinished() {
 
 
     statusEl.textContent =
-      "Transcript ready. Checking your answer…";
+      "Checking your answer…";
 
 
     await showFeedback(
@@ -561,7 +561,7 @@ async function handleRecordingFinished() {
     console.error(error);
 
     statusEl.textContent =
-      "I couldn't process the recording. Please try again.";
+      "I couldn't process that. Please try again.";
 
   } finally {
 
@@ -606,7 +606,7 @@ listenBtn.addEventListener(
       listenBtn.textContent;
 
     listenBtn.textContent =
-      "Loading voice…";
+      "Loading…";
 
 
     await speak(
@@ -673,7 +673,7 @@ tryAgainBtn.addEventListener(
       "none";
 
     statusEl.textContent =
-      "Answer the same question again when you're ready.";
+      "Your turn — answer the same question again.";
 
   }
 );
@@ -745,7 +745,7 @@ continueBtn.addEventListener(
 
 
     statusEl.textContent =
-      "Tap the microphone when you're ready.";
+      "Your turn when you're ready.";
 
 
     await speak(
