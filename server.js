@@ -9,7 +9,12 @@ app.use(express.json({ limit: "1mb" }));
 
 app.post("/correct", async (req, res) => {
   try {
-    const { transcript, turn = 1 } = req.body;
+    const {
+      transcript,
+      turn = 1,
+      current_question = "",
+      history = []
+    } = req.body;
 
     if (!process.env.GEMINI_API_KEY) {
       return res.status(500).json({
@@ -31,94 +36,134 @@ You are an English speaking coach for Thai beginner learners.
 LESSON:
 My Weekend
 
-LEARNER ANSWER:
+CURRENT QUESTION:
+"${current_question}"
+
+PREVIOUS CONVERSATION:
+${JSON.stringify(history)}
+
+LEARNER'S CURRENT SPOKEN ANSWER:
 "${transcript}"
 
 CURRENT TURN:
 ${turn} of 5
 
-Your tasks:
+IMPORTANT:
+This is SPOKEN English practice, not writing practice.
 
-1. Keep the learner's intended meaning.
-2. Correct only meaningful SPOKEN English mistakes.
-3. Make the sentence sound natural in everyday spoken English.
-4. Do not over-correct tiny mistakes if the learner is understandable and sounds natural enough.
+Your job has TWO parts:
+1. Evaluate the learner's spoken English.
+2. Continue the conversation naturally.
 
-IMPORTANT: This is SPOKEN English practice, not writing practice.
+CORRECTION RULES:
+
+- Preserve the learner's intended meaning.
+- NEVER invent facts or information the learner did not say.
+- NEVER invent colors, places, people, activities, objects, times, reasons, or opinions.
+- Do not change the factual meaning just to make a nicer sentence.
+- If something is unclear, correct only what you can confidently correct.
+- Do not guess missing information.
+
+Example:
+
+Learner says:
+"My car is black."
+
+You must NEVER change black to blue, red, white, or any other color.
+
+Learner says:
+"I go shopping yesterday."
+
+Correct:
+"I went shopping yesterday."
+
+Only correct meaningful SPOKEN English mistakes such as:
+- wrong tense
+- wrong verb form
+- missing an important verb
+- incorrect sentence structure
+- unnatural word choice
+- errors that make the spoken meaning unclear
 
 Do NOT correct or comment on:
 - punctuation
 - commas
 - periods
 - capitalization
-- spelling-style formatting
-- sentence separation caused only by speech-to-text transcription
+- written formatting
+- sentence separation caused by speech-to-text
 
-Never mark punctuation or capitalization as a correction.
+If the learner's spoken English is understandable and natural enough,
+set correction_needed to false.
 
-Only correct mistakes that matter when spoken aloud, such as:
-- wrong tense
-- wrong verb form
-- missing an important verb
-- incorrect sentence structure
-- unnatural word choice
-- mistakes that change or confuse the meaning
+THAI EXPLANATION:
 
-If the learner's spoken English sounds natural and understandable, set correction_needed to false even if the transcript has no punctuation.
+When correction_needed is true:
+- Explain the important correction briefly in Thai.
+- Keep it beginner-friendly.
+- Explain spoken grammar, not writing rules.
 
-5. Give a short beginner-friendly Thai explanation only when a meaningful spoken-English correction is needed.
+When correction_needed is false:
+- thai_explanation must be an empty string.
 
-Never mention punctuation, commas, periods, capitalization, spelling-style formatting, or writing rules in the Thai explanation.
+NEXT QUESTION:
 
-6. Create ONE short, natural follow-up question based directly on what the learner actually said.
-7. Do not ask a generic scripted question if a more relevant follow-up is possible.
-8. Keep the next question simple enough for a beginner.
-9. Ask only ONE question at a time.
+Use the CURRENT QUESTION, CURRENT ANSWER, and PREVIOUS CONVERSATION to decide what to ask next.
 
-FOLLOW-UP EXAMPLES:
+The next question must:
+- follow naturally from what the learner actually said
+- stay related to the Weekend topic
+- be easy for a beginner
+- ask only ONE thing
+- sound like a real conversation
+
+Do NOT ask strange definition questions such as:
+"What is black?"
+"What is shopping?"
+"What is tired?"
+
+Instead, ask about the learner's experience.
+
+Examples:
 
 Learner:
 "I went shopping with my friends."
 
-Good next question:
+Good:
 "What did you buy?"
+
+Learner:
+"I bought a new bag."
+
+Good:
+"What color is the bag?"
+
+Learner:
+"My car is black."
+
+Good:
+"Where did you drive?"
 
 Learner:
 "I stayed home because I was tired."
 
-Good next question:
+Good:
 "What did you do at home?"
 
-Learner:
-"I watched a movie."
-
-Good next question:
-"What movie did you watch?"
-
-Learner:
-"I went to a cafe with my boyfriend."
-
-Good next question:
-"What did you have at the cafe?"
-
-Learner:
-"Good."
-
-Good next question:
-"What did you do?"
-
-ENDING RULE:
+ENDING:
 
 ${isFinalTurn
-  ? `This is the final learner answer.
-Do NOT ask another question.
+  ? `
+This is the final learner answer.
 Set next_question to an empty string.
-Create a short, warm closing_message in English.`
-  : `This is not the final turn.
-Create ONE natural next_question based on the learner's answer.
-Set closing_message to an empty string.`}
+Give a short friendly closing_message in English.
+`
+  : `
+Create ONE natural next_question.
+Set closing_message to an empty string.
+`}
 
-Return ONLY valid JSON with exactly these fields:
+Return ONLY valid JSON:
 
 {
   "corrected_sentence": "string",
@@ -140,15 +185,11 @@ Return ONLY valid JSON with exactly these fields:
         body: JSON.stringify({
           contents: [
             {
-              parts: [
-                {
-                  text: prompt
-                }
-              ]
+              parts: [{ text: prompt }]
             }
           ],
           generationConfig: {
-            temperature: 0.35,
+            temperature: 0.2,
             responseMimeType: "application/json",
             responseSchema: {
               type: "OBJECT",
@@ -212,6 +253,7 @@ Return ONLY valid JSON with exactly these fields:
       next_question: result.next_question,
       closing_message: result.closing_message
     });
+
   } catch (error) {
     console.error("Correction error:", error);
 
