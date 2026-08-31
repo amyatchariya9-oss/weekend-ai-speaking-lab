@@ -27,105 +27,193 @@ let closingMessage = "";
 let currentQuestion = "Hey! How was your weekend?";
 let history = [];
 
-// ---------------------------------------
-// TEMP VOICE
-// Later we will replace this with ElevenLabs TTS
-// ---------------------------------------
+let currentAudio = null;
 
-function speak(text) {
-  if (!("speechSynthesis" in window)) return;
 
-  speechSynthesis.cancel();
+// ==========================================
+// ELEVENLABS TTS
+// ==========================================
 
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = "en-US";
-  utterance.rate = 0.92;
+async function speak(text) {
+  try {
+    if (!text) return;
 
-  speechSynthesis.speak(utterance);
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio = null;
+    }
+
+    const response = await fetch("/tts", {
+      method: "POST",
+
+      headers: {
+        "Content-Type": "application/json"
+      },
+
+      body: JSON.stringify({
+        text
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+
+      console.error(
+        "TTS error:",
+        errorData
+      );
+
+      statusEl.textContent =
+        "Could not play the tutor voice.";
+
+      return;
+    }
+
+    const audioBlob =
+      await response.blob();
+
+    const audioUrl =
+      URL.createObjectURL(audioBlob);
+
+    currentAudio =
+      new Audio(audioUrl);
+
+    currentAudio.onended = () => {
+      URL.revokeObjectURL(audioUrl);
+      currentAudio = null;
+    };
+
+    currentAudio.onerror = () => {
+      URL.revokeObjectURL(audioUrl);
+      currentAudio = null;
+
+      statusEl.textContent =
+        "Could not play the tutor voice.";
+    };
+
+    await currentAudio.play();
+
+  } catch (error) {
+    console.error(
+      "Speak error:",
+      error
+    );
+
+    statusEl.textContent =
+      "Could not play the tutor voice.";
+  }
 }
 
-// ---------------------------------------
+
+// ==========================================
 // SEND AUDIO TO ELEVENLABS STT
-// ---------------------------------------
+// ==========================================
 
 async function transcribeAudio(audioBlob) {
-  const response = await fetch("/transcribe", {
-    method: "POST",
-    headers: {
-      "Content-Type":
-        audioBlob.type || "application/octet-stream"
-    },
-    body: audioBlob
-  });
+  const response =
+    await fetch("/transcribe", {
+      method: "POST",
 
-  const data = await response.json();
+      headers: {
+        "Content-Type":
+          audioBlob.type ||
+          "application/octet-stream"
+      },
+
+      body: audioBlob
+    });
+
+  const data =
+    await response.json();
 
   if (!response.ok) {
-    console.error("Transcription response:", data);
+    console.error(
+      "Transcription response:",
+      data
+    );
 
     throw new Error(
-      data?.error || "Could not transcribe audio"
+      data?.error ||
+      "Could not transcribe audio"
     );
   }
 
   return data.transcript || "";
 }
 
-// ---------------------------------------
+
+// ==========================================
 // SEND TRANSCRIPT TO GEMINI
-// ---------------------------------------
+// ==========================================
 
 async function getAICorrection(transcript) {
-  const response = await fetch("/correct", {
-    method: "POST",
+  const response =
+    await fetch("/correct", {
+      method: "POST",
 
-    headers: {
-      "Content-Type": "application/json"
-    },
+      headers: {
+        "Content-Type":
+          "application/json"
+      },
 
-    body: JSON.stringify({
-      transcript,
-      turn,
-      current_question: currentQuestion,
-      history
-    })
-  });
+      body: JSON.stringify({
+        transcript,
+        turn,
+        current_question:
+          currentQuestion,
+        history
+      })
+    });
 
-  const data = await response.json();
+  const data =
+    await response.json();
 
   if (!response.ok) {
     throw new Error(
-      data?.error || "Could not get AI correction"
+      data?.error ||
+      "Could not get AI correction"
     );
   }
 
   return data;
 }
 
-// ---------------------------------------
+
+// ==========================================
 // SHOW CORRECTION
-// ---------------------------------------
+// ==========================================
 
 async function showFeedback(transcript) {
-  youSaid.textContent = transcript;
+  youSaid.textContent =
+    transcript;
 
-  better.textContent = "Checking…";
-  why.textContent = "AI is reviewing your sentence…";
+  better.textContent =
+    "Checking…";
 
-  feedback.style.display = "block";
+  why.textContent =
+    "AI is reviewing your sentence…";
+
+  feedback.style.display =
+    "block";
 
   statusEl.textContent =
     "Checking your English…";
 
-  continueBtn.disabled = true;
-  continueBtn.textContent = "Checking…";
+  continueBtn.disabled =
+    true;
+
+  continueBtn.textContent =
+    "Checking…";
 
   try {
     const result =
-      await getAICorrection(transcript);
+      await getAICorrection(
+        transcript
+      );
 
     lastCorrected =
-      result.corrected_sentence || transcript;
+      result.corrected_sentence ||
+      transcript;
 
     nextQuestion =
       result.next_question || "";
@@ -143,6 +231,7 @@ async function showFeedback(transcript) {
 
       statusEl.textContent =
         "มีจุดที่ปรับให้เป็นธรรมชาติมากขึ้น ดูด้านล่างได้เลย";
+
     } else {
       better.textContent =
         "Sounds good! ✅";
@@ -155,10 +244,15 @@ async function showFeedback(transcript) {
     }
 
     history.push({
-      question: currentQuestion,
-      answer: transcript,
+      question:
+        currentQuestion,
+
+      answer:
+        transcript,
+
       corrected_answer:
-        result.corrected_sentence || transcript
+        result.corrected_sentence ||
+        transcript
     });
 
     continueBtn.textContent =
@@ -166,7 +260,8 @@ async function showFeedback(transcript) {
         ? "Finish →"
         : "Continue →";
 
-    continueBtn.disabled = false;
+    continueBtn.disabled =
+      false;
 
   } catch (error) {
     console.error(error);
@@ -180,7 +275,8 @@ async function showFeedback(transcript) {
     statusEl.textContent =
       "AI correction error.";
 
-    continueBtn.disabled = true;
+    continueBtn.disabled =
+      true;
   }
 
   feedback.scrollIntoView({
@@ -189,20 +285,23 @@ async function showFeedback(transcript) {
   });
 }
 
-// ---------------------------------------
+
+// ==========================================
 // START RECORDING
-// ---------------------------------------
+// ==========================================
 
 async function startRecording() {
   try {
-    feedback.style.display = "none";
+    feedback.style.display =
+      "none";
 
     audioChunks = [];
 
     mediaStream =
-      await navigator.mediaDevices.getUserMedia({
-        audio: true
-      });
+      await navigator.mediaDevices
+        .getUserMedia({
+          audio: true
+        });
 
     let options = {};
 
@@ -212,19 +311,28 @@ async function startRecording() {
       )
     ) {
       options = {
-        mimeType: "audio/webm;codecs=opus"
+        mimeType:
+          "audio/webm;codecs=opus"
       };
+
     } else if (
-      MediaRecorder.isTypeSupported("audio/webm")
+      MediaRecorder.isTypeSupported(
+        "audio/webm"
+      )
     ) {
       options = {
-        mimeType: "audio/webm"
+        mimeType:
+          "audio/webm"
       };
+
     } else if (
-      MediaRecorder.isTypeSupported("audio/mp4")
+      MediaRecorder.isTypeSupported(
+        "audio/mp4"
+      )
     ) {
       options = {
-        mimeType: "audio/mp4"
+        mimeType:
+          "audio/mp4"
       };
     }
 
@@ -234,24 +342,32 @@ async function startRecording() {
         options
       );
 
-    mediaRecorder.ondataavailable = (event) => {
-      if (
-        event.data &&
-        event.data.size > 0
-      ) {
-        audioChunks.push(event.data);
-      }
-    };
+    mediaRecorder.ondataavailable =
+      (event) => {
+        if (
+          event.data &&
+          event.data.size > 0
+        ) {
+          audioChunks.push(
+            event.data
+          );
+        }
+      };
 
     mediaRecorder.onstop =
       handleRecordingFinished;
 
     mediaRecorder.start();
 
-    isRecording = true;
+    isRecording =
+      true;
 
-    micBtn.classList.add("recording");
-    micBtn.textContent = "⏹️";
+    micBtn.classList.add(
+      "recording"
+    );
+
+    micBtn.textContent =
+      "⏹️";
 
     statusEl.textContent =
       "Recording… take your time. Tap again when you're done.";
@@ -264,23 +380,32 @@ async function startRecording() {
   }
 }
 
-// ---------------------------------------
-// FINISH RECORDING
-// ---------------------------------------
+
+// ==========================================
+// STOP RECORDING
+// ==========================================
 
 function stopRecording() {
   if (
     !mediaRecorder ||
-    mediaRecorder.state === "inactive"
+    mediaRecorder.state ===
+      "inactive"
   ) {
     return;
   }
 
-  isRecording = false;
+  isRecording =
+    false;
 
-  micBtn.classList.remove("recording");
-  micBtn.textContent = "🎙️";
-  micBtn.disabled = true;
+  micBtn.classList.remove(
+    "recording"
+  );
+
+  micBtn.textContent =
+    "🎙️";
+
+  micBtn.disabled =
+    true;
 
   statusEl.textContent =
     "Got it! Transcribing your answer…";
@@ -290,13 +415,17 @@ function stopRecording() {
   if (mediaStream) {
     mediaStream
       .getTracks()
-      .forEach((track) => track.stop());
+      .forEach(
+        (track) =>
+          track.stop()
+      );
   }
 }
 
-// ---------------------------------------
-// AFTER AUDIO IS FINISHED
-// ---------------------------------------
+
+// ==========================================
+// AFTER RECORDING
+// ==========================================
 
 async function handleRecordingFinished() {
   try {
@@ -306,24 +435,33 @@ async function handleRecordingFinished() {
       "audio/webm";
 
     const audioBlob =
-      new Blob(audioChunks, {
-        type: mimeType
-      });
+      new Blob(
+        audioChunks,
+        {
+          type: mimeType
+        }
+      );
 
-    if (audioBlob.size < 500) {
+    if (
+      audioBlob.size < 500
+    ) {
       throw new Error(
         "Recording was too short"
       );
     }
 
     const transcript =
-      await transcribeAudio(audioBlob);
+      await transcribeAudio(
+        audioBlob
+      );
 
     if (!transcript.trim()) {
       statusEl.textContent =
         "I couldn't hear your answer. Please try again.";
 
-      micBtn.disabled = false;
+      micBtn.disabled =
+        false;
+
       return;
     }
 
@@ -341,65 +479,116 @@ async function handleRecordingFinished() {
       "I couldn't process the recording. Please try again.";
 
   } finally {
-    micBtn.disabled = false;
+    micBtn.disabled =
+      false;
+
     audioChunks = [];
   }
 }
 
-// ---------------------------------------
+
+// ==========================================
 // MIC BUTTON
-// ---------------------------------------
+// ==========================================
 
-micBtn.addEventListener("click", () => {
-  if (isRecording) {
-    stopRecording();
-  } else {
-    startRecording();
-  }
-});
-
-// ---------------------------------------
-// LISTEN TO QUESTION
-// ---------------------------------------
-
-listenBtn.addEventListener("click", () => {
-  speak(currentQuestion);
-});
-
-// ---------------------------------------
-// LISTEN TO CORRECTED SENTENCE
-// ---------------------------------------
-
-hearCorrectionBtn.addEventListener(
+micBtn.addEventListener(
   "click",
   () => {
-    if (lastCorrected) {
-      speak(lastCorrected);
+    if (isRecording) {
+      stopRecording();
+    } else {
+      startRecording();
     }
   }
 );
 
-// ---------------------------------------
+
+// ==========================================
+// LISTEN TO QUESTION
+// ==========================================
+
+listenBtn.addEventListener(
+  "click",
+  async () => {
+    listenBtn.disabled =
+      true;
+
+    const originalText =
+      listenBtn.textContent;
+
+    listenBtn.textContent =
+      "Loading voice…";
+
+    await speak(
+      currentQuestion
+    );
+
+    listenBtn.textContent =
+      originalText;
+
+    listenBtn.disabled =
+      false;
+  }
+);
+
+
+// ==========================================
+// LISTEN TO CORRECTION
+// ==========================================
+
+hearCorrectionBtn.addEventListener(
+  "click",
+  async () => {
+    if (!lastCorrected) {
+      return;
+    }
+
+    hearCorrectionBtn.disabled =
+      true;
+
+    const originalText =
+      hearCorrectionBtn.textContent;
+
+    hearCorrectionBtn.textContent =
+      "Loading…";
+
+    await speak(
+      lastCorrected
+    );
+
+    hearCorrectionBtn.textContent =
+      originalText;
+
+    hearCorrectionBtn.disabled =
+      false;
+  }
+);
+
+
+// ==========================================
 // TRY AGAIN
-// ---------------------------------------
+// ==========================================
 
 tryAgainBtn.addEventListener(
   "click",
   () => {
-    feedback.style.display = "none";
+    feedback.style.display =
+      "none";
 
     statusEl.textContent =
       "Tap the microphone when you're ready to try again.";
   }
 );
 
-// ---------------------------------------
-// NEXT QUESTION / FINISH
-// ---------------------------------------
+
+// ==========================================
+// CONTINUE / FINISH
+// ==========================================
 
 continueBtn.addEventListener(
   "click",
-  () => {
+  async () => {
+
     if (turn >= 5) {
       currentQuestion =
         closingMessage ||
@@ -411,13 +600,18 @@ continueBtn.addEventListener(
       feedback.style.display =
         "none";
 
-      micBtn.disabled = true;
-      micBtn.style.opacity = "0.45";
+      micBtn.disabled =
+        true;
+
+      micBtn.style.opacity =
+        "0.45";
 
       statusEl.textContent =
         "Practice complete 🎉";
 
-      speak(currentQuestion);
+      await speak(
+        currentQuestion
+      );
 
       return;
     }
@@ -440,6 +634,8 @@ continueBtn.addEventListener(
     statusEl.textContent =
       "Tap the microphone when you're ready.";
 
-    speak(currentQuestion);
+    await speak(
+      currentQuestion
+    );
   }
 );
