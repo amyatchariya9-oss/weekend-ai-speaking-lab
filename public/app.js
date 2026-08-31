@@ -16,9 +16,13 @@ const continueBtn = $("continueBtn");
 let turn = 1;
 let recognition = null;
 let isListening = false;
+
 let lastCorrected = "";
 let nextQuestion = "";
 let closingMessage = "";
+
+let currentQuestion = "Hey! How was your weekend?";
+let history = [];
 
 function speak(text) {
   if (!("speechSynthesis" in window)) return;
@@ -40,14 +44,18 @@ async function getAICorrection(transcript) {
     },
     body: JSON.stringify({
       transcript,
-      turn
+      turn,
+      current_question: currentQuestion,
+      history
     })
   });
 
   const data = await response.json();
 
   if (!response.ok) {
-    throw new Error(data?.error || "Could not get AI correction");
+    throw new Error(
+      data?.error || "Could not get AI correction"
+    );
   }
 
   return data;
@@ -67,12 +75,18 @@ async function showFeedback(transcript) {
   try {
     const result = await getAICorrection(transcript);
 
-    lastCorrected = result.corrected_sentence;
-    nextQuestion = result.next_question || "";
-    closingMessage = result.closing_message || "";
+    lastCorrected =
+      result.corrected_sentence || transcript;
+
+    nextQuestion =
+      result.next_question || "";
+
+    closingMessage =
+      result.closing_message || "";
 
     if (result.correction_needed) {
-      better.textContent = result.corrected_sentence;
+      better.textContent =
+        result.corrected_sentence;
 
       why.textContent =
         result.thai_explanation ||
@@ -81,7 +95,8 @@ async function showFeedback(transcript) {
       statusEl.textContent =
         "มีจุดที่ปรับให้เป็นธรรมชาติมากขึ้น ดูด้านล่างได้เลย";
     } else {
-      better.textContent = "Sounds good! ✅";
+      better.textContent =
+        "Sounds good! ✅";
 
       why.textContent =
         "ประโยคนี้ใช้ได้ดีแล้วค่ะ ไม่ต้องแก้อะไร";
@@ -89,6 +104,13 @@ async function showFeedback(transcript) {
       statusEl.textContent =
         "Nice! Your answer was clear.";
     }
+
+    history.push({
+      question: currentQuestion,
+      answer: transcript,
+      corrected_answer:
+        result.corrected_sentence || transcript
+    });
 
     continueBtn.textContent =
       turn >= 5 ? "Finish →" : "Continue →";
@@ -98,11 +120,15 @@ async function showFeedback(transcript) {
   } catch (error) {
     console.error(error);
 
-    better.textContent = "Could not check this sentence.";
+    better.textContent =
+      "Could not check this sentence.";
+
     why.textContent =
       "ตอนนี้ AI correction มีปัญหาชั่วคราว ลองใหม่อีกครั้งได้ค่ะ";
 
-    statusEl.textContent = "AI correction error.";
+    statusEl.textContent =
+      "AI correction error.";
+
     continueBtn.disabled = true;
   }
 
@@ -117,7 +143,9 @@ function createRecognition() {
     window.SpeechRecognition ||
     window.webkitSpeechRecognition;
 
-  if (!SpeechRecognition) return null;
+  if (!SpeechRecognition) {
+    return null;
+  }
 
   const r = new SpeechRecognition();
 
@@ -128,8 +156,11 @@ function createRecognition() {
 
   r.onstart = () => {
     isListening = true;
+
     micBtn.classList.add("recording");
-    statusEl.textContent = "Listening… speak now.";
+
+    statusEl.textContent =
+      "Listening… speak now.";
   };
 
   r.onresult = (event) => {
@@ -189,7 +220,7 @@ micBtn.addEventListener("click", () => {
 });
 
 listenBtn.addEventListener("click", () => {
-  speak(questionEl.textContent);
+  speak(currentQuestion);
 });
 
 hearCorrectionBtn.addEventListener("click", () => {
@@ -200,39 +231,51 @@ hearCorrectionBtn.addEventListener("click", () => {
 
 tryAgainBtn.addEventListener("click", () => {
   feedback.style.display = "none";
+
   statusEl.textContent =
     "Tap the microphone and say it again.";
 });
 
 continueBtn.addEventListener("click", () => {
   if (turn >= 5) {
-    questionEl.textContent =
+    currentQuestion =
       closingMessage ||
       "Great job today! You finished your Weekend speaking practice.";
 
-    feedback.style.display = "none";
+    questionEl.textContent =
+      currentQuestion;
+
+    feedback.style.display =
+      "none";
 
     micBtn.disabled = true;
     micBtn.style.opacity = "0.45";
 
-    statusEl.textContent = "Practice complete 🎉";
+    statusEl.textContent =
+      "Practice complete 🎉";
 
-    speak(questionEl.textContent);
+    speak(currentQuestion);
+
     return;
   }
 
   turn += 1;
 
-  turnEl.textContent = String(turn);
+  turnEl.textContent =
+    String(turn);
 
-  questionEl.textContent =
+  currentQuestion =
     nextQuestion ||
     "Tell me a little more about your weekend.";
 
-  feedback.style.display = "none";
+  questionEl.textContent =
+    currentQuestion;
+
+  feedback.style.display =
+    "none";
 
   statusEl.textContent =
     "Tap the microphone to answer.";
 
-  speak(questionEl.textContent);
+  speak(currentQuestion);
 });
