@@ -38,72 +38,73 @@ function speak(text) {
   speechSynthesis.speak(utterance);
 }
 
-function localWeekendCorrection(text) {
-  let corrected = text.trim();
-  let explanation = "";
-  let changed = false;
-
-  const replacements = [
-    {
-      pattern: /\bI go\b/gi,
-      replacement: "I went",
-      why: "กำลังเล่าเรื่อง weekend ที่ผ่านมา จึงใช้ past tense: go → went"
+async function getAICorrection(transcript) {
+  const response = await fetch("/correct", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
     },
-    {
-      pattern: /\bit is good\b/gi,
-      replacement: "it was good",
-      why: "กำลังพูดถึง weekend ที่ผ่านมา จึงใช้ was แทน is"
-    },
-    {
-      pattern: /\bit good\b/gi,
-      replacement: "it was good",
-      why: "ประโยคต้องมี verb และกำลังพูดถึงอดีต จึงใช้ “It was good.”"
-    },
-    {
-      pattern: /\bI am go\b/gi,
-      replacement: "I went",
-      why: "ถ้าพูดถึงสิ่งที่ทำไปแล้ว ใช้ “I went …” ไม่ใช้ “I am go …”"
-    }
-  ];
+    body: JSON.stringify({ transcript })
+  });
 
-  for (const rule of replacements) {
-    if (rule.pattern.test(corrected)) {
-      corrected = corrected.replace(rule.pattern, rule.replacement);
+  const data = await response.json();
 
-      if (!explanation) {
-        explanation = rule.why;
-      }
-
-      changed = true;
-    }
+  if (!response.ok) {
+    throw new Error(
+      data?.error || "Could not get AI correction"
+    );
   }
 
-  if (!changed) {
-    explanation =
-      "ประโยคนี้สื่อสารได้ดีแล้วค่ะ ยังไม่มีจุดสำคัญที่ต้องแก้ในรอบนี้";
-  }
-
-  return {
-    corrected,
-    explanation,
-    changed
-  };
+  return data;
 }
 
-function showFeedback(transcript) {
-  const result = localWeekendCorrection(transcript);
-
+async function showFeedback(transcript) {
   youSaid.textContent = transcript;
-  better.textContent = result.corrected;
-  why.textContent = result.explanation;
 
-  lastCorrected = result.corrected;
+  better.textContent = "Checking…";
+  why.textContent = "AI is reviewing your sentence…";
 
   feedback.style.display = "block";
 
-  statusEl.textContent = result.changed
-    ? "มีจุดที่ปรับให้เป็นธรรมชาติมากขึ้น ดูด้านล่างได้เลย"
-    : "Nice! Your answer was clear.";
+  statusEl.textContent =
+    "Checking your English…";
+
+  try {
+    const result =
+      await getAICorrection(transcript);
+
+    better.textContent =
+      result.corrected_sentence;
+
+    lastCorrected =
+      result.corrected_sentence;
+
+    if (result.correction_needed) {
+      why.textContent =
+        result.thai_explanation ||
+        "มีจุดที่ปรับให้เป็นธรรมชาติมากขึ้นค่ะ";
+
+      statusEl.textContent =
+        "มีจุดที่ปรับให้นaturalขึ้น ดู correction ด้านล่างได้เลย";
+    } else {
+      why.textContent =
+        "ประโยคนี้ใช้ได้ดีแล้วค่ะ ✅";
+
+      statusEl.textContent =
+        "Nice! Your answer was clear.";
+    }
+  } catch (error) {
+    console.error(error);
+
+    better.textContent =
+      "Could not check this sentence.";
+
+    why.textContent =
+      "ตอนนี้ AI correction มีปัญหาชั่วคราว ลองใหม่อีกครั้งได้ค่ะ";
+
+    statusEl.textContent =
+      "AI correction error.";
+  }
 
   feedback.scrollIntoView({
     behavior: "smooth",
