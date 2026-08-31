@@ -9,6 +9,19 @@ app.use(express.json({ limit: "1mb" }));
 
 
 // ==========================================
+// HELPERS
+// ==========================================
+
+function normalizeSpokenText(text = "") {
+  return text
+    .toLowerCase()
+    .replace(/[.,!?;:'"()[\]{}]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+
+// ==========================================
 // ELEVENLABS SPEECH TO TEXT
 // ==========================================
 
@@ -43,9 +56,17 @@ app.post(
 
       let extension = "webm";
 
-      if (contentType.includes("mp4")) extension = "m4a";
-      if (contentType.includes("mpeg")) extension = "mp3";
-      if (contentType.includes("wav")) extension = "wav";
+      if (contentType.includes("mp4")) {
+        extension = "m4a";
+      }
+
+      if (contentType.includes("mpeg")) {
+        extension = "mp3";
+      }
+
+      if (contentType.includes("wav")) {
+        extension = "wav";
+      }
 
       const audioBlob = new Blob(
         [req.body],
@@ -60,19 +81,32 @@ app.post(
         `answer.${extension}`
       );
 
-      formData.append("model_id", "scribe_v2");
-      formData.append("language_code", "eng");
-      formData.append("tag_audio_events", "false");
+      formData.append(
+        "model_id",
+        "scribe_v2"
+      );
+
+      formData.append(
+        "language_code",
+        "eng"
+      );
+
+      formData.append(
+        "tag_audio_events",
+        "false"
+      );
 
       const elevenResponse =
         await fetch(
           "https://api.elevenlabs.io/v1/speech-to-text",
           {
             method: "POST",
+
             headers: {
               "xi-api-key":
                 process.env.ELEVENLABS_API_KEY
             },
+
             body: formData
           }
         );
@@ -91,6 +125,7 @@ app.post(
           .json({
             error:
               "ElevenLabs transcription failed",
+
             details: data
           });
       }
@@ -149,12 +184,14 @@ app.post("/tts", async (req, res) => {
           headers: {
             "xi-api-key":
               process.env.ELEVENLABS_API_KEY,
+
             "Content-Type":
               "application/json"
           },
 
           body: JSON.stringify({
             text,
+
             model_id:
               "eleven_multilingual_v2",
 
@@ -182,6 +219,7 @@ app.post("/tts", async (req, res) => {
         .json({
           error:
             "ElevenLabs TTS failed",
+
           details: errorText
         });
     }
@@ -218,7 +256,7 @@ app.post("/tts", async (req, res) => {
 
 
 // ==========================================
-// GEMINI CORRECTION + RELEVANCE + NEXT QUESTION
+// GEMINI CORRECTION + RELEVANCE
 // ==========================================
 
 app.post("/correct", async (req, res) => {
@@ -270,165 +308,202 @@ ${turn} of 5
 IMPORTANT:
 This is SPOKEN English practice, not writing practice.
 
-You must evaluate TWO separate things:
+You must evaluate TWO things:
 
 1. LANGUAGE QUALITY
-Is the learner's spoken English understandable and natural enough?
-
 2. ANSWER RELEVANCE
-Does the learner's answer actually respond to the current question?
 
 
-ANSWER RELEVANCE RULES:
+==========================================
+ANSWER RELEVANCE
+==========================================
 
-- answer_relevant = true when the answer responds to the question directly OR gives clearly related information.
-- answer_relevant = false when the answer is unrelated, random, or clearly does not answer what was asked.
+answer_relevant = true when the learner:
+- directly answers the question
+- gives information that clearly responds to the question
+- gives a natural short conversational answer
 
-Examples:
+answer_relevant = false when the learner:
+- says something unrelated
+- changes topic completely
+- gives an answer that clearly does not respond to what was asked
+
+Example:
 
 Question:
 "Did you win the game?"
 
-Answer:
-"Yes, I did."
-answer_relevant = true
-
-Answer:
-"No, we lost."
-answer_relevant = true
-
-Answer:
-"It was really difficult."
-answer_relevant = true
-
-Answer:
 "I love vegetables."
 answer_relevant = false
 
-
-Question:
-"What did you buy?"
-
-Answer:
-"I bought a black bag."
+"Yes, I did."
 answer_relevant = true
 
-Answer:
-"I went with my friend."
-answer_relevant = false
+"No, we lost."
+answer_relevant = true
 
 
-If the answer is NOT relevant:
+If answer_relevant = false:
 
-- Set answer_relevant to false.
-- Do NOT pretend the answer is good just because the grammar is correct.
-- Give a short Thai relevance_explanation explaining what the question was asking.
-- Give ONE simple example_answer that correctly answers the question.
-- Do NOT invent personal facts about the learner.
-- The example_answer is only an example, not a claim about what the learner actually did.
-- Set next_question to an empty string because the learner should answer the SAME question again.
-- correction_needed may still be true or false depending on grammar.
+- Do not praise the answer as correct.
+- relevance_explanation must be short Thai.
+- Explain what the question is asking.
+- Give ONE simple example_answer.
+- Never pretend the example answer is something the learner actually did.
+- next_question must be empty.
+- closing_message must be empty.
 
 
-CORRECTION RULES:
+==========================================
+SPOKEN CORRECTION RULES
+==========================================
 
-- Preserve the learner's intended meaning.
-- NEVER invent facts the learner did not say.
-- NEVER invent colors, places, people, activities, objects, times, reasons, or opinions.
-- Do not change factual meaning.
-- Do not guess missing information.
-- Correct only mistakes you can confidently identify.
+Only correct meaningful SPOKEN mistakes.
 
-Only correct meaningful SPOKEN English mistakes such as:
+Correct things like:
 - wrong tense
 - wrong verb form
-- missing an important verb
+- missing important subject or verb
 - incorrect sentence structure
-- unnatural word choice
-- errors that make spoken meaning unclear
+- clearly unnatural word choice
+- grammar errors that affect spoken English
 
-Do NOT correct or comment on:
+DO NOT correct:
 - punctuation
-- commas
 - periods
+- commas
+- exclamation marks
+- question marks
 - capitalization
 - written formatting
-- sentence separation caused by speech-to-text
+- sentence separation created by speech-to-text
 
-If the learner's spoken English is understandable and natural enough,
-set correction_needed to false.
+VERY IMPORTANT:
+
+If the original answer and corrected sentence
+would sound IDENTICAL when spoken,
+correction_needed MUST be false.
+
+Example:
+
+Original:
+"I bought snacks and food"
+
+Corrected:
+"I bought snacks and food."
+
+This is NOT a correction.
+correction_needed = false.
+
+Original:
+"i went shopping"
+
+Corrected:
+"I went shopping."
+
+This is NOT a correction.
+correction_needed = false.
 
 
-THAI EXPLANATION:
+NEVER claim that a word was added,
+removed, or changed if that word already appears
+in the learner's transcript.
 
-When correction_needed is true:
-- Explain the important correction briefly in Thai.
-- Keep it beginner-friendly.
-- Explain spoken grammar, not writing rules.
+Example:
 
-When correction_needed is false:
-- thai_explanation must be an empty string.
+If learner said:
+"I bought snacks and food"
+
+DO NOT say:
+"เพิ่ม I"
+DO NOT say:
+"เพิ่ม bought"
+
+because both words are already present.
 
 
-NEXT QUESTION:
+Preserve the learner's intended meaning.
 
-Only create a new next_question when answer_relevant = true.
+NEVER invent:
+- places
+- people
+- colors
+- objects
+- activities
+- times
+- reasons
+- opinions
+- events
 
-Use the CURRENT QUESTION, CURRENT ANSWER, and PREVIOUS CONVERSATION.
+Do not guess missing personal information.
 
-The next question must:
+
+==========================================
+THAI EXPLANATION
+==========================================
+
+When correction_needed = true:
+
+- Explain only the REAL spoken correction.
+- Keep it short.
+- Use beginner-friendly Thai.
+- Do not explain punctuation.
+- Do not invent corrections.
+- Do not use "ครับ".
+- Use neutral friendly Thai such as "ค่ะ" or no ending particle.
+
+When correction_needed = false:
+
+thai_explanation must be an empty string.
+
+
+==========================================
+NEXT QUESTION
+==========================================
+
+Only create next_question when
+answer_relevant = true.
+
+It must:
 - follow naturally from what the learner actually said
-- stay related to their weekend
-- be easy for a beginner
+- stay related to the weekend conversation
 - ask only ONE thing
-- sound like a real conversation
+- be beginner-friendly
+- sound natural
 
-Do NOT ask strange definition questions.
+Do not ask definition questions.
 
 Examples:
 
-Learner:
 "I went shopping with my friends."
+→ "What did you buy?"
 
-Good:
-"What did you buy?"
-
-Learner:
 "I bought a black bag."
+→ "Where did you buy it?"
 
-Good:
-"Where did you buy it?"
-
-Learner:
-"My car is black."
-
-Good:
-"Where did you drive?"
-
-Learner:
 "I stayed home because I was tired."
-
-Good:
-"What did you do at home?"
+→ "What did you do at home?"
 
 
-ENDING:
+==========================================
+ENDING
+==========================================
 
 If answer_relevant = false:
-- next_question must be ""
-- closing_message must be ""
+- next_question = ""
+- closing_message = ""
 
 If answer_relevant = true:
 ${
   isFinalTurn
     ? `
-This is the final learner answer.
-Set next_question to an empty string.
+This is the final answer.
+Set next_question to "".
 Give a short friendly closing_message in English.
 `
     : `
 Create ONE natural next_question.
-Set closing_message to an empty string.
+Set closing_message to "".
 `
 }
 
@@ -447,6 +522,7 @@ Return ONLY valid JSON:
 }
 `.trim();
 
+
     const geminiResponse =
       await fetch(
         "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent",
@@ -456,6 +532,7 @@ Return ONLY valid JSON:
           headers: {
             "Content-Type":
               "application/json",
+
             "x-goog-api-key":
               process.env.GEMINI_API_KEY
           },
@@ -472,7 +549,7 @@ Return ONLY valid JSON:
             ],
 
             generationConfig: {
-              temperature: 0.1,
+              temperature: 0.05,
 
               responseMimeType:
                 "application/json",
@@ -530,8 +607,10 @@ Return ONLY valid JSON:
         }
       );
 
+
     const data =
       await geminiResponse.json();
+
 
     if (!geminiResponse.ok) {
       console.error(
@@ -544,13 +623,16 @@ Return ONLY valid JSON:
         .json({
           error:
             "Gemini request failed",
+
           details: data
         });
     }
 
+
     const text =
       data?.candidates?.[0]
         ?.content?.parts?.[0]?.text;
+
 
     if (!text) {
       return res.status(500).json({
@@ -559,20 +641,67 @@ Return ONLY valid JSON:
       });
     }
 
+
     const result =
       JSON.parse(text);
+
+
+    // ======================================
+    // HARD SAFETY CHECK
+    // Ignore punctuation/capitalization-only
+    // changes even if Gemini gets it wrong.
+    // ======================================
+
+    const originalNormalized =
+      normalizeSpokenText(
+        transcript
+      );
+
+    const correctedNormalized =
+      normalizeSpokenText(
+        result.corrected_sentence || ""
+      );
+
+
+    let correctionNeeded =
+      Boolean(
+        result.correction_needed
+      );
+
+    let correctedSentence =
+      result.corrected_sentence ||
+      transcript;
+
+    let thaiExplanation =
+      result.thai_explanation || "";
+
+
+    if (
+      originalNormalized ===
+      correctedNormalized
+    ) {
+      correctionNeeded =
+        false;
+
+      correctedSentence =
+        transcript;
+
+      thaiExplanation =
+        "";
+    }
+
 
     return res.json({
       transcript,
 
       corrected_sentence:
-        result.corrected_sentence,
+        correctedSentence,
 
       thai_explanation:
-        result.thai_explanation,
+        thaiExplanation,
 
       correction_needed:
-        result.correction_needed,
+        correctionNeeded,
 
       answer_relevant:
         result.answer_relevant,
