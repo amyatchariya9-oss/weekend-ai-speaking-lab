@@ -79,9 +79,8 @@ Begin the session by saying exactly:
 
   try {
     const form = new FormData();
-    form.append("sdp", new Blob([req.body], { type: "application/sdp" }), "offer.sdp");
-    form.append("session", new Blob([JSON.stringify(session)], { type: "application/json" }), "session.json");
-
+form.set("sdp", req.body);
+form.set("session", JSON.stringify(session));
     const r = await fetch("https://api.openai.com/v1/realtime/calls", {
       method: "POST",
       headers: {
