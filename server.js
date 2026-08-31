@@ -5,103 +5,155 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(express.static("public"));
-app.use("/session", express.text({ type: ["application/sdp", "text/plain"], limit: "1mb" }));
+app.use(express.json({ limit: "1mb" }));
 
-const allowedVoices = new Set([
-  "alloy", "ash", "ballad", "coral", "echo",
-  "sage", "shimmer", "verse", "marin", "cedar"
-]);
+app.post("/correct", async (req, res) => {
+  try {
+    const { transcript } = req.body;
 
-app.post("/session", async (req, res) => {
-  if (!process.env.OPENAI_API_KEY) {
-    return res.status(500).send("Missing OPENAI_API_KEY on the server.");
-  }
+    if (!process.env.GEMINI_API_KEY) {
+      return res.status(500).json({
+        error: "Missing GEMINI_API_KEY"
+      });
+    }
 
-  const voice = allowedVoices.has(req.query.voice) ? req.query.voice : "coral";
+    if (!transcript || typeof transcript !== "string") {
+      return res.status(400).json({
+        error: "Missing transcript"
+      });
+    }
 
-  const instructions = `
-You are Amy, a warm English speaking coach for Thai beginner learners.
+    const prompt = `
+You are an English speaking coach for Thai beginner learners.
 
-LESSON: My Weekend
-GOAL: Help the learner talk naturally about their most recent weekend.
+The learner is practicing the lesson "My Weekend".
 
-Conversation rules:
-- Speak in friendly, simple English at a beginner-friendly speed.
-- Keep each response short: usually 1–2 sentences.
-- Ask only ONE question at a time.
-- The learner must answer by voice.
-- Do not ask them to type.
-- Focus on useful spoken English, not textbook perfection.
-- Do not interrupt for tiny mistakes that do not affect communication.
-- If the learner makes an important grammar or natural-English mistake:
-  1. Briefly acknowledge the meaning.
-  2. Say exactly: "Try this:" followed by ONE improved sentence.
-  3. Give at most one very short Thai explanation when useful.
-  4. Say: "Say it again."
-  5. Wait for the learner to repeat it.
-  6. If the repeat is good enough, praise briefly and continue.
-- If their answer is already natural enough, do not invent a correction.
-- Never shame the learner or say their English is bad.
-- Keep the conversation about the weekend.
-- Useful follow-ups may include: how it was, what they did, who they were with,
-  where they went, what they ate/bought, favorite part, and next weekend.
-- Aim for about five meaningful learner turns before a short closing message.
-- Do not give numeric pronunciation scores in this version.
-- If the learner asks what a word means, explain briefly and return to the conversation.
+Analyze ONLY this learner sentence:
 
-Begin the session by saying exactly:
-"Hey! How was your weekend?"
+"${transcript}"
+
+Your job:
+1. Keep the learner's intended meaning.
+2. Correct important grammar mistakes.
+3. Make the sentence sound natural in everyday English.
+4. Do NOT over-correct tiny mistakes if the sentence is already natural enough.
+5. Give a short Thai explanation of WHY the correction is better.
+6. If no meaningful correction is needed, return the original sentence unchanged and use an empty Thai explanation.
+
+Return ONLY valid JSON.
+
+Required fields:
+- corrected_sentence: string
+- thai_explanation: string
+- correction_needed: boolean
+
+Examples:
+
+Input:
+"I go shopping yesterday."
+
+Output:
+{
+  "corrected_sentence": "I went shopping yesterday.",
+  "thai_explanation": "มีคำว่า yesterday ซึ่งเป็นอดีต จึงใช้ went แทน go",
+  "correction_needed": true
+}
+
+Input:
+"I stayed home and watched Netflix."
+
+Output:
+{
+  "corrected_sentence": "I stayed home and watched Netflix.",
+  "thai_explanation": "",
+  "correction_needed": false
+}
 `.trim();
 
-  const session = {
-    type: "realtime",
-    model: "gpt-realtime",
-    output_modalities: ["audio"],
-    instructions,
-    audio: {
-      input: {
-        transcription: {
-          model: "gpt-4o-mini-transcribe",
-          language: "en",
-          prompt: "English learner speaking about their weekend."
+    const geminiResponse = await fetch(
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": process.env.GEMINI_API_KEY
         },
-        noise_reduction: { type: "near_field" },
-        turn_detection: {
-          type: "semantic_vad"
-        }
-      },
-      output: {
-        voice,
-        speed: 0.92
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                {
+                  text: prompt
+                }
+              ]
+            }
+          ],
+          generationConfig: {
+            temperature: 0.2,
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: "OBJECT",
+              properties: {
+                corrected_sentence: {
+                  type: "STRING"
+                },
+                thai_explanation: {
+                  type: "STRING"
+                },
+                correction_needed: {
+                  type: "BOOLEAN"
+                }
+              },
+              required: [
+                "corrected_sentence",
+                "thai_explanation",
+                "correction_needed"
+              ]
+            }
+          }
+        })
       }
-    }
-  };
+    );
 
-  try {
-    const form = new FormData();
-form.set("sdp", req.body);
-form.set("session", JSON.stringify(session));
-    const r = await fetch("https://api.openai.com/v1/realtime/calls", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`
-      },
-      body: form
+    const data = await geminiResponse.json();
+
+    if (!geminiResponse.ok) {
+      console.error("Gemini error:", data);
+
+      return res.status(geminiResponse.status).json({
+        error: "Gemini request failed",
+        details: data
+      });
+    }
+
+    const text =
+      data?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+    if (!text) {
+      return res.status(500).json({
+        error: "Gemini returned no text"
+      });
+    }
+
+    const result = JSON.parse(text);
+
+    return res.json({
+      transcript,
+      corrected_sentence: result.corrected_sentence,
+      thai_explanation: result.thai_explanation,
+      correction_needed: result.correction_needed
     });
+  } catch (error) {
+    console.error("Correction error:", error);
 
-    const body = await r.text();
-    if (!r.ok) {
-      console.error("OpenAI realtime error:", r.status, body);
-      return res.status(r.status).send(body);
-    }
-
-    res.status(200).type("application/sdp").send(body);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("Could not create realtime session.");
+    return res.status(500).json({
+      error: "Could not correct sentence"
+    });
   }
 });
 
 app.listen(port, () => {
-  console.log(`Weekend AI Speaking Lab running at http://localhost:${port}`);
+  console.log(
+    `Weekend AI Speaking Lab running at http://localhost:${port}`
+  );
 });
