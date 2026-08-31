@@ -7,9 +7,10 @@ const port = process.env.PORT || 3000;
 app.use(express.static("public"));
 app.use(express.json({ limit: "1mb" }));
 
-// -----------------------------
-// 1) TRANSCRIBE AUDIO
-// -----------------------------
+
+// ==========================================
+// ELEVENLABS SPEECH TO TEXT
+// ==========================================
 
 app.post(
   "/transcribe",
@@ -42,9 +43,17 @@ app.post(
 
       let extension = "webm";
 
-      if (contentType.includes("mp4")) extension = "m4a";
-      if (contentType.includes("mpeg")) extension = "mp3";
-      if (contentType.includes("wav")) extension = "wav";
+      if (contentType.includes("mp4")) {
+        extension = "m4a";
+      }
+
+      if (contentType.includes("mpeg")) {
+        extension = "mp3";
+      }
+
+      if (contentType.includes("wav")) {
+        extension = "wav";
+      }
 
       const audioBlob = new Blob(
         [req.body],
@@ -64,29 +73,30 @@ app.post(
         "scribe_v2"
       );
 
-      // This lesson is English speaking practice.
       formData.append(
         "language_code",
         "eng"
       );
 
-      // We do not need things like [laughter] in learner answers.
       formData.append(
         "tag_audio_events",
         "false"
       );
 
-      const elevenResponse = await fetch(
-        "https://api.elevenlabs.io/v1/speech-to-text",
-        {
-          method: "POST",
-          headers: {
-            "xi-api-key":
-              process.env.ELEVENLABS_API_KEY
-          },
-          body: formData
-        }
-      );
+      const elevenResponse =
+        await fetch(
+          "https://api.elevenlabs.io/v1/speech-to-text",
+          {
+            method: "POST",
+
+            headers: {
+              "xi-api-key":
+                process.env.ELEVENLABS_API_KEY
+            },
+
+            body: formData
+          }
+        );
 
       const data =
         await elevenResponse.json();
@@ -102,6 +112,7 @@ app.post(
           .json({
             error:
               "ElevenLabs transcription failed",
+
             details: data
           });
       }
@@ -120,15 +131,120 @@ app.post(
       );
 
       return res.status(500).json({
-        error: "Could not transcribe audio"
+        error:
+          "Could not transcribe audio"
       });
     }
   }
 );
 
-// -----------------------------
-// 2) CORRECT + NEXT QUESTION
-// -----------------------------
+
+// ==========================================
+// ELEVENLABS TEXT TO SPEECH
+// ==========================================
+
+app.post("/tts", async (req, res) => {
+  try {
+    if (!process.env.ELEVENLABS_API_KEY) {
+      return res.status(500).json({
+        error: "Missing ELEVENLABS_API_KEY"
+      });
+    }
+
+    const { text } = req.body;
+
+    if (!text || typeof text !== "string") {
+      return res.status(400).json({
+        error: "Missing text"
+      });
+    }
+
+    const voiceId =
+      "WAhoMTNdLdMoq1j3wf3I";
+
+    const elevenResponse =
+      await fetch(
+        `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?output_format=mp3_44100_128`,
+        {
+          method: "POST",
+
+          headers: {
+            "xi-api-key":
+              process.env.ELEVENLABS_API_KEY,
+
+            "Content-Type":
+              "application/json"
+          },
+
+          body: JSON.stringify({
+            text,
+
+            model_id:
+              "eleven_multilingual_v2",
+
+            voice_settings: {
+              stability: 0.45,
+              similarity_boost: 0.75,
+              style: 0.15,
+              use_speaker_boost: true
+            }
+          })
+        }
+      );
+
+    if (!elevenResponse.ok) {
+      const errorText =
+        await elevenResponse.text();
+
+      console.error(
+        "ElevenLabs TTS error:",
+        errorText
+      );
+
+      return res
+        .status(elevenResponse.status)
+        .json({
+          error:
+            "ElevenLabs TTS failed",
+
+          details: errorText
+        });
+    }
+
+    const audioBuffer =
+      await elevenResponse.arrayBuffer();
+
+    res.setHeader(
+      "Content-Type",
+      "audio/mpeg"
+    );
+
+    res.setHeader(
+      "Cache-Control",
+      "no-store"
+    );
+
+    return res.send(
+      Buffer.from(audioBuffer)
+    );
+
+  } catch (error) {
+    console.error(
+      "TTS error:",
+      error
+    );
+
+    return res.status(500).json({
+      error:
+        "Could not generate speech"
+    });
+  }
+});
+
+
+// ==========================================
+// GEMINI CORRECTION + NEXT QUESTION
+// ==========================================
 
 app.post("/correct", async (req, res) => {
   try {
@@ -183,7 +299,6 @@ Your job has TWO parts:
 2. Continue the conversation naturally.
 
 CORRECTION RULES:
-
 - Preserve the learner's intended meaning.
 - NEVER invent facts the learner did not say.
 - NEVER invent colors, places, people, activities, objects, times, reasons, or opinions.
@@ -211,7 +326,6 @@ If the learner's spoken English is understandable and natural enough,
 set correction_needed to false.
 
 THAI EXPLANATION:
-
 When correction_needed is true:
 - Explain the important correction briefly in Thai.
 - Keep it beginner-friendly.
@@ -221,7 +335,6 @@ When correction_needed is false:
 - thai_explanation must be an empty string.
 
 NEXT QUESTION:
-
 Use the CURRENT QUESTION, CURRENT ANSWER, and PREVIOUS CONVERSATION.
 
 The next question must:
@@ -266,16 +379,18 @@ Good:
 
 ENDING:
 
-${isFinalTurn
-  ? `
+${
+  isFinalTurn
+    ? `
 This is the final learner answer.
 Set next_question to an empty string.
 Give a short friendly closing_message in English.
 `
-  : `
+    : `
 Create ONE natural next_question.
 Set closing_message to an empty string.
-`}
+`
+}
 
 Return ONLY valid JSON:
 
@@ -288,72 +403,74 @@ Return ONLY valid JSON:
 }
 `.trim();
 
-    const geminiResponse = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type":
-            "application/json",
+    const geminiResponse =
+      await fetch(
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent",
+        {
+          method: "POST",
 
-          "x-goog-api-key":
-            process.env.GEMINI_API_KEY
-        },
-
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                {
-                  text: prompt
-                }
-              ]
-            }
-          ],
-
-          generationConfig: {
-            temperature: 0.2,
-
-            responseMimeType:
+          headers: {
+            "Content-Type":
               "application/json",
 
-            responseSchema: {
-              type: "OBJECT",
+            "x-goog-api-key":
+              process.env.GEMINI_API_KEY
+          },
 
-              properties: {
-                corrected_sentence: {
-                  type: "STRING"
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [
+                  {
+                    text: prompt
+                  }
+                ]
+              }
+            ],
+
+            generationConfig: {
+              temperature: 0.2,
+
+              responseMimeType:
+                "application/json",
+
+              responseSchema: {
+                type: "OBJECT",
+
+                properties: {
+                  corrected_sentence: {
+                    type: "STRING"
+                  },
+
+                  thai_explanation: {
+                    type: "STRING"
+                  },
+
+                  correction_needed: {
+                    type: "BOOLEAN"
+                  },
+
+                  next_question: {
+                    type: "STRING"
+                  },
+
+                  closing_message: {
+                    type: "STRING"
+                  }
                 },
 
-                thai_explanation: {
-                  type: "STRING"
-                },
-
-                correction_needed: {
-                  type: "BOOLEAN"
-                },
-
-                next_question: {
-                  type: "STRING"
-                },
-
-                closing_message: {
-                  type: "STRING"
-                }
-              },
-
-              required: [
-                "corrected_sentence",
-                "thai_explanation",
-                "correction_needed",
-                "next_question",
-                "closing_message"
-              ]
+                required: [
+                  "corrected_sentence",
+                  "thai_explanation",
+                  "correction_needed",
+                  "next_question",
+                  "closing_message"
+                ]
+              }
             }
-          }
-        })
-      }
-    );
+          })
+        }
+      );
 
     const data =
       await geminiResponse.json();
@@ -369,13 +486,14 @@ Return ONLY valid JSON:
         .json({
           error:
             "Gemini request failed",
+
           details: data
         });
     }
 
     const text =
-      data?.candidates?.[0]?.content
-        ?.parts?.[0]?.text;
+      data?.candidates?.[0]
+        ?.content?.parts?.[0]?.text;
 
     if (!text) {
       return res.status(500).json({
@@ -418,6 +536,7 @@ Return ONLY valid JSON:
     });
   }
 });
+
 
 app.listen(port, () => {
   console.log(
