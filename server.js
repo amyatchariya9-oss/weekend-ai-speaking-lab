@@ -138,7 +138,7 @@ app.post("/tts", async (req, res) => {
     }
 
     const voiceId =
-      "YOUR_CURRENT_VOICE_ID";
+      "4cQ2mfgiJ51P5DoueVge";
 
     const elevenResponse =
       await fetch(
