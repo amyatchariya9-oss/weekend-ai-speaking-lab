@@ -14,8 +14,10 @@ const tryAgainBtn = $("tryAgain");
 const continueBtn = $("continueBtn");
 
 let turn = 1;
+
 let recognition = null;
-let isListening = false;
+let isRecording = false;
+let accumulatedTranscript = "";
 
 let lastCorrected = "";
 let nextQuestion = "";
@@ -155,12 +157,10 @@ function createRecognition() {
   r.maxAlternatives = 1;
 
   r.onstart = () => {
-    isListening = true;
-
-    micBtn.classList.add("recording");
-
-    statusEl.textContent =
-      "Listening… speak now.";
+    if (isRecording) {
+      statusEl.textContent =
+        "Listening… take your time. Tap Done when you finish.";
+    }
   };
 
   r.onresult = (event) => {
@@ -168,29 +168,56 @@ function createRecognition() {
       event.results[0][0].transcript.trim();
 
     if (transcript) {
-      showFeedback(transcript);
-    } else {
+      accumulatedTranscript +=
+        (accumulatedTranscript ? " " : "") + transcript;
+
       statusEl.textContent =
-        "I didn’t catch that. Tap the mic and try again.";
+        `I heard: "${accumulatedTranscript}" — keep speaking or tap Done.`;
     }
   };
 
   r.onerror = (event) => {
-    if (event.error === "no-speech") {
-      statusEl.textContent =
-        "I didn’t hear anything. Tap the mic when you're ready.";
-    } else if (event.error === "not-allowed") {
+    if (
+      event.error !== "no-speech" &&
+      event.error !== "aborted"
+    ) {
+      console.error(
+        "Speech recognition error:",
+        event.error
+      );
+    }
+
+    if (event.error === "not-allowed") {
+      isRecording = false;
+
+      micBtn.classList.remove("recording");
+      micBtn.textContent = "🎙️";
+
       statusEl.textContent =
         "Please allow microphone access in your browser.";
-    } else {
-      statusEl.textContent =
-        "Microphone error. Please try again.";
     }
   };
 
   r.onend = () => {
-    isListening = false;
-    micBtn.classList.remove("recording");
+    /*
+      Chrome may automatically stop recognition
+      when the learner pauses.
+
+      If the learner has NOT pressed Done,
+      automatically start listening again.
+    */
+
+    if (isRecording) {
+      setTimeout(() => {
+        try {
+          recognition.start();
+        } catch (error) {
+          console.log(
+            "Waiting to restart microphone…"
+          );
+        }
+      }, 250);
+    }
   };
 
   return r;
@@ -198,24 +225,63 @@ function createRecognition() {
 
 recognition = createRecognition();
 
-micBtn.addEventListener("click", () => {
-  feedback.style.display = "none";
-
+function startRecording() {
   if (!recognition) {
     statusEl.textContent =
-      "This browser does not support speech recognition. Please try Chrome.";
+      "This browser does not support speech recognition. Please use Chrome.";
     return;
   }
 
-  if (isListening) {
-    recognition.stop();
-    return;
-  }
+  accumulatedTranscript = "";
+  isRecording = true;
+
+  feedback.style.display = "none";
+
+  micBtn.classList.add("recording");
+  micBtn.textContent = "⏹️";
+
+  statusEl.textContent =
+    "Listening… take your time. Tap Done when you finish.";
 
   try {
     recognition.start();
   } catch (error) {
     console.error(error);
+  }
+}
+
+function finishRecording() {
+  isRecording = false;
+
+  micBtn.classList.remove("recording");
+  micBtn.textContent = "🎙️";
+
+  try {
+    recognition.stop();
+  } catch (error) {
+    console.log("Recognition already stopped.");
+  }
+
+  const finalTranscript =
+    accumulatedTranscript.trim();
+
+  if (!finalTranscript) {
+    statusEl.textContent =
+      "I didn’t hear anything. Tap the microphone and try again.";
+    return;
+  }
+
+  statusEl.textContent =
+    "Got it! Checking your English…";
+
+  showFeedback(finalTranscript);
+}
+
+micBtn.addEventListener("click", () => {
+  if (isRecording) {
+    finishRecording();
+  } else {
+    startRecording();
   }
 });
 
@@ -232,11 +298,15 @@ hearCorrectionBtn.addEventListener("click", () => {
 tryAgainBtn.addEventListener("click", () => {
   feedback.style.display = "none";
 
+  accumulatedTranscript = "";
+
   statusEl.textContent =
-    "Tap the microphone and say it again.";
+    "Tap the microphone when you're ready to try again.";
 });
 
 continueBtn.addEventListener("click", () => {
+  accumulatedTranscript = "";
+
   if (turn >= 5) {
     currentQuestion =
       closingMessage ||
@@ -275,7 +345,7 @@ continueBtn.addEventListener("click", () => {
     "none";
 
   statusEl.textContent =
-    "Tap the microphone to answer.";
+    "Tap the microphone when you're ready.";
 
   speak(currentQuestion);
 });
