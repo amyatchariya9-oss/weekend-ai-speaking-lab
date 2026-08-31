@@ -47,9 +47,7 @@ async function getAICorrection(transcript) {
   const data = await response.json();
 
   if (!response.ok) {
-    throw new Error(
-      data?.error || "Could not get AI correction"
-    );
+    throw new Error(data?.error || "Could not get AI correction");
   }
 
   return data;
@@ -69,13 +67,13 @@ async function showFeedback(transcript) {
   try {
     const result = await getAICorrection(transcript);
 
-    better.textContent = result.corrected_sentence;
     lastCorrected = result.corrected_sentence;
-
     nextQuestion = result.next_question || "";
     closingMessage = result.closing_message || "";
 
     if (result.correction_needed) {
+      better.textContent = result.corrected_sentence;
+
       why.textContent =
         result.thai_explanation ||
         "มีจุดที่ปรับให้เป็นธรรมชาติมากขึ้นค่ะ";
@@ -83,33 +81,28 @@ async function showFeedback(transcript) {
       statusEl.textContent =
         "มีจุดที่ปรับให้เป็นธรรมชาติมากขึ้น ดูด้านล่างได้เลย";
     } else {
+      better.textContent = "Sounds good! ✅";
+
       why.textContent =
-        "ประโยคนี้ใช้ได้ดีแล้วค่ะ ✅";
+        "ประโยคนี้ใช้ได้ดีแล้วค่ะ ไม่ต้องแก้อะไร";
 
       statusEl.textContent =
         "Nice! Your answer was clear.";
     }
 
-    if (turn >= 5) {
-      continueBtn.textContent = "Finish →";
-    } else {
-      continueBtn.textContent = "Continue →";
-    }
+    continueBtn.textContent =
+      turn >= 5 ? "Finish →" : "Continue →";
 
     continueBtn.disabled = false;
+
   } catch (error) {
     console.error(error);
 
-    better.textContent =
-      "Could not check this sentence.";
-
+    better.textContent = "Could not check this sentence.";
     why.textContent =
       "ตอนนี้ AI correction มีปัญหาชั่วคราว ลองใหม่อีกครั้งได้ค่ะ";
 
-    statusEl.textContent =
-      "AI correction error.";
-
-    continueBtn.textContent = "Try again";
+    statusEl.textContent = "AI correction error.";
     continueBtn.disabled = true;
   }
 
@@ -124,9 +117,7 @@ function createRecognition() {
     window.SpeechRecognition ||
     window.webkitSpeechRecognition;
 
-  if (!SpeechRecognition) {
-    return null;
-  }
+  if (!SpeechRecognition) return null;
 
   const r = new SpeechRecognition();
 
@@ -137,11 +128,8 @@ function createRecognition() {
 
   r.onstart = () => {
     isListening = true;
-
     micBtn.classList.add("recording");
-
-    statusEl.textContent =
-      "Listening… speak now.";
+    statusEl.textContent = "Listening… speak now.";
   };
 
   r.onresult = (event) => {
@@ -212,7 +200,6 @@ hearCorrectionBtn.addEventListener("click", () => {
 
 tryAgainBtn.addEventListener("click", () => {
   feedback.style.display = "none";
-
   statusEl.textContent =
     "Tap the microphone and say it again.";
 });
@@ -228,18 +215,15 @@ continueBtn.addEventListener("click", () => {
     micBtn.disabled = true;
     micBtn.style.opacity = "0.45";
 
-    statusEl.textContent =
-      "Practice complete 🎉";
+    statusEl.textContent = "Practice complete 🎉";
 
     speak(questionEl.textContent);
-
     return;
   }
 
   turn += 1;
 
-  turnEl.textContent =
-    String(turn);
+  turnEl.textContent = String(turn);
 
   questionEl.textContent =
     nextQuestion ||
