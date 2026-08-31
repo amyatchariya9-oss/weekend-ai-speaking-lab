@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Weekend AI Speaking Lab</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#f7f5f0;--card:#ffffff;--text:#252525;--muted:#7a7771;
+      --line:#e7e2da;--soft:#f2efe9;--accent:#242424;--green:#e9f5ed;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:"DM Sans",system-ui,sans-serif}
+    .wrap{max-width:700px;margin:0 auto;padding:22px 14px 48px}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:24px;padding:22px}
+    .eyebrow{font-size:12px;letter-spacing:.08em;color:var(--muted);font-weight:700}
+    h1{font-size:26px;margin:7px 0 4px} .muted{color:var(--muted);font-size:14px}
+    .coach{margin-top:22px;background:var(--soft);border-radius:20px;padding:18px}
+    .coach-head{display:flex;align-items:center;gap:11px}
+    .avatar{width:43px;height:43px;background:#fff;border:1px solid var(--line);border-radius:50%;display:grid;place-items:center;font-weight:700}
+    .bubble{margin-top:16px;font-size:20px;line-height:1.45}
+    .controls{margin-top:20px;display:flex;flex-direction:column;align-items:center;gap:12px}
+    .mic{width:94px;height:94px;border-radius:50%;border:0;background:var(--accent);color:white;font-size:34px;cursor:pointer}
+    .mic.live{animation:pulse 1.6s infinite}
+    @keyframes pulse{50%{transform:scale(1.05);box-shadow:0 0 0 12px rgba(0,0,0,.06)}}
+    button,select{font:inherit}
+    button{cursor:pointer}.start{width:100%;min-height:50px;border:0;border-radius:15px;background:var(--accent);color:#fff;font-weight:700;padding:12px 16px}
+    .end{min-height:45px;border:1px solid var(--line);background:#fff;border-radius:13px;padding:10px 16px}
+    select{min-height:44px;border:1px solid var(--line);border-radius:12px;background:#fff;padding:8px 12px;color:var(--text)}
+    .row{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-top:16px;flex-wrap:wrap}
+    .status{margin-top:13px;padding:11px 13px;border-radius:13px;background:var(--soft);font-size:14px}
+    .transcript{margin-top:16px;display:grid;gap:10px}
+    .msg{border:1px solid var(--line);border-radius:16px;padding:13px 14px}
+    .msg.user{background:#fff}.msg.ai{background:var(--soft)}
+    .who{font-size:11px;font-weight:700;color:var(--muted);margin-bottom:5px;letter-spacing:.05em}
+    .hidden{display:none!important}
+    .note{margin-top:16px;font-size:12px;color:var(--muted);line-height:1.5}
+    @media(max-width:520px){.wrap{padding:10px}.card{padding:17px;border-radius:19px}.bubble{font-size:19px}}
+    @media(prefers-reduced-motion:reduce){.mic.live{animation:none}}
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="card">
+      <div class="eyebrow">LESSON 01 · AI SPEAKING</div>
+      <h1>My Weekend ☀️</h1>
+      <div class="muted">Talk with your AI coach. No typing.</div>
+
+      <div class="row" id="setupRow">
+        <label for="voice"><b>AI voice</b></label>
+        <select id="voice">
+          <option value="coral">Coral</option>
+          <option value="marin">Marin</option>
+          <option value="shimmer">Shimmer</option>
+          <option value="sage">Sage</option>
+          <option value="cedar">Cedar</option>
+        </select>
+      </div>
+
+      <div class="coach">
+        <div class="coach-head">
+          <div class="avatar">A</div>
+          <div><b>Amy · AI Coach</b><div class="muted" id="coachState">Ready when you are</div></div>
+        </div>
+        <div class="bubble" id="aiBubble">Press Start Speaking. I’ll ask about your weekend.</div>
+      </div>
+
+      <div class="controls">
+        <button class="start" id="start">🎙️ Start Speaking</button>
+        <button class="mic hidden" id="mic" aria-label="Microphone active">🎙️</button>
+        <div class="muted hidden" id="micHint">Just speak naturally. AI will answer when you finish.</div>
+        <button class="end hidden" id="end">End conversation</button>
+      </div>
+
+      <div class="status" id="status">Microphone has not started yet.</div>
+      <div class="transcript" id="transcript" aria-live="polite"></div>
+
+      <div class="note">
+        This first build gives voice conversation + spoken corrections. Detailed pronunciation scoring will be added as a separate assessment layer.
+      </div>
+
+      <audio id="remoteAudio" autoplay></audio>
+    </section>
+  </main>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>
+๒
