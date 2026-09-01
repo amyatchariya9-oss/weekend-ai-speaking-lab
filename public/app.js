@@ -61,70 +61,147 @@ const whyLabel =
 
 
 // ==========================================
-// SUCCESS SOUND ✅
-// STATIC FILE
-// NO ELEVENLABS
+// SUCCESS VOICE BANK 🎉
+// STATIC MP3 FILES
+// NO ELEVENLABS COST WHEN PLAYING
 // ==========================================
 
-const successSound =
-  new Audio(
-    "/audio/weekend/effects/correct-success.mp3"
-  );
+const FIRST_TRY_SUCCESS = [
 
-successSound.preload =
+  {
+    text: "Nice!",
+    audio:
+      "/audio/weekend/success/nice.mp3"
+  },
+
+  {
+    text: "Great job!",
+    audio:
+      "/audio/weekend/success/great-job.mp3"
+  },
+
+  {
+    text: "That sounds great!",
+    audio:
+      "/audio/weekend/success/sounds-great.mp3"
+  }
+
+];
+
+
+const RETRY_SUCCESS = [
+
+  {
+    text: "Perfect!",
+    audio:
+      "/audio/weekend/success/perfect.mp3"
+  },
+
+  {
+    text: "Well done!",
+    audio:
+      "/audio/weekend/success/well-done.mp3"
+  },
+
+  {
+    text: "Much better!",
+    audio:
+      "/audio/weekend/success/much-better.mp3"
+  }
+
+];
+
+
+const successVoicePlayer =
+  new Audio();
+
+
+successVoicePlayer.preload =
   "auto";
 
-successSound.volume =
-  0.55;
 
-let successSoundUnlocked =
+successVoicePlayer.volume =
+  0.9;
+
+
+let successVoiceUnlocked =
   false;
 
 
+let lastSuccessAudio =
+  "";
+
+
 // ==========================================
-// UNLOCK SUCCESS SOUND
+// PRELOAD SUCCESS VOICES
+// ==========================================
+
+[
+  ...FIRST_TRY_SUCCESS,
+  ...RETRY_SUCCESS
+].forEach(
+  (item) => {
+
+    const audio =
+      new Audio(
+        item.audio
+      );
+
+    audio.preload =
+      "auto";
+
+  }
+);
+
+
+// ==========================================
+// UNLOCK SUCCESS AUDIO
 // FOR iPHONE / SAFARI
 // ==========================================
 
-async function unlockSuccessSound() {
+async function unlockSuccessVoice() {
 
-  if (successSoundUnlocked) {
+  if (
+    successVoiceUnlocked
+  ) {
+
     return;
+
   }
 
 
   try {
 
-    const oldVolume =
-      successSound.volume;
+    successVoicePlayer.src =
+      FIRST_TRY_SUCCESS[0].audio;
 
 
-    successSound.volume =
+    successVoicePlayer.volume =
       0;
 
 
-    await successSound.play();
+    await successVoicePlayer.play();
 
 
-    successSound.pause();
+    successVoicePlayer.pause();
 
 
-    successSound.currentTime =
+    successVoicePlayer.currentTime =
       0;
 
 
-    successSound.volume =
-      oldVolume;
+    successVoicePlayer.volume =
+      0.9;
 
 
-    successSoundUnlocked =
+    successVoiceUnlocked =
       true;
 
 
   } catch (error) {
 
     console.log(
-      "Success sound not unlocked yet."
+      "Success voice waiting for another user tap."
     );
 
   }
@@ -133,31 +210,93 @@ async function unlockSuccessSound() {
 
 
 // ==========================================
-// PLAY SUCCESS SOUND
+// PICK RANDOM SUCCESS PHRASE
 // ==========================================
 
-function playSuccessSound() {
+function pickRandomSuccess(
+  choices
+) {
+
+  let available =
+    choices.filter(
+      (item) =>
+        item.audio !==
+        lastSuccessAudio
+    );
+
+
+  if (
+    available.length === 0
+  ) {
+
+    available =
+      choices;
+
+  }
+
+
+  const randomIndex =
+    Math.floor(
+      Math.random() *
+      available.length
+    );
+
+
+  return available[
+    randomIndex
+  ];
+
+}
+
+
+// ==========================================
+// PLAY SUCCESS VOICE
+// ==========================================
+
+function playSuccessVoice(
+  wasRetry
+) {
+
+  const choices =
+    wasRetry
+      ? RETRY_SUCCESS
+      : FIRST_TRY_SUCCESS;
+
+
+  const selected =
+    pickRandomSuccess(
+      choices
+    );
+
+
+  lastSuccessAudio =
+    selected.audio;
+
 
   try {
 
-    successSound.pause();
+    successVoicePlayer.pause();
 
 
-    successSound.currentTime =
+    successVoicePlayer.src =
+      selected.audio;
+
+
+    successVoicePlayer.currentTime =
       0;
 
 
-    successSound.volume =
-      0.55;
+    successVoicePlayer.volume =
+      0.9;
 
 
-    successSound
+    successVoicePlayer
       .play()
       .catch(
         (error) => {
 
           console.log(
-            "Success sound blocked:",
+            "Success voice blocked:",
             error
           );
 
@@ -168,19 +307,20 @@ function playSuccessSound() {
   } catch (error) {
 
     console.log(
-      "Success sound error:",
+      "Success voice error:",
       error
     );
 
   }
+
+
+  return selected.text;
 
 }
 
 
 // ==========================================
 // QUESTION AUDIO
-// STATIC MP3 FILES
-// NO ELEVENLABS
 // ==========================================
 
 const QUESTION_AUDIO = [
@@ -339,10 +479,6 @@ function normalizeQuestion(
 }
 
 
-// ==========================================
-// FIND AUDIO FOR QUESTION
-// ==========================================
-
 function getQuestionAudio(
   text
 ) {
@@ -372,8 +508,7 @@ function getQuestionAudio(
 
 
 // ==========================================
-// FEEDBACK LAYOUT
-// CORRECTION
+// FEEDBACK LAYOUTS
 // ==========================================
 
 function showCorrectionLayout() {
@@ -412,19 +547,12 @@ function showCorrectionLayout() {
 }
 
 
-// ==========================================
-// FEEDBACK LAYOUT
-// SUCCESS
-// ==========================================
-
 function showSuccessLayout() {
 
-  // Remove Better heading
   correctionHeading.style.display =
     "none";
 
 
-  // Remove WHY section
   whyDivider.style.display =
     "none";
 
@@ -437,12 +565,10 @@ function showSuccessLayout() {
     "none";
 
 
-  // No Try again
   tryAgainBtn.style.display =
     "none";
 
 
-  // Continue full width
   continueBtn.style.display =
     "block";
 
@@ -454,7 +580,7 @@ function showSuccessLayout() {
 
 
 // ==========================================
-// NORMALIZE WORD
+// CORRECTION DIFF
 // ==========================================
 
 function normalizeWord(
@@ -470,10 +596,6 @@ function normalizeWord(
 
 }
 
-
-// ==========================================
-// CREATE WORD SPAN
-// ==========================================
 
 function createWordSpan(
   text,
@@ -498,19 +620,6 @@ function createWordSpan(
 
 }
 
-
-// ==========================================
-// CORRECTION DIFF
-//
-// Example:
-//
-// I stay home
-//
-// becomes
-//
-// I  stay  stayed  home
-//    red   blue
-// ==========================================
 
 function renderCorrectionDiff(
   originalText,
@@ -542,10 +651,6 @@ function renderCorrectionDiff(
   const n =
     correctedWords.length;
 
-
-  // ----------------------------------------
-  // LCS TABLE
-  // ----------------------------------------
 
   const dp =
     Array.from(
@@ -600,10 +705,6 @@ function renderCorrectionDiff(
 
   }
 
-
-  // ----------------------------------------
-  // BUILD OPERATIONS
-  // ----------------------------------------
 
   const operations =
     [];
@@ -730,10 +831,6 @@ function renderCorrectionDiff(
   }
 
 
-  // ----------------------------------------
-  // RENDER
-  // ----------------------------------------
-
   operations.forEach(
     (operation, index) => {
 
@@ -791,13 +888,17 @@ function renderCorrectionDiff(
 
 
 // ==========================================
-// STOP QUESTION AUDIO
+// QUESTION AUDIO
 // ==========================================
 
 function stopCurrentAudio() {
 
-  if (!currentAudio) {
+  if (
+    !currentAudio
+  ) {
+
     return;
+
   }
 
 
@@ -814,17 +915,6 @@ function stopCurrentAudio() {
 }
 
 
-// ==========================================
-// PLAY QUESTION AUDIO
-//
-// IMPORTANT:
-//
-// This plays q1-q10 directly.
-//
-// It does NOT touch the success sound.
-// It does NOT call ElevenLabs.
-// ==========================================
-
 async function speakQuestion(
   text
 ) {
@@ -835,7 +925,9 @@ async function speakQuestion(
     );
 
 
-  if (!audioPath) {
+  if (
+    !audioPath
+  ) {
 
     console.error(
       "Question MP3 not found:",
@@ -853,20 +945,14 @@ async function speakQuestion(
     stopCurrentAudio();
 
 
-    const questionAudio =
-      new Audio();
-
-
-    questionAudio.src =
-      audioPath;
-
-
-    questionAudio.preload =
-      "auto";
-
-
     currentAudio =
-      questionAudio;
+      new Audio(
+        audioPath
+      );
+
+
+    currentAudio.preload =
+      "auto";
 
 
     currentAudio.onended =
@@ -879,12 +965,11 @@ async function speakQuestion(
 
 
     currentAudio.onerror =
-      (event) => {
+      () => {
 
         console.error(
-          "Could not play question audio:",
-          audioPath,
-          event
+          "Could not play:",
+          audioPath
         );
 
 
@@ -1150,8 +1235,6 @@ async function showFeedback(
   transcript
 ) {
 
-  // Hide microphone while
-  // learner reviews feedback
   speakArea.style.display =
     "none";
 
@@ -1194,7 +1277,7 @@ async function showFeedback(
 
 
     // ======================================
-    // ANSWER NOT RELEVANT
+    // NOT RELEVANT
     // ======================================
 
     if (
@@ -1334,18 +1417,24 @@ async function showFeedback(
 
 
     // ======================================
-    // CORRECT ANSWER ✅
+    // CORRECT ✅
     // ======================================
+
+    const wasRetry =
+      isRetrying;
+
 
     showSuccessLayout();
 
 
+    const successText =
+      playSuccessVoice(
+        wasRetry
+      );
+
+
     better.textContent =
-      "Well done! ✅";
-
-
-    // FREE SUCCESS SOUND
-    playSuccessSound();
+      `${successText} ✅`;
 
 
     saveCurrentTurn(
@@ -1402,12 +1491,12 @@ async function startRecording() {
 
   try {
 
-    // Only unlock the success sound
-    // when learner touches the mic.
-    //
-    // Do NOT do this on Listen question.
+    stopCurrentAudio();
 
-    unlockSuccessSound();
+
+    // Unlock success voice
+    // from a real user tap
+    unlockSuccessVoice();
 
 
     audioChunks =
@@ -1527,9 +1616,7 @@ async function startRecording() {
 
     statusEl.textContent =
       isRetrying
-
         ? "Listening… say it again."
-
         : "Listening… take your time.";
 
 
@@ -1726,12 +1813,7 @@ micBtn.addEventListener(
 
 
 // ==========================================
-// LISTEN TO QUESTION
-//
-// IMPORTANT:
-//
-// NO unlockSuccessSound here.
-// This button ONLY plays q1-q10.
+// LISTEN QUESTION
 // ==========================================
 
 listenBtn.addEventListener(
@@ -1746,14 +1828,6 @@ listenBtn.addEventListener(
 
       await speakQuestion(
         currentQuestion
-      );
-
-
-    } catch (error) {
-
-      console.error(
-        "Listen error:",
-        error
       );
 
 
@@ -1776,14 +1850,9 @@ tryAgainBtn.addEventListener(
   "click",
   () => {
 
-    // Bring microphone back
     speakArea.style.display =
       "block";
 
-
-    // ======================================
-    // CORRECTED SENTENCE RETRY
-    // ======================================
 
     if (
       pendingAnswer
@@ -1814,10 +1883,6 @@ tryAgainBtn.addEventListener(
     }
 
 
-    // ======================================
-    // ANSWER SAME QUESTION AGAIN
-    // ======================================
-
     isRetrying =
       false;
 
@@ -1838,7 +1903,7 @@ tryAgainBtn.addEventListener(
 
 
 // ==========================================
-// COMPLETE SCREEN
+// COMPLETE
 // ==========================================
 
 function showCompleteScreen() {
@@ -1883,11 +1948,6 @@ continueBtn.addEventListener(
   "click",
   async () => {
 
-    // --------------------------------------
-    // Student had correction
-    // but skipped retry
-    // --------------------------------------
-
     if (
       pendingAnswer
     ) {
@@ -1907,10 +1967,6 @@ continueBtn.addEventListener(
     }
 
 
-    // ======================================
-    // FINISH
-    // ======================================
-
     if (
       turn >= 5
     ) {
@@ -1922,10 +1978,6 @@ continueBtn.addEventListener(
 
     }
 
-
-    // ======================================
-    // NEXT QUESTION
-    // ======================================
 
     turn +=
       1;
@@ -1958,7 +2010,6 @@ continueBtn.addEventListener(
     resetFeedbackUI();
 
 
-    // Bring mic back
     speakArea.style.display =
       "block";
 
@@ -1967,8 +2018,6 @@ continueBtn.addEventListener(
       "Tap the mic to answer";
 
 
-    // Automatically play
-    // the next saved MP3
     await speakQuestion(
       currentQuestion
     );
@@ -1986,6 +2035,9 @@ practiceAgainBtn.addEventListener(
   () => {
 
     stopCurrentAudio();
+
+
+    successVoicePlayer.pause();
 
 
     turn =
@@ -2014,6 +2066,10 @@ practiceAgainBtn.addEventListener(
 
     isRecording =
       false;
+
+
+    lastSuccessAudio =
+      "";
 
 
     questionEl.textContent =
