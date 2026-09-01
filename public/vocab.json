@@ -1,5 +1,18 @@
 {
   "food-everyday-life": {
+    "q1": {
+      "questionThai": "วันนี้คุณกินอะไรมา?",
+      "vocab": [
+        {
+          "text": "did you eat",
+          "thai": "คุณกิน...มา / คุณได้กิน...ไหม",
+          "type": "phrase",
+          "example": "What did you eat for lunch?",
+          "exampleThai": "คุณกินอะไรเป็นมื้อกลางวัน?"
+        }
+      ]
+    },
+
     "q6": {
       "questionThai": "เมนูประจำของคุณคืออะไร?",
       "vocab": [
