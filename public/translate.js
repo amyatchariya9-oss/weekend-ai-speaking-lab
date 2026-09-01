@@ -13,47 +13,54 @@ if (questionEl) {
 
   let lessonsData = {};
   let vocabData = {};
-  let currentVocabEntry = null;
-  let lastRenderedQuestion = "";
-
-  const typeLabels = {
-    noun: "noun · คำนาม",
-    verb: "verb · คำกริยา",
-    adjective:
-      "adjective · คำคุณศัพท์",
-    adverb:
-      "adverb · คำวิเศษณ์",
-    phrase: "phrase · วลี",
-    expression:
-      "expression · สำนวน / วลี"
-  };
+  let currentTranslation = null;
+  let lastQuestion = "";
 
   function injectStyles() {
     const style =
       document.createElement("style");
 
     style.textContent = `
-      .tap-vocab {
-        cursor: pointer;
-        border-bottom: 1.5px dashed currentColor;
-        padding-bottom: 1px;
+      .question-translate-row {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
       }
 
-      .translate-question-btn {
+      .question-translate-row #question {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .translate-btn {
         display: none;
-        margin-top: 10px;
-        padding: 7px 11px;
+        flex-shrink: 0;
+        align-items: center;
+        gap: 5px;
+        margin-top: 2px;
         border: 0;
         background: transparent;
+        padding: 5px 3px;
         font: inherit;
         font-size: 13px;
         font-weight: 700;
-        color: #6f72a8;
+        color: #7375a8;
         cursor: pointer;
       }
 
-      .translate-question-btn.show {
+      .translate-btn.show {
         display: inline-flex;
+      }
+
+      .translate-btn svg {
+        width: 17px;
+        height: 17px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
       }
 
       .translate-overlay {
@@ -64,7 +71,7 @@ if (questionEl) {
         align-items: flex-end;
         justify-content: center;
         padding: 18px;
-        background: rgba(25, 27, 45, 0.32);
+        background: rgba(25, 27, 45, 0.3);
         backdrop-filter: blur(2px);
       }
 
@@ -73,25 +80,26 @@ if (questionEl) {
       }
 
       .translate-sheet {
-        width: min(100%, 440px);
+        width: min(100%, 430px);
+        padding: 21px;
         border-radius: 24px;
-        background: white;
+        background: #ffffff;
         box-shadow:
           0 22px 60px
-          rgba(28, 31, 56, 0.22);
-        padding: 20px;
+          rgba(28, 31, 56, 0.2);
       }
 
-      .translate-head {
+      .translate-header {
         display: flex;
+        align-items: center;
         justify-content: space-between;
         gap: 14px;
       }
 
-      .translate-word {
-        margin: 0;
-        font-size: 24px;
-        color: #20233f;
+      .translate-heading {
+        font-size: 13px;
+        font-weight: 800;
+        color: #8a8da4;
       }
 
       .translate-close {
@@ -100,54 +108,39 @@ if (questionEl) {
         border: 0;
         border-radius: 50%;
         background: #f3f3f8;
+        color: #55586f;
         font-size: 20px;
         cursor: pointer;
       }
 
-      .translate-type {
-        margin-top: 5px;
-        font-size: 12px;
+      .translate-english {
+        margin-top: 18px;
+        font-size: 19px;
+        line-height: 1.5;
         font-weight: 700;
-        color: #8a8da6;
-      }
-
-      .translate-thai {
-        margin-top: 14px;
-        font-size: 18px;
-        line-height: 1.55;
-        font-weight: 700;
-        color: #333650;
+        color: #262942;
       }
 
       .translate-divider {
         height: 1px;
-        margin: 17px 0;
+        margin: 16px 0;
         background: #ececf3;
       }
 
-      .translate-label {
-        font-size: 11px;
-        font-weight: 800;
-        color: #9a9cb0;
-      }
-
-      .translate-example {
-        margin-top: 6px;
-        font-size: 16px;
-        line-height: 1.5;
-      }
-
-      .translate-example-thai {
-        margin-top: 5px;
-        font-size: 14px;
-        color: #70738a;
-      }
-
-      .translate-question-en {
-        margin-top: 8px;
+      .translate-thai {
         font-size: 17px;
-        line-height: 1.5;
-        font-weight: 400;
+        line-height: 1.6;
+        color: #4f5269;
+      }
+
+      @media (max-width: 520px) {
+        .question-translate-row {
+          gap: 8px;
+        }
+
+        .translate-btn {
+          font-size: 12px;
+        }
       }
 
       @media (min-width: 700px) {
@@ -160,6 +153,32 @@ if (questionEl) {
     document.head.appendChild(style);
   }
 
+  function createQuestionRow() {
+    if (
+      questionEl.parentElement
+        ?.classList.contains(
+          "question-translate-row"
+        )
+    ) {
+      return questionEl.parentElement;
+    }
+
+    const row =
+      document.createElement("div");
+
+    row.className =
+      "question-translate-row";
+
+    questionEl.parentNode.insertBefore(
+      row,
+      questionEl
+    );
+
+    row.appendChild(questionEl);
+
+    return row;
+  }
+
   function createTranslateButton() {
     let button =
       document.getElementById(
@@ -170,6 +189,9 @@ if (questionEl) {
       return button;
     }
 
+    const row =
+      createQuestionRow();
+
     button =
       document.createElement(
         "button"
@@ -179,36 +201,42 @@ if (questionEl) {
       "translateQuestionBtn";
 
     button.className =
-      "translate-question-btn";
+      "translate-btn";
 
     button.type =
       "button";
 
-    button.textContent =
-      "ดูคำแปลทั้งคำถาม";
+    button.innerHTML = `
+      <svg
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+      >
+        <path d="M5 8l6 6"></path>
+        <path d="M4 14l6-6 2-3"></path>
+        <path d="M2 5h12"></path>
+        <path d="M7 2h1"></path>
+        <path d="M22 22l-5-10-5 10"></path>
+        <path d="M14 18h6"></path>
+      </svg>
 
-    questionEl.insertAdjacentElement(
-      "afterend",
-      button
-    );
+      <span>แปล</span>
+    `;
 
     button.addEventListener(
       "click",
       () => {
         if (
-          !currentVocabEntry
+          !currentTranslation
             ?.questionThai
         ) {
           return;
         }
 
-        openQuestionTranslation(
-          getPlainQuestionText(),
-          currentVocabEntry
-            .questionThai
-        );
+        openTranslation();
       }
     );
+
+    row.appendChild(button);
 
     return button;
   }
@@ -236,54 +264,38 @@ if (questionEl) {
 
     overlay.innerHTML = `
       <div class="translate-sheet">
-        <div class="translate-head">
-          <div>
-            <h3
-              class="translate-word"
-              id="translateTitle"
-            ></h3>
 
-            <div
-              class="translate-type"
-              id="translateType"
-            ></div>
+        <div class="translate-header">
+
+          <div class="translate-heading">
+            คำแปล
           </div>
 
           <button
             class="translate-close"
             id="translateClose"
             type="button"
+            aria-label="Close"
           >
             ×
           </button>
+
         </div>
+
+        <div
+          class="translate-english"
+          id="translateEnglish"
+        ></div>
+
+        <div
+          class="translate-divider"
+        ></div>
 
         <div
           class="translate-thai"
           id="translateThai"
         ></div>
 
-        <div id="translateExampleBlock">
-          <div
-            class="translate-divider"
-          ></div>
-
-          <div
-            class="translate-label"
-          >
-            EXAMPLE
-          </div>
-
-          <div
-            class="translate-example"
-            id="translateExample"
-          ></div>
-
-          <div
-            class="translate-example-thai"
-            id="translateExampleThai"
-          ></div>
-        </div>
       </div>
     `;
 
@@ -297,7 +309,7 @@ if (questionEl) {
       )
       .addEventListener(
         "click",
-        closePopup
+        closeTranslation
       );
 
     overlay.addEventListener(
@@ -307,7 +319,7 @@ if (questionEl) {
           event.target ===
           overlay
         ) {
-          closePopup();
+          closeTranslation();
         }
       }
     );
@@ -315,7 +327,7 @@ if (questionEl) {
     return overlay;
   }
 
-  function closePopup() {
+  function closeTranslation() {
     document
       .getElementById(
         "translateOverlay"
@@ -325,110 +337,21 @@ if (questionEl) {
       );
   }
 
-  function openPopup(vocab) {
+  function openTranslation() {
     const overlay =
       createPopup();
 
     overlay.querySelector(
-      "#translateTitle"
+      "#translateEnglish"
     ).textContent =
-      vocab.text || "";
-
-    overlay.querySelector(
-      "#translateType"
-    ).textContent =
-      typeLabels[
-        vocab.type
-      ] ||
-      vocab.type ||
-      "";
+      getQuestionText();
 
     overlay.querySelector(
       "#translateThai"
     ).textContent =
-      vocab.thai || "";
-
-    overlay.querySelector(
-      "#translateExample"
-    ).textContent =
-      vocab.example || "";
-
-    overlay.querySelector(
-      "#translateExampleThai"
-    ).textContent =
-      vocab.exampleThai || "";
-
-    overlay.querySelector(
-      "#translateExampleBlock"
-    ).style.display =
-      vocab.example ||
-      vocab.exampleThai
-        ? "block"
-        : "none";
-
-    overlay.classList.add(
-      "open"
-    );
-  }
-
-  function openQuestionTranslation(
-    english,
-    thai
-  ) {
-    const overlay =
-      createPopup();
-
-    overlay.querySelector(
-      "#translateTitle"
-    ).textContent =
-      "แปลทั้งคำถาม";
-
-    overlay.querySelector(
-      "#translateType"
-    ).textContent = "";
-
-    const thaiContainer =
-      overlay.querySelector(
-        "#translateThai"
-      );
-
-    thaiContainer.innerHTML =
+      currentTranslation
+        ?.questionThai ||
       "";
-
-    const englishEl =
-      document.createElement(
-        "div"
-      );
-
-    englishEl.className =
-      "translate-question-en";
-
-    englishEl.textContent =
-      english;
-
-    const thaiEl =
-      document.createElement(
-        "div"
-      );
-
-    thaiEl.className =
-      "translate-thai";
-
-    thaiEl.textContent =
-      thai;
-
-    thaiContainer.appendChild(
-      englishEl
-    );
-
-    thaiContainer.appendChild(
-      thaiEl
-    );
-
-    overlay.querySelector(
-      "#translateExampleBlock"
-    ).style.display =
-      "none";
 
     overlay.classList.add(
       "open"
@@ -444,14 +367,14 @@ if (questionEl) {
       .trim();
   }
 
-  function getPlainQuestionText() {
+  function getQuestionText() {
     return questionEl.textContent
       .replace(/\s+/g, " ")
       .trim();
   }
 
   function findQuestionId(
-    text
+    questionText
   ) {
     const questions =
       lessonsData?.[
@@ -467,7 +390,9 @@ if (questionEl) {
     }
 
     const normalized =
-      normalizeText(text);
+      normalizeText(
+        questionText
+      );
 
     const match =
       questions.find(
@@ -480,48 +405,27 @@ if (questionEl) {
     return match?.id || "";
   }
 
-  function escapeRegExp(
-    text
-  ) {
-    return text.replace(
-      /[.*+?^${}()|[\]\\]/g,
-      "\\$&"
-    );
-  }
-
-  function renderQuestion() {
+  function updateTranslation() {
     const questionText =
-      getPlainQuestionText();
+      getQuestionText();
 
-    if (!questionText) {
-      return;
-    }
-
-    /*
-      If this exact question has
-      already been decorated,
-      do nothing.
-
-      This prevents the
-      MutationObserver from
-      repeatedly rendering itself.
-    */
     if (
+      !questionText ||
       questionText ===
-        lastRenderedQuestion &&
-      questionEl.querySelector(
-        ".tap-vocab"
-      )
+        lastQuestion
     ) {
       return;
     }
+
+    lastQuestion =
+      questionText;
 
     const questionId =
       findQuestionId(
         questionText
       );
 
-    currentVocabEntry =
+    currentTranslation =
       vocabData?.[
         lessonId
       ]?.[
@@ -532,21 +436,8 @@ if (questionEl) {
       createTranslateButton();
 
     if (
-      !currentVocabEntry
-    ) {
-      button.classList.remove(
-        "show"
-      );
-
-      lastRenderedQuestion =
-        questionText;
-
-      return;
-    }
-
-    if (
-      currentVocabEntry
-        .questionThai
+      currentTranslation
+        ?.questionThai
     ) {
       button.classList.add(
         "show"
@@ -556,116 +447,14 @@ if (questionEl) {
         "show"
       );
     }
-
-    const vocabList =
-      Array.isArray(
-        currentVocabEntry
-          .vocab
-      )
-        ? currentVocabEntry
-            .vocab
-        : [];
-
-    if (
-      vocabList.length === 0
-    ) {
-      lastRenderedQuestion =
-        questionText;
-
-      return;
-    }
-
-    let html =
-      questionText;
-
-    const sorted =
-      [...vocabList].sort(
-        (a, b) =>
-          String(
-            b.text
-          ).length -
-          String(
-            a.text
-          ).length
-      );
-
-    for (
-      const vocab
-      of sorted
-    ) {
-      if (!vocab.text) {
-        continue;
-      }
-
-      const escaped =
-        escapeRegExp(
-          vocab.text
-        );
-
-      const regex =
-        new RegExp(
-          `(${escaped})`,
-          "i"
-        );
-
-      html =
-        html.replace(
-          regex,
-          `<span
-            class="tap-vocab"
-            data-vocab="${encodeURIComponent(
-              vocab.text
-            )}"
-          >$1</span>`
-        );
-    }
-
-    questionEl.innerHTML =
-      html;
-
-    questionEl
-      .querySelectorAll(
-        ".tap-vocab"
-      )
-      .forEach(
-        (element) => {
-          element.addEventListener(
-            "click",
-            () => {
-              const text =
-                decodeURIComponent(
-                  element
-                    .dataset
-                    .vocab
-                );
-
-              const vocab =
-                vocabList.find(
-                  (item) =>
-                    item.text ===
-                    text
-                );
-
-              if (vocab) {
-                openPopup(
-                  vocab
-                );
-              }
-            }
-          );
-        }
-      );
-
-    lastRenderedQuestion =
-      questionText;
   }
 
   async function initTranslate() {
     injectStyles();
 
-    createPopup();
-
+    createQuestionRow();
     createTranslateButton();
+    createPopup();
 
     try {
       const [
@@ -707,33 +496,25 @@ if (questionEl) {
       }
 
       lessonsData =
-        await lessonsResponse
-          .json();
+        await lessonsResponse.json();
 
       vocabData =
-        await vocabResponse
-          .json();
+        await vocabResponse.json();
 
-      renderQuestion();
+      updateTranslation();
 
       const observer =
         new MutationObserver(
           () => {
-            const text =
-              getPlainQuestionText();
+            const questionText =
+              getQuestionText();
 
-            /*
-              Only render again
-              when app.js changes
-              to a genuinely
-              different question.
-            */
             if (
-              text !==
-              lastRenderedQuestion
+              questionText !==
+              lastQuestion
             ) {
               requestAnimationFrame(
-                renderQuestion
+                updateTranslation
               );
             }
           }
@@ -750,7 +531,7 @@ if (questionEl) {
 
     } catch (error) {
       console.error(
-        "Tap-to-Translate error:",
+        "Translation error:",
         error
       );
     }
