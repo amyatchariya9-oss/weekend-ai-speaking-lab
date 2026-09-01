@@ -1,91 +1,716 @@
 <!doctype html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  />
+
   <title>Weekend Speaking Lab</title>
+
   <style>
-    :root{
-      --bg:#f7f5f0;--card:#fff;--text:#252525;--muted:#77736d;
-      --line:#e7e1d8;--soft:#f1eee8;--accent:#242424;
+
+    :root {
+      --bg: #f7f5f0;
+      --card: #fff;
+      --text: #252525;
+      --muted: #77736d;
+      --line: #e7e1d8;
+      --soft: #f1eee8;
+      --accent: #242424;
     }
-    *{box-sizing:border-box}
-    body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-    .wrap{max-width:720px;margin:0 auto;padding:24px 14px 48px}
-    .card{background:var(--card);border:1px solid var(--line);border-radius:24px;padding:22px}
-    .eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;color:var(--muted)}
-    h1{font-size:28px;margin:7px 0 4px}
-    .muted{color:var(--muted);font-size:14px}
-    .coach{margin-top:22px;background:var(--soft);border-radius:20px;padding:18px}
-    .coachhead{display:flex;align-items:center;gap:11px}
-    .avatar{width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:#fff;display:grid;place-items:center;font-weight:700}
-    .question{font-size:20px;line-height:1.45;margin:18px 0 0}
-    .listen{margin-top:14px;border:1px solid var(--line);background:#fff;border-radius:13px;min-height:44px;padding:10px 14px;font:inherit;cursor:pointer}
-    .speak-area{margin-top:20px;text-align:center}
-    .mic{width:104px;height:104px;border-radius:50%;border:0;background:var(--accent);color:#fff;font-size:36px;cursor:pointer}
-    .mic.recording{animation:pulse 1.5s infinite}
-    @keyframes pulse{50%{transform:scale(1.04);box-shadow:0 0 0 12px rgba(0,0,0,.06)}}
-    .status{margin-top:12px;color:var(--muted);font-size:14px}
-    .feedback{display:none;margin-top:18px;border-top:1px solid var(--line);padding-top:18px}
-    .box{background:var(--soft);border-radius:15px;padding:14px;margin-top:10px;text-align:left}
-    .label{font-size:11px;font-weight:800;letter-spacing:.06em;color:var(--muted)}
-    .answer{font-size:17px;line-height:1.5;margin-top:5px}
-    .actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
-    button{font:inherit}
-    .secondary{min-height:46px;border:1px solid var(--line);background:#fff;border-radius:13px;cursor:pointer;padding:10px 14px}
-    .primary{grid-column:1/-1;min-height:48px;border:0;background:var(--accent);color:#fff;border-radius:14px;font-weight:700;cursor:pointer}
-    .turn{float:right;background:var(--soft);padding:6px 11px;border-radius:999px;font-size:13px}
-    @media(max-width:520px){.wrap{padding:10px}.card{padding:17px;border-radius:19px}.question{font-size:19px}}
-    @media(prefers-reduced-motion:reduce){.mic.recording{animation:none}}
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+
+      font-family:
+        Inter,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+    }
+
+    .wrap {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 24px 14px 48px;
+    }
+
+    .card {
+      background: var(--card);
+
+      border:
+        1px solid var(--line);
+
+      border-radius: 24px;
+
+      padding: 22px;
+    }
+
+    .eyebrow {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      color: var(--muted);
+    }
+
+    h1 {
+      font-size: 28px;
+      margin: 7px 0 4px;
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+
+    /* =====================================
+       COACH
+    ===================================== */
+
+    .coach {
+      margin-top: 22px;
+      background: var(--soft);
+      border-radius: 20px;
+      padding: 18px;
+    }
+
+    .coachhead {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+    }
+
+    .avatar {
+      width: 44px;
+      height: 44px;
+
+      border-radius: 50%;
+
+      border:
+        1px solid var(--line);
+
+      background: #fff;
+
+      display: grid;
+      place-items: center;
+
+      font-weight: 700;
+    }
+
+    .question {
+      font-size: 20px;
+      line-height: 1.45;
+      margin: 18px 0 0;
+    }
+
+    .listen {
+      margin-top: 14px;
+
+      border:
+        1px solid var(--line);
+
+      background: #fff;
+
+      border-radius: 13px;
+
+      min-height: 44px;
+
+      padding: 10px 14px;
+
+      font: inherit;
+
+      cursor: pointer;
+    }
+
+
+    /* =====================================
+       SPEAK
+    ===================================== */
+
+    .speak-area {
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    .mic {
+      width: 104px;
+      height: 104px;
+
+      border-radius: 50%;
+
+      border: 0;
+
+      background:
+        var(--accent);
+
+      color: #fff;
+
+      font-size: 36px;
+
+      cursor: pointer;
+    }
+
+    .mic.recording {
+      animation:
+        pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+
+      50% {
+        transform:
+          scale(1.04);
+
+        box-shadow:
+          0 0 0 12px
+          rgba(0, 0, 0, .06);
+      }
+
+    }
+
+    .status {
+      margin-top: 12px;
+
+      color:
+        var(--muted);
+
+      font-size: 14px;
+    }
+
+
+    /* =====================================
+       FEEDBACK
+    ===================================== */
+
+    .feedback {
+      display: none;
+
+      margin-top: 18px;
+
+      border-top:
+        1px solid var(--line);
+
+      padding-top: 18px;
+    }
+
+    .box {
+      background:
+        var(--soft);
+
+      border-radius: 15px;
+
+      padding: 14px;
+
+      margin-top: 10px;
+
+      text-align: left;
+    }
+
+    .label {
+      font-size: 11px;
+
+      font-weight: 800;
+
+      letter-spacing: .06em;
+
+      color:
+        var(--muted);
+    }
+
+    .answer {
+      font-size: 17px;
+
+      line-height: 1.5;
+
+      margin-top: 5px;
+    }
+
+    .actions {
+      display: grid;
+
+      grid-template-columns:
+        1fr 1fr;
+
+      gap: 10px;
+
+      margin-top: 14px;
+    }
+
+    button {
+      font: inherit;
+    }
+
+    .secondary {
+      min-height: 46px;
+
+      border:
+        1px solid var(--line);
+
+      background:
+        #fff;
+
+      border-radius: 13px;
+
+      cursor: pointer;
+
+      padding:
+        10px 14px;
+    }
+
+    .primary {
+      grid-column:
+        1 / -1;
+
+      min-height: 48px;
+
+      border: 0;
+
+      background:
+        var(--accent);
+
+      color: #fff;
+
+      border-radius: 14px;
+
+      font-weight: 700;
+
+      cursor: pointer;
+    }
+
+    .turn {
+      float: right;
+
+      background:
+        var(--soft);
+
+      padding:
+        6px 11px;
+
+      border-radius:
+        999px;
+
+      font-size:
+        13px;
+    }
+
+
+    /* =====================================
+       LESSON COMPLETE
+    ===================================== */
+
+    .complete {
+      display: none;
+
+      text-align:
+        center;
+
+      padding:
+        36px 22px;
+    }
+
+    .complete-icon {
+      font-size:
+        48px;
+
+      margin-bottom:
+        10px;
+    }
+
+    .complete h2 {
+      font-size:
+        27px;
+
+      margin:
+        4px 0 8px;
+    }
+
+    .complete-text {
+      color:
+        var(--muted);
+
+      font-size:
+        15px;
+
+      line-height:
+        1.55;
+    }
+
+    .complete-box {
+      background:
+        var(--soft);
+
+      border-radius:
+        18px;
+
+      padding:
+        20px;
+
+      margin:
+        24px 0 18px;
+    }
+
+    .complete-number {
+      font-size:
+        42px;
+
+      font-weight:
+        800;
+    }
+
+    .complete-label {
+      color:
+        var(--muted);
+
+      font-size:
+        14px;
+
+      margin-top:
+        3px;
+    }
+
+    .restart {
+      width:
+        100%;
+
+      min-height:
+        50px;
+
+      border: 0;
+
+      border-radius:
+        14px;
+
+      background:
+        var(--accent);
+
+      color:
+        #fff;
+
+      font-weight:
+        700;
+
+      cursor:
+        pointer;
+
+      margin-top:
+        8px;
+    }
+
+
+    /* =====================================
+       MOBILE
+    ===================================== */
+
+    @media(max-width:520px) {
+
+      .wrap {
+        padding:
+          10px;
+      }
+
+      .card {
+        padding:
+          17px;
+
+        border-radius:
+          19px;
+      }
+
+      .question {
+        font-size:
+          19px;
+      }
+
+    }
+
+
+    @media(
+      prefers-reduced-motion: reduce
+    ) {
+
+      .mic.recording {
+        animation:
+          none;
+      }
+
+    }
+
   </style>
 </head>
+
+
 <body>
+
   <main class="wrap">
-    <section class="card">
-      <div class="turn"><span id="turn">1</span>/5</div>
-      <div class="eyebrow">LESSON 01 · SPEAKING</div>
-      <h1>My Weekend ☀️</h1>
-      <div class="muted">Listen. Tap to speak. Get instant corrections.</div>
+
+
+    <!-- ===================================
+         MAIN LESSON
+    ==================================== -->
+
+    <section
+      class="card"
+      id="lessonCard"
+    >
+
+      <div class="turn">
+        <span id="turn">1</span>/5
+      </div>
+
+
+      <div class="eyebrow">
+        LESSON 01 · SPEAKING
+      </div>
+
+
+      <h1>
+        My Weekend ☀️
+      </h1>
+
+
+      <div class="muted">
+        Listen. Tap to speak.
+        Get instant corrections.
+      </div>
+
 
       <div class="coach">
+
         <div class="coachhead">
-          <div class="avatar">A</div>
-          <div><b>Amy · Speaking Coach</b><div class="muted">Your turn when you're ready</div></div>
+
+          <div class="avatar">
+            A
+          </div>
+
+          <div>
+
+            <b>
+              Amy · Speaking Coach
+            </b>
+
+            <div class="muted">
+              Your turn when you're ready
+            </div>
+
+          </div>
+
         </div>
-        <div class="question" id="question">Hey! How was your weekend?</div>
-        <button class="listen" id="listen">🔊 Listen</button>
+
+
+        <div
+          class="question"
+          id="question"
+        >
+          Hey! How was your weekend?
+        </div>
+
+
+        <button
+          class="listen"
+          id="listen"
+        >
+          🔊 Listen
+        </button>
+
       </div>
+
 
       <div class="speak-area">
-        <button class="mic" id="mic" aria-label="Tap to speak">🎙️</button>
-        <div class="status" id="status">Tap the microphone to answer.</div>
+
+        <button
+          class="mic"
+          id="mic"
+          aria-label="Tap to speak"
+        >
+          🎙️
+        </button>
+
+
+        <div
+          class="status"
+          id="status"
+        >
+          Tap the microphone to answer.
+        </div>
+
       </div>
 
-      <section class="feedback" id="feedback" aria-live="polite">
-        <div class="box">
-          <div class="label">YOU SAID</div>
-          <div class="answer" id="youSaid">—</div>
-        </div>
+
+      <!-- ===============================
+           FEEDBACK
+      ================================ -->
+
+      <section
+        class="feedback"
+        id="feedback"
+        aria-live="polite"
+      >
 
         <div class="box">
-          <div class="label">BETTER ✨</div>
-          <div class="answer" id="better">—</div>
+
+          <div class="label">
+            YOU SAID
+          </div>
+
+          <div
+            class="answer"
+            id="youSaid"
+          >
+            —
+          </div>
+
         </div>
 
+
         <div class="box">
-          <div class="label">WHY 🇹🇭</div>
-          <div class="answer" id="why">—</div>
+
+          <div class="label">
+            BETTER ✨
+          </div>
+
+          <div
+            class="answer"
+            id="better"
+          >
+            —
+          </div>
+
         </div>
+
+
+        <div class="box">
+
+          <div class="label">
+            WHY 🇹🇭
+          </div>
+
+          <div
+            class="answer"
+            id="why"
+          >
+            —
+          </div>
+
+        </div>
+
 
         <div class="actions">
-          <button class="secondary" id="hearCorrection">🔊 Listen</button>
-          <button class="secondary" id="tryAgain">🎙️ Try again</button>
-          <button class="primary" id="continueBtn">Continue →</button>
+
+          <button
+            class="secondary"
+            id="hearCorrection"
+          >
+            🔊 Listen
+          </button>
+
+
+          <button
+            class="secondary"
+            id="tryAgain"
+          >
+            🎙️ Try again
+          </button>
+
+
+          <button
+            class="primary"
+            id="continueBtn"
+          >
+            Continue →
+          </button>
+
         </div>
+
       </section>
+
     </section>
+
+
+
+    <!-- ===================================
+         LESSON COMPLETE
+    ==================================== -->
+
+    <section
+      class="card complete"
+      id="completeScreen"
+    >
+
+      <div class="complete-icon">
+        🎉
+      </div>
+
+
+      <div class="eyebrow">
+        LESSON COMPLETE
+      </div>
+
+
+      <h2>
+        Great job!
+      </h2>
+
+
+      <div class="complete-text">
+        You finished your Weekend
+        speaking practice.
+      </div>
+
+
+      <div class="complete-box">
+
+        <div
+          class="complete-number"
+          id="completedQuestions"
+        >
+          5
+        </div>
+
+
+        <div class="complete-label">
+          questions completed
+        </div>
+
+      </div>
+
+
+      <div class="complete-text">
+        Keep practicing — speaking
+        gets easier every time.
+      </div>
+
+
+      <button
+        class="restart"
+        id="practiceAgain"
+      >
+        Practice again ↻
+      </button>
+
+    </section>
+
+
   </main>
 
-  <script type="module" src="/app.js"></script>
+
+  <script
+    type="module"
+    src="/app.js"
+  ></script>
+
 </body>
+
 </html>
