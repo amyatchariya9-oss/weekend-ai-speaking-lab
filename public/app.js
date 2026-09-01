@@ -18,6 +18,67 @@ const completeScreen = $("completeScreen");
 const practiceAgainBtn = $("practiceAgain");
 const completedQuestions = $("completedQuestions");
 
+
+// ==========================================
+// QUESTION BANK + SAVED AUDIO
+// ==========================================
+//
+// These files already exist in:
+//
+// public/audio/weekend/q1.mp3
+// ...
+// public/audio/weekend/q10.mp3
+//
+// Tutor questions DO NOT use ElevenLabs TTS.
+
+const QUESTION_AUDIO = [
+  {
+    text: "Hey! How was your weekend?",
+    audio: "/audio/weekend/q1.mp3"
+  },
+  {
+    text: "What did you do?",
+    audio: "/audio/weekend/q2.mp3"
+  },
+  {
+    text: "Tell me more about it.",
+    audio: "/audio/weekend/q3.mp3"
+  },
+  {
+    text: "Where did you go?",
+    audio: "/audio/weekend/q4.mp3"
+  },
+  {
+    text: "Who were you with?",
+    audio: "/audio/weekend/q5.mp3"
+  },
+  {
+    text: "What happened next?",
+    audio: "/audio/weekend/q6.mp3"
+  },
+  {
+    text: "How did you feel?",
+    audio: "/audio/weekend/q7.mp3"
+  },
+  {
+    text: "What did you like about it?",
+    audio: "/audio/weekend/q8.mp3"
+  },
+  {
+    text: "What was the best part?",
+    audio: "/audio/weekend/q9.mp3"
+  },
+  {
+    text: "Would you do it again?",
+    audio: "/audio/weekend/q10.mp3"
+  }
+];
+
+
+// ==========================================
+// STATE
+// ==========================================
+
 let turn = 1;
 
 let mediaRecorder = null;
@@ -37,78 +98,214 @@ let history = [];
 let currentAudio = null;
 
 let isRetrying = false;
+
 let pendingAnswer = null;
 
 
 // ==========================================
-// TTS AUDIO CACHE
+// HELPERS
 // ==========================================
 
-// text -> Blob
-//
-// Example:
-// "Hey! How was your weekend?"
-// will only need ElevenLabs once
-// during this browser session.
+function normalizeQuestion(text = "") {
+  return text
+    .toLowerCase()
+    .replace(/[.,!?;:'"]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
 
-const ttsAudioCache =
+
+function getQuestionAudio(text) {
+
+  const normalized =
+    normalizeQuestion(text);
+
+
+  const match =
+    QUESTION_AUDIO.find(
+      (item) =>
+        normalizeQuestion(item.text) ===
+        normalized
+    );
+
+
+  return match
+    ? match.audio
+    : null;
+}
+
+
+// ==========================================
+// STOP CURRENT AUDIO
+// ==========================================
+
+function stopCurrentAudio() {
+
+  if (!currentAudio) {
+    return;
+  }
+
+
+  currentAudio.pause();
+
+  currentAudio.currentTime =
+    0;
+
+  currentAudio =
+    null;
+
+}
+
+
+// ==========================================
+// PLAY SAVED QUESTION AUDIO
+// ==========================================
+//
+// NO ElevenLabs API.
+// Plays our MP3 directly.
+
+async function speakQuestion(text) {
+
+  try {
+
+    const audioPath =
+      getQuestionAudio(text);
+
+
+    if (!audioPath) {
+
+      console.error(
+        "Question audio not found:",
+        text
+      );
+
+      statusEl.textContent =
+        "Question voice unavailable.";
+
+      return;
+    }
+
+
+    stopCurrentAudio();
+
+
+    currentAudio =
+      new Audio(audioPath);
+
+
+    currentAudio.onended =
+      () => {
+
+        currentAudio =
+          null;
+
+      };
+
+
+    currentAudio.onerror =
+      () => {
+
+        console.error(
+          "Could not load:",
+          audioPath
+        );
+
+        currentAudio =
+          null;
+
+        statusEl.textContent =
+          "Question voice unavailable.";
+
+      };
+
+
+    await currentAudio.play();
+
+
+  } catch (error) {
+
+    console.error(
+      "Question audio error:",
+      error
+    );
+
+  }
+
+}
+
+
+// ==========================================
+// DYNAMIC TTS CACHE
+// ==========================================
+//
+// Correction sentences / closing message
+// can still use ElevenLabs.
+//
+// If the exact same text is played again
+// during this browser session,
+// reuse the audio.
+
+const dynamicTTSCache =
   new Map();
 
 
 // ==========================================
-// GET TTS AUDIO
+// DYNAMIC ELEVENLABS TTS
 // ==========================================
 
-async function getTTSAudio(text) {
+async function getDynamicTTSAudio(text) {
 
   if (!text) {
     return null;
   }
 
 
-  // ----------------------------------------
-  // ALREADY GENERATED
-  // Use cached audio.
-  // No ElevenLabs request.
-  // ----------------------------------------
+  const cleanText =
+    text.trim();
 
-  if (ttsAudioCache.has(text)) {
+
+  if (
+    dynamicTTSCache.has(
+      cleanText
+    )
+  ) {
 
     console.log(
-      "Using cached voice:",
-      text
+      "Using cached dynamic voice:",
+      cleanText
     );
 
-    return ttsAudioCache.get(text);
+
+    return dynamicTTSCache.get(
+      cleanText
+    );
+
   }
 
 
-  // ----------------------------------------
-  // FIRST TIME
-  // Generate through ElevenLabs.
-  // ----------------------------------------
-
-  console.log(
-    "Generating new voice:",
-    text
-  );
-
-
   const response =
-    await fetch("/tts", {
+    await fetch(
+      "/tts",
+      {
 
-      method: "POST",
+        method:
+          "POST",
 
-      headers: {
-        "Content-Type":
-          "application/json"
-      },
+        headers: {
 
-      body: JSON.stringify({
-        text
-      })
+          "Content-Type":
+            "application/json"
 
-    });
+        },
+
+        body:
+          JSON.stringify({
+            text:
+              cleanText
+          })
+
+      }
+    );
 
 
   if (!response.ok) {
@@ -124,24 +321,28 @@ async function getTTSAudio(text) {
     await response.blob();
 
 
-  // Save the actual audio file
-  // in browser memory.
-
-  ttsAudioCache.set(
-    text,
+  dynamicTTSCache.set(
+    cleanText,
     audioBlob
   );
 
 
   return audioBlob;
+
 }
 
 
 // ==========================================
-// PLAY ELEVENLABS VOICE
+// PLAY DYNAMIC TTS
 // ==========================================
+//
+// Used ONLY for things like:
+// corrected learner sentence
+// closing message
+//
+// Tutor questions use saved MP3 instead.
 
-async function speak(text) {
+async function speakDynamic(text) {
 
   try {
 
@@ -150,22 +351,13 @@ async function speak(text) {
     }
 
 
-    // Stop previous audio
-    if (currentAudio) {
-
-      currentAudio.pause();
-
-      currentAudio.currentTime =
-        0;
-
-      currentAudio =
-        null;
-
-    }
+    stopCurrentAudio();
 
 
     const audioBlob =
-      await getTTSAudio(text);
+      await getDynamicTTSAudio(
+        text
+      );
 
 
     if (!audioBlob) {
@@ -180,7 +372,9 @@ async function speak(text) {
 
 
     currentAudio =
-      new Audio(audioUrl);
+      new Audio(
+        audioUrl
+      );
 
 
     currentAudio.onended =
@@ -206,9 +400,6 @@ async function speak(text) {
         currentAudio =
           null;
 
-        statusEl.textContent =
-          "Voice is unavailable right now.";
-
       };
 
 
@@ -218,9 +409,10 @@ async function speak(text) {
   } catch (error) {
 
     console.error(
-      "Speak error:",
+      "Dynamic voice error:",
       error
     );
+
 
     statusEl.textContent =
       "Voice is unavailable right now.";
@@ -243,7 +435,8 @@ async function transcribeAudio(
       "/transcribe",
       {
 
-        method: "POST",
+        method:
+          "POST",
 
         headers: {
 
@@ -292,7 +485,8 @@ async function getAICorrection(
       "/correct",
       {
 
-        method: "POST",
+        method:
+          "POST",
 
         headers: {
 
@@ -339,7 +533,7 @@ async function getAICorrection(
 
 
 // ==========================================
-// SAVE TURN
+// SAVE CURRENT TURN
 // ==========================================
 
 function saveCurrentTurn(
@@ -431,7 +625,7 @@ async function showFeedback(
 
 
     // ======================================
-    // ANSWER NOT RELEVANT
+    // ANSWER DOESN'T MATCH QUESTION
     // ======================================
 
     if (
@@ -507,7 +701,7 @@ async function showFeedback(
 
 
     // ======================================
-    // RELEVANT + CORRECTION
+    // RELEVANT + CORRECTION NEEDED
     // ======================================
 
     if (
@@ -605,7 +799,9 @@ async function showFeedback(
         : "Nice! Your answer works well.";
 
 
-    if (isRetrying) {
+    if (
+      isRetrying
+    ) {
 
       saveCurrentTurn(
         transcript,
@@ -616,7 +812,9 @@ async function showFeedback(
       isRetrying =
         false;
 
-    } else {
+    }
+
+    else {
 
       saveCurrentTurn(
 
@@ -700,19 +898,23 @@ async function startRecording() {
       "none";
 
 
-    audioChunks = [];
+    audioChunks =
+      [];
 
 
     mediaStream =
-      await navigator.mediaDevices
+      await navigator
+        .mediaDevices
         .getUserMedia({
 
-          audio: true
+          audio:
+            true
 
         });
 
 
-    let options = {};
+    let options =
+      {};
 
 
     if (
@@ -774,8 +976,7 @@ async function startRecording() {
       );
 
 
-    mediaRecorder
-      .ondataavailable =
+    mediaRecorder.ondataavailable =
       (event) => {
 
         if (
@@ -872,7 +1073,9 @@ function stopRecording() {
   mediaRecorder.stop();
 
 
-  if (mediaStream) {
+  if (
+    mediaStream
+  ) {
 
     mediaStream
       .getTracks()
@@ -980,18 +1183,22 @@ async function handleRecordingFinished() {
 
 
 // ==========================================
-// MIC
+// MIC BUTTON
 // ==========================================
 
 micBtn.addEventListener(
   "click",
   () => {
 
-    if (isRecording) {
+    if (
+      isRecording
+    ) {
 
       stopRecording();
 
-    } else {
+    }
+
+    else {
 
       startRecording();
 
@@ -1002,8 +1209,12 @@ micBtn.addEventListener(
 
 
 // ==========================================
-// LISTEN QUESTION
+// LISTEN TO QUESTION
 // ==========================================
+//
+// IMPORTANT:
+// Plays saved MP3.
+// NO ElevenLabs TTS.
 
 listenBtn.addEventListener(
   "click",
@@ -1021,7 +1232,7 @@ listenBtn.addEventListener(
       "Loading…";
 
 
-    await speak(
+    await speakQuestion(
       currentQuestion
     );
 
@@ -1038,8 +1249,11 @@ listenBtn.addEventListener(
 
 
 // ==========================================
-// LISTEN CORRECTION
+// LISTEN TO CORRECTION
 // ==========================================
+//
+// Correction sentence is personalized,
+// so this still uses ElevenLabs.
 
 hearCorrectionBtn.addEventListener(
   "click",
@@ -1066,7 +1280,7 @@ hearCorrectionBtn.addEventListener(
       "Loading…";
 
 
-    await speak(
+    await speakDynamic(
       lastCorrected
     );
 
@@ -1146,7 +1360,8 @@ async function showCompleteScreen() {
 
   window.scrollTo({
 
-    top: 0,
+    top:
+      0,
 
     behavior:
       "smooth"
@@ -1154,11 +1369,13 @@ async function showCompleteScreen() {
   });
 
 
+  // Closing message is dynamic for now,
+  // so ElevenLabs may still be used here.
   if (
     closingMessage
   ) {
 
-    await speak(
+    await speakDynamic(
       closingMessage
     );
 
@@ -1194,6 +1411,10 @@ continueBtn.addEventListener(
     }
 
 
+    // ======================================
+    // FINISH
+    // ======================================
+
     if (
       turn >= 5
     ) {
@@ -1205,7 +1426,12 @@ continueBtn.addEventListener(
     }
 
 
-    turn += 1;
+    // ======================================
+    // NEXT QUESTION
+    // ======================================
+
+    turn +=
+      1;
 
 
     turnEl.textContent =
@@ -1214,7 +1440,7 @@ continueBtn.addEventListener(
 
     currentQuestion =
       nextQuestion ||
-      "Tell me a little more about your weekend.";
+      "Tell me more about it.";
 
 
     questionEl.textContent =
@@ -1241,10 +1467,10 @@ continueBtn.addEventListener(
       false;
 
 
-    // First play generates it.
-    // Any Listen clicks afterward
-    // reuse the cached audio.
-    await speak(
+    // IMPORTANT:
+    // Play our saved MP3.
+    // Not ElevenLabs API.
+    await speakQuestion(
       currentQuestion
     );
 
@@ -1260,16 +1486,7 @@ practiceAgainBtn.addEventListener(
   "click",
   () => {
 
-    if (
-      currentAudio
-    ) {
-
-      currentAudio.pause();
-
-      currentAudio =
-        null;
-
-    }
+    stopCurrentAudio();
 
 
     turn =
@@ -1379,7 +1596,8 @@ practiceAgainBtn.addEventListener(
 
     window.scrollTo({
 
-      top: 0,
+      top:
+        0,
 
       behavior:
         "smooth"
