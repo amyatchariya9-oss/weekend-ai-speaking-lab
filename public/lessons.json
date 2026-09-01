@@ -111,5 +111,24 @@
       { "id": "q9", "text": "Is there anything you're looking forward to?", "audio": "/audio/small-talk/q9.mp3" },
       { "id": "q10", "text": "Anyway, what are you up to this weekend?", "audio": "/audio/small-talk/q10.mp3" }
     ]
+  },
+
+  "food-eating-out": {
+    "id": "food-eating-out",
+    "title": "Lesson 07 · Food & Eating Out",
+    "turns": 5,
+    "openingQuestion": "What did you eat today?",
+    "questions": [
+      { "id": "q1", "text": "What did you eat today?", "audio": "/audio/food-eating-out/q1.mp3" },
+      { "id": "q2", "text": "Was it good?", "audio": "/audio/food-eating-out/q2.mp3" },
+      { "id": "q3", "text": "What do you usually eat for lunch?", "audio": "/audio/food-eating-out/q3.mp3" },
+      { "id": "q4", "text": "Do you cook much?", "audio": "/audio/food-eating-out/q4.mp3" },
+      { "id": "q5", "text": "What's something you're really good at cooking?", "audio": "/audio/food-eating-out/q5.mp3" },
+      { "id": "q6", "text": "Do you eat out a lot?", "audio": "/audio/food-eating-out/q6.mp3" },
+      { "id": "q7", "text": "What kind of places do you usually go to?", "audio": "/audio/food-eating-out/q7.mp3" },
+      { "id": "q8", "text": "Have you tried any good food lately?", "audio": "/audio/food-eating-out/q8.mp3" },
+      { "id": "q9", "text": "Is there anything you've been craving recently?", "audio": "/audio/food-eating-out/q9.mp3" },
+      { "id": "q10", "text": "If you could eat anything right now, what would you have?", "audio": "/audio/food-eating-out/q10.mp3" }
+    ]
   }
 }
