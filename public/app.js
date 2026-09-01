@@ -61,7 +61,7 @@ const whyLabel =
 
 
 // ==========================================
-// SUCCESS TEXTS
+// SUCCESS TEXT
 // ==========================================
 
 const FIRST_TRY_SUCCESS = [
@@ -83,8 +83,7 @@ let lastSuccessText =
 
 
 // ==========================================
-// CLEAN DING 🔔
-// STATIC MP3 = FREE TO PLAY
+// CORRECT ANSWER DING 🔔
 // ==========================================
 
 const successDing =
@@ -106,7 +105,29 @@ let successDingUnlocked =
 
 
 // ==========================================
-// UNLOCK DING FOR iPHONE
+// FINISH CELEBRATION SOUND 🎉
+// ==========================================
+
+const finishSound =
+  new Audio(
+    "/audio/weekend/effects/finish-cheer.mp3"
+  );
+
+
+finishSound.preload =
+  "auto";
+
+
+finishSound.volume =
+  0.8;
+
+
+let finishSoundUnlocked =
+  false;
+
+
+// ==========================================
+// UNLOCK AUDIO FOR MOBILE
 // ==========================================
 
 async function unlockSuccessDing() {
@@ -114,9 +135,7 @@ async function unlockSuccessDing() {
   if (
     successDingUnlocked
   ) {
-
     return;
-
   }
 
 
@@ -151,7 +170,55 @@ async function unlockSuccessDing() {
   } catch (error) {
 
     console.log(
-      "Ding waiting for another user tap."
+      "Success ding waiting for user interaction."
+    );
+
+  }
+
+}
+
+
+async function unlockFinishSound() {
+
+  if (
+    finishSoundUnlocked
+  ) {
+    return;
+  }
+
+
+  try {
+
+    const oldVolume =
+      finishSound.volume;
+
+
+    finishSound.volume =
+      0;
+
+
+    await finishSound.play();
+
+
+    finishSound.pause();
+
+
+    finishSound.currentTime =
+      0;
+
+
+    finishSound.volume =
+      oldVolume;
+
+
+    finishSoundUnlocked =
+      true;
+
+
+  } catch (error) {
+
+    console.log(
+      "Finish sound waiting for user interaction."
     );
 
   }
@@ -160,7 +227,7 @@ async function unlockSuccessDing() {
 
 
 // ==========================================
-// PLAY DING
+// PLAY SOUNDS
 // ==========================================
 
 function playSuccessDing() {
@@ -204,8 +271,52 @@ function playSuccessDing() {
 }
 
 
+function playFinishSound() {
+
+  try {
+
+    successDing.pause();
+
+
+    finishSound.pause();
+
+
+    finishSound.currentTime =
+      0;
+
+
+    finishSound.volume =
+      0.8;
+
+
+    finishSound
+      .play()
+      .catch(
+        (error) => {
+
+          console.log(
+            "Finish sound blocked:",
+            error
+          );
+
+        }
+      );
+
+
+  } catch (error) {
+
+    console.log(
+      "Finish sound error:",
+      error
+    );
+
+  }
+
+}
+
+
 // ==========================================
-// PICK SUCCESS TEXT
+// SUCCESS TEXT PICKER
 // ==========================================
 
 function pickSuccessText(
@@ -221,8 +332,7 @@ function pickSuccessText(
   let available =
     choices.filter(
       (text) =>
-        text !==
-        lastSuccessText
+        text !== lastSuccessText
     );
 
 
@@ -236,16 +346,12 @@ function pickSuccessText(
   }
 
 
-  const randomIndex =
-    Math.floor(
-      Math.random() *
-      available.length
-    );
-
-
   const selected =
     available[
-      randomIndex
+      Math.floor(
+        Math.random() *
+        available.length
+      )
     ];
 
 
@@ -254,6 +360,362 @@ function pickSuccessText(
 
 
   return selected;
+
+}
+
+
+// ==========================================
+// CONFETTI 🎊
+// ==========================================
+
+function launchConfetti() {
+
+  const colors = [
+    "#FF6B6B",
+    "#FFD93D",
+    "#6BCB77",
+    "#4D96FF",
+    "#B983FF",
+    "#FF8FAB",
+    "#56CFE1",
+    "#FF9F1C"
+  ];
+
+
+  const container =
+    document.createElement(
+      "div"
+    );
+
+
+  Object.assign(
+    container.style,
+    {
+      position:
+        "fixed",
+
+      inset:
+        "0",
+
+      overflow:
+        "hidden",
+
+      pointerEvents:
+        "none",
+
+      zIndex:
+        "99999"
+    }
+  );
+
+
+  document.body.appendChild(
+    container
+  );
+
+
+  // ========================================
+  // CREATE ONE CONFETTI PIECE
+  // ========================================
+
+  function createPiece(
+    originX,
+    originY,
+    direction
+  ) {
+
+    const piece =
+      document.createElement(
+        "div"
+      );
+
+
+    const width =
+      5 +
+      Math.random() * 8;
+
+
+    const height =
+      8 +
+      Math.random() * 12;
+
+
+    const color =
+      colors[
+        Math.floor(
+          Math.random() *
+          colors.length
+        )
+      ];
+
+
+    Object.assign(
+      piece.style,
+      {
+        position:
+          "absolute",
+
+        left:
+          `${originX}px`,
+
+        top:
+          `${originY}px`,
+
+        width:
+          `${width}px`,
+
+        height:
+          `${height}px`,
+
+        background:
+          color,
+
+        borderRadius:
+          Math.random() >
+          0.65
+            ? "50%"
+            : "2px",
+
+        opacity:
+          "1",
+
+        willChange:
+          "transform, opacity"
+      }
+    );
+
+
+    container.appendChild(
+      piece
+    );
+
+
+    let xMovement;
+
+
+    if (
+      direction === "left"
+    ) {
+
+      xMovement =
+        100 +
+        Math.random() * 400;
+
+    }
+
+    else if (
+      direction === "right"
+    ) {
+
+      xMovement =
+        -100 -
+        Math.random() * 400;
+
+    }
+
+    else {
+
+      xMovement =
+        -300 +
+        Math.random() * 600;
+
+    }
+
+
+    const upMovement =
+      220 +
+      Math.random() * 420;
+
+
+    const fallMovement =
+      window.innerHeight +
+      150;
+
+
+    const rotation =
+      -900 +
+      Math.random() * 1800;
+
+
+    const duration =
+      1800 +
+      Math.random() * 1600;
+
+
+    piece.animate(
+      [
+        {
+          transform:
+            "translate3d(0, 0, 0) rotate(0deg)",
+
+          opacity:
+            1
+        },
+
+        {
+          transform:
+            `translate3d(${xMovement * 0.6}px, -${upMovement}px, 0) rotate(${rotation * 0.5}deg)`,
+
+          opacity:
+            1,
+
+          offset:
+            0.35
+        },
+
+        {
+          transform:
+            `translate3d(${xMovement}px, ${fallMovement}px, 0) rotate(${rotation}deg)`,
+
+          opacity:
+            0.85
+        }
+      ],
+
+      {
+        duration,
+
+        easing:
+          "cubic-bezier(0.18, 0.75, 0.25, 1)",
+
+        fill:
+          "forwards"
+      }
+    );
+
+  }
+
+
+  // ========================================
+  // LEFT CANNON
+  // ========================================
+
+  for (
+    let i = 0;
+    i < 35;
+    i++
+  ) {
+
+    setTimeout(
+      () => {
+
+        createPiece(
+          20,
+          window.innerHeight -
+            40,
+          "left"
+        );
+
+      },
+
+      Math.random() *
+        180
+    );
+
+  }
+
+
+  // ========================================
+  // RIGHT CANNON
+  // ========================================
+
+  for (
+    let i = 0;
+    i < 35;
+    i++
+  ) {
+
+    setTimeout(
+      () => {
+
+        createPiece(
+          window.innerWidth -
+            20,
+
+          window.innerHeight -
+            40,
+
+          "right"
+        );
+
+      },
+
+      Math.random() *
+        180
+    );
+
+  }
+
+
+  // ========================================
+  // CENTER BURST
+  // ========================================
+
+  for (
+    let i = 0;
+    i < 30;
+    i++
+  ) {
+
+    setTimeout(
+      () => {
+
+        createPiece(
+          window.innerWidth /
+            2,
+
+          window.innerHeight *
+            0.65,
+
+          "center"
+        );
+
+      },
+
+      120 +
+      Math.random() *
+        220
+    );
+
+  }
+
+
+  // Remove DOM after animation
+  setTimeout(
+    () => {
+
+      container.remove();
+
+    },
+
+    4200
+  );
+
+}
+
+
+// ==========================================
+// CELEBRATION
+// ==========================================
+
+function celebrateCompletion() {
+
+  playFinishSound();
+
+
+  launchConfetti();
+
+
+  // Second smaller burst
+  setTimeout(
+    () => {
+
+      launchConfetti();
+
+    },
+
+    380
+  );
 
 }
 
@@ -447,8 +909,7 @@ function getQuestionAudio(
 
 
 // ==========================================
-// FEEDBACK LAYOUT
-// WRONG ANSWER
+// WRONG ANSWER LAYOUT
 // ==========================================
 
 function showCorrectionLayout() {
@@ -481,8 +942,7 @@ function showCorrectionLayout() {
     "1 / -1";
 
 
-  // Wrong answer:
-  // learner MUST retry
+  // Cannot skip correction
   continueBtn.style.display =
     "none";
 
@@ -490,8 +950,7 @@ function showCorrectionLayout() {
 
 
 // ==========================================
-// FEEDBACK LAYOUT
-// CORRECT ANSWER
+// CORRECT ANSWER LAYOUT
 // ==========================================
 
 function showSuccessLayout() {
@@ -527,7 +986,7 @@ function showSuccessLayout() {
 
 
 // ==========================================
-// WORD HELPERS
+// WORD DIFF
 // ==========================================
 
 function normalizeWord(
@@ -567,10 +1026,6 @@ function createWordSpan(
 
 }
 
-
-// ==========================================
-// CORRECTION DIFF
-// ==========================================
 
 function renderCorrectionDiff(
   originalText,
@@ -639,10 +1094,12 @@ function renderCorrectionDiff(
       ) {
 
         dp[i][j] =
-          dp[i + 1][j + 1] + 1;
+          dp[i + 1][j + 1] +
+          1;
 
+      }
 
-      } else {
+      else {
 
         dp[i][j] =
           Math.max(
@@ -684,13 +1141,11 @@ function renderCorrectionDiff(
     ) {
 
       operations.push({
-
         type:
           "same",
 
         text:
           correctedWords[j]
-
       });
 
 
@@ -709,29 +1164,26 @@ function renderCorrectionDiff(
     ) {
 
       operations.push({
-
         type:
           "removed",
 
         text:
           originalWords[i]
-
       });
 
 
       i++;
 
+    }
 
-    } else {
+    else {
 
       operations.push({
-
         type:
           "added",
 
         text:
           correctedWords[j]
-
       });
 
 
@@ -747,13 +1199,11 @@ function renderCorrectionDiff(
   ) {
 
     operations.push({
-
       type:
         "removed",
 
       text:
         originalWords[i]
-
     });
 
 
@@ -767,13 +1217,11 @@ function renderCorrectionDiff(
   ) {
 
     operations.push({
-
       type:
         "added",
 
       text:
         correctedWords[j]
-
     });
 
 
@@ -824,7 +1272,8 @@ function renderCorrectionDiff(
 
       if (
         index <
-        operations.length - 1
+        operations.length -
+          1
       ) {
 
         better.appendChild(
@@ -850,9 +1299,7 @@ function stopCurrentAudio() {
   if (
     !currentAudio
   ) {
-
     return;
-
   }
 
 
@@ -977,8 +1424,9 @@ function updateProgress() {
           "active"
         );
 
+      }
 
-      } else {
+      else {
 
         step.classList.remove(
           "active"
@@ -1008,21 +1456,17 @@ async function transcribeAudio(
     await fetch(
       "/transcribe",
       {
-
         method:
           "POST",
 
         headers: {
-
           "Content-Type":
             audioBlob.type ||
             "application/octet-stream"
-
         },
 
         body:
           audioBlob
-
       }
     );
 
@@ -1063,20 +1507,16 @@ async function getAICorrection(
     await fetch(
       "/correct",
       {
-
         method:
           "POST",
 
         headers: {
-
           "Content-Type":
             "application/json"
-
         },
 
         body:
           JSON.stringify({
-
             transcript,
 
             turn,
@@ -1085,9 +1525,7 @@ async function getAICorrection(
               currentQuestion,
 
             history
-
           })
-
       }
     );
 
@@ -1123,7 +1561,6 @@ function saveCurrentTurn(
 ) {
 
   history.push({
-
     question:
       currentQuestion,
 
@@ -1132,7 +1569,6 @@ function saveCurrentTurn(
     corrected_answer:
       correctedAnswer ||
       answer
-
   });
 
 
@@ -1218,7 +1654,6 @@ async function showFeedback(
   transcript
 ) {
 
-  // Hide microphone
   speakArea.style.display =
     "none";
 
@@ -1243,7 +1678,6 @@ async function showFeedback(
     "กำลังตรวจคำตอบ…";
 
 
-  // Hide buttons while AI checks
   continueBtn.style.display =
     "none";
 
@@ -1266,7 +1700,7 @@ async function showFeedback(
 
 
     // ======================================
-    // ANSWER NOT RELEVANT
+    // IRRELEVANT
     // ======================================
 
     if (
@@ -1324,11 +1758,6 @@ async function showFeedback(
         "block";
 
 
-      tryAgainBtn.style.gridColumn =
-        "1 / -1";
-
-
-      // NO CONTINUE
       continueBtn.style.display =
         "none";
 
@@ -1350,11 +1779,9 @@ async function showFeedback(
 
 
       renderCorrectionDiff(
-
         transcript,
 
         result.corrected_sentence
-
       );
 
 
@@ -1368,14 +1795,12 @@ async function showFeedback(
 
 
       pendingAnswer = {
-
         original:
           transcript,
 
         corrected:
           result.corrected_sentence ||
           transcript
-
       };
 
 
@@ -1387,12 +1812,6 @@ async function showFeedback(
         "block";
 
 
-      tryAgainBtn.style.gridColumn =
-        "1 / -1";
-
-
-      // IMPORTANT:
-      // Wrong answer = cannot continue
       continueBtn.style.display =
         "none";
 
@@ -1423,7 +1842,6 @@ async function showFeedback(
       `${successText} ✅`;
 
 
-    // 🔔 Clean ding only
     playSuccessDing();
 
 
@@ -1496,9 +1914,11 @@ async function startRecording() {
     stopCurrentAudio();
 
 
-    // iPhone audio unlock
-    // happens only from mic tap
+    // Unlock both effects
+    // from a real user tap
     unlockSuccessDing();
+
+    unlockFinishSound();
 
 
     audioChunks =
@@ -1509,10 +1929,8 @@ async function startRecording() {
       await navigator
         .mediaDevices
         .getUserMedia({
-
           audio:
             true
-
         });
 
 
@@ -1528,10 +1946,8 @@ async function startRecording() {
     ) {
 
       options = {
-
         mimeType:
           "audio/webm;codecs=opus"
-
       };
 
     }
@@ -1544,10 +1960,8 @@ async function startRecording() {
     ) {
 
       options = {
-
         mimeType:
           "audio/webm"
-
       };
 
     }
@@ -1560,10 +1974,8 @@ async function startRecording() {
     ) {
 
       options = {
-
         mimeType:
           "audio/mp4"
-
       };
 
     }
@@ -1571,11 +1983,8 @@ async function startRecording() {
 
     mediaRecorder =
       new MediaRecorder(
-
         mediaStream,
-
         options
-
       );
 
 
@@ -1584,7 +1993,8 @@ async function startRecording() {
 
         if (
           event.data &&
-          event.data.size > 0
+          event.data.size >
+            0
         ) {
 
           audioChunks.push(
@@ -1648,9 +2058,7 @@ function stopRecording() {
     mediaRecorder.state ===
       "inactive"
   ) {
-
     return;
-
   }
 
 
@@ -1710,19 +2118,17 @@ async function handleRecordingFinished() {
 
     const audioBlob =
       new Blob(
-
         audioChunks,
-
         {
           type:
             mimeType
         }
-
       );
 
 
     if (
-      audioBlob.size < 500
+      audioBlob.size <
+      500
     ) {
 
       throw new Error(
@@ -1803,8 +2209,9 @@ micBtn.addEventListener(
 
       stopRecording();
 
+    }
 
-    } else {
+    else {
 
       startRecording();
 
@@ -1832,8 +2239,9 @@ listenBtn.addEventListener(
         currentQuestion
       );
 
+    }
 
-    } finally {
+    finally {
 
       listenBtn.disabled =
         false;
@@ -1852,7 +2260,6 @@ tryAgainBtn.addEventListener(
   "click",
   () => {
 
-    // Bring mic back
     speakArea.style.display =
       "block";
 
@@ -1860,10 +2267,6 @@ tryAgainBtn.addEventListener(
     feedback.style.display =
       "none";
 
-
-    // ======================================
-    // GRAMMAR RETRY
-    // ======================================
 
     if (
       pendingAnswer
@@ -1890,10 +2293,6 @@ tryAgainBtn.addEventListener(
     }
 
 
-    // ======================================
-    // IRRELEVANT ANSWER
-    // ======================================
-
     isRetrying =
       false;
 
@@ -1910,7 +2309,7 @@ tryAgainBtn.addEventListener(
 
 
 // ==========================================
-// COMPLETE
+// COMPLETE SCREEN 🎉
 // ==========================================
 
 function showCompleteScreen() {
@@ -1919,6 +2318,10 @@ function showCompleteScreen() {
 
 
   successDing.pause();
+
+
+  successDing.currentTime =
+    0;
 
 
   lessonCard.style.display =
@@ -1938,14 +2341,16 @@ function showCompleteScreen() {
 
 
   window.scrollTo({
-
     top:
       0,
 
     behavior:
       "smooth"
-
   });
+
+
+  // 🎉 Celebration starts here
+  celebrateCompletion();
 
 }
 
@@ -1958,15 +2363,11 @@ continueBtn.addEventListener(
   "click",
   async () => {
 
-    // Safety:
-    // cannot continue while correction
-    // is still pending.
+    // Cannot skip correction
     if (
       pendingAnswer
     ) {
-
       return;
-
     }
 
 
@@ -2052,6 +2453,13 @@ practiceAgainBtn.addEventListener(
 
 
     successDing.currentTime =
+      0;
+
+
+    finishSound.pause();
+
+
+    finishSound.currentTime =
       0;
 
 
@@ -2147,13 +2555,11 @@ practiceAgainBtn.addEventListener(
 
 
     window.scrollTo({
-
       top:
         0,
 
       behavior:
         "smooth"
-
     });
 
   }
