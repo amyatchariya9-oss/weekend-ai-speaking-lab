@@ -1,4 +1,5 @@
-const $ = (id) => document.getElementById(id);
+const $ = (id) =>
+  document.getElementById(id);
 
 
 // ==========================================
@@ -23,25 +24,73 @@ const continueBtn = $("continueBtn");
 const lessonCard = $("lessonCard");
 const completeScreen = $("completeScreen");
 
-const practiceAgainBtn = $("practiceAgain");
-const completedQuestions = $("completedQuestions");
+const practiceAgainBtn =
+  $("practiceAgain");
 
-const progressBar = $("progressBar");
+const completedQuestions =
+  $("completedQuestions");
 
-const retryView = $("retryView");
-const retrySentence = $("retrySentence");
+const progressBar =
+  $("progressBar");
+
+const retryView =
+  $("retryView");
+
+const retrySentence =
+  $("retrySentence");
 
 const speakArea =
-  document.querySelector(".speak-area");
+  document.querySelector(
+    ".speak-area"
+  );
 
 const correctionHeading =
-  document.querySelector(".correction-heading");
+  document.querySelector(
+    ".correction-heading"
+  );
 
 const whyDivider =
-  document.querySelector(".why-divider");
+  document.querySelector(
+    ".why-divider"
+  );
 
 const whyLabel =
-  document.querySelector(".why-label");
+  document.querySelector(
+    ".why-label"
+  );
+
+// Optional.
+// Later we can add id="lessonTitle"
+// inside index.html.
+const lessonTitleEl =
+  $("lessonTitle");
+
+
+// ==========================================
+// LESSON SETTINGS
+// ==========================================
+
+const DEFAULT_LESSON_ID =
+  "weekend";
+
+const urlParams =
+  new URLSearchParams(
+    window.location.search
+  );
+
+const requestedLessonId =
+  urlParams.get("lesson") ||
+  DEFAULT_LESSON_ID;
+
+
+let activeLesson = null;
+
+let lessonId =
+  requestedLessonId;
+
+let questionBank = [];
+
+let totalTurns = 5;
 
 
 // ==========================================
@@ -75,7 +124,8 @@ const successDing =
 successDing.preload = "auto";
 successDing.volume = 0.55;
 
-let successDingUnlocked = false;
+let successDingUnlocked =
+  false;
 
 
 // ==========================================
@@ -94,65 +144,15 @@ finishSound.volume = 0.75;
 // ==========================================
 // QUESTION AUDIO PLAYER 🔊
 // ==========================================
-//
-// Dedicated player.
-// It does NOT share an Audio object
-// with ding or finish sounds.
-//
 
 const questionPlayer =
   new Audio();
 
-questionPlayer.preload = "auto";
-questionPlayer.volume = 1;
+questionPlayer.preload =
+  "auto";
 
-
-// ==========================================
-// QUESTION AUDIO BANK
-// ==========================================
-
-const QUESTION_AUDIO = [
-  {
-    text: "Hey! How was your weekend?",
-    audio: "/audio/weekend/q1.mp3"
-  },
-  {
-    text: "What did you do?",
-    audio: "/audio/weekend/q2.mp3"
-  },
-  {
-    text: "Tell me more about it.",
-    audio: "/audio/weekend/q3.mp3"
-  },
-  {
-    text: "Where did you go?",
-    audio: "/audio/weekend/q4.mp3"
-  },
-  {
-    text: "Who were you with?",
-    audio: "/audio/weekend/q5.mp3"
-  },
-  {
-    text: "What happened next?",
-    audio: "/audio/weekend/q6.mp3"
-  },
-  {
-    text: "How did you feel?",
-    audio: "/audio/weekend/q7.mp3"
-  },
-  {
-    text: "What did you like about it?",
-    audio: "/audio/weekend/q8.mp3"
-  },
-  {
-    text: "What was the best part?",
-    audio: "/audio/weekend/q9.mp3"
-  },
-  {
-    text: "Would you do it again?",
-    audio: "/audio/weekend/q10.mp3"
-  }
-];
+questionPlayer.volume =
+  1;
 
 
 // ==========================================
@@ -161,14 +161,14 @@ const QUESTION_AUDIO = [
 
 let turn = 1;
 
-let currentQuestion =
-  "Hey! How was your weekend?";
+let currentQuestion = "";
 
 let nextQuestion = "";
 
 let history = [];
 
 let mediaRecorder = null;
+
 let mediaStream = null;
 
 let audioChunks = [];
@@ -181,36 +181,257 @@ let pendingAnswer = null;
 
 
 // ==========================================
-// QUESTION HELPERS
+// LOAD LESSON
 // ==========================================
 
-function normalizeQuestion(text = "") {
+async function loadLesson() {
 
-  return String(text)
-    .toLowerCase()
-    .replace(/[.,!?;:'"]/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
+  micBtn.disabled = true;
+
+  listenBtn.disabled = true;
+
+  statusEl.textContent =
+    "Loading lesson…";
+
+
+  try {
+
+    const response =
+      await fetch(
+        "/lessons.json",
+        {
+          cache: "no-store"
+        }
+      );
+
+
+    if (!response.ok) {
+
+      throw new Error(
+        "Could not load lessons.json"
+      );
+
+    }
+
+
+    const lessons =
+      await response.json();
+
+
+    let lesson =
+      lessons[requestedLessonId];
+
+
+    // If URL contains an unknown lesson,
+    // safely fall back to Weekend.
+    if (!lesson) {
+
+      console.warn(
+        `Lesson "${requestedLessonId}" not found. Using Weekend.`
+      );
+
+
+      lesson =
+        lessons[
+          DEFAULT_LESSON_ID
+        ];
+
+
+      lessonId =
+        DEFAULT_LESSON_ID;
+
+    }
+
+
+    if (!lesson) {
+
+      throw new Error(
+        "Weekend lesson not found."
+      );
+
+    }
+
+
+    if (
+      !Array.isArray(
+        lesson.questions
+      ) ||
+      lesson.questions.length === 0
+    ) {
+
+      throw new Error(
+        "Lesson has no questions."
+      );
+
+    }
+
+
+    activeLesson =
+      lesson;
+
+
+    questionBank =
+      lesson.questions;
+
+
+    totalTurns =
+      Number(
+        lesson.turns
+      ) || 5;
+
+
+    currentQuestion =
+      lesson.openingQuestion ||
+      questionBank[0].text;
+
+
+    questionEl.textContent =
+      currentQuestion;
+
+
+    if (lessonTitleEl) {
+
+      lessonTitleEl.textContent =
+        lesson.title ||
+        "Speaking Lab";
+
+    }
+
+
+    updateProgress();
+
+
+    statusEl.textContent =
+      "Tap the mic to answer";
+
+
+    micBtn.disabled = false;
+
+    listenBtn.disabled = false;
+
+
+    console.log(
+      "Lesson loaded:",
+      lessonId
+    );
+
+
+  } catch (error) {
+
+    console.error(
+      "Lesson loading error:",
+      error
+    );
+
+
+    statusEl.textContent =
+      "Could not load this lesson. Please refresh the page.";
+
+
+    micBtn.disabled = true;
+
+    listenBtn.disabled = true;
+
+  }
+
 }
 
 
-function getQuestionAudio(text) {
+// ==========================================
+// QUESTION HELPERS
+// ==========================================
+
+function normalizeQuestion(
+  text = ""
+) {
+
+  return String(text)
+    .toLowerCase()
+    .replace(
+      /[.,!?;:'"]/g,
+      ""
+    )
+    .replace(
+      /\s+/g,
+      " "
+    )
+    .trim();
+
+}
+
+
+function getQuestionAudio(
+  text
+) {
 
   const normalized =
-    normalizeQuestion(text);
+    normalizeQuestion(
+      text
+    );
 
 
   const match =
-    QUESTION_AUDIO.find(
+    questionBank.find(
       (item) =>
-        normalizeQuestion(item.text) ===
-        normalized
+
+        normalizeQuestion(
+          item.text
+        ) === normalized
     );
 
 
   return match
     ? match.audio
     : null;
+
+}
+
+
+// ==========================================
+// SAFE FALLBACK QUESTION
+// ==========================================
+
+function getFallbackQuestion() {
+
+  const usedQuestions =
+    new Set(
+      history.map(
+        (item) =>
+          normalizeQuestion(
+            item.question
+          )
+      )
+    );
+
+
+  const candidate =
+    questionBank.find(
+      (item) => {
+
+        const normalized =
+          normalizeQuestion(
+            item.text
+          );
+
+
+        return (
+          normalized !==
+            normalizeQuestion(
+              currentQuestion
+            ) &&
+          !usedQuestions.has(
+            normalized
+          )
+        );
+
+      }
+    );
+
+
+  return candidate
+    ? candidate.text
+    : currentQuestion;
+
 }
 
 
@@ -218,10 +439,14 @@ function getQuestionAudio(text) {
 // PLAY QUESTION AUDIO 🔊
 // ==========================================
 
-async function speakQuestion(text) {
+async function speakQuestion(
+  text
+) {
 
   const audioPath =
-    getQuestionAudio(text);
+    getQuestionAudio(
+      text
+    );
 
 
   if (!audioPath) {
@@ -232,23 +457,22 @@ async function speakQuestion(text) {
     );
 
     return;
+
   }
 
 
   try {
 
-    // Stop anything already playing
     questionPlayer.pause();
 
-    questionPlayer.currentTime = 0;
+    questionPlayer.currentTime =
+      0;
 
 
-    // Set exact MP3
     questionPlayer.src =
       audioPath;
 
 
-    // Force browser to load it
     questionPlayer.load();
 
 
@@ -263,6 +487,7 @@ async function speakQuestion(text) {
     );
 
   }
+
 }
 
 
@@ -272,7 +497,8 @@ function stopQuestionAudio() {
 
     questionPlayer.pause();
 
-    questionPlayer.currentTime = 0;
+    questionPlayer.currentTime =
+      0;
 
   } catch (error) {
 
@@ -282,17 +508,22 @@ function stopQuestionAudio() {
     );
 
   }
+
 }
 
 
 // ==========================================
-// UNLOCK SUCCESS DING ON MOBILE
+// UNLOCK SUCCESS DING
 // ==========================================
 
 async function unlockSuccessDing() {
 
-  if (successDingUnlocked) {
+  if (
+    successDingUnlocked
+  ) {
+
     return;
+
   }
 
 
@@ -310,7 +541,8 @@ async function unlockSuccessDing() {
 
     successDing.pause();
 
-    successDing.currentTime = 0;
+    successDing.currentTime =
+      0;
 
 
     successDing.volume =
@@ -328,6 +560,7 @@ async function unlockSuccessDing() {
     );
 
   }
+
 }
 
 
@@ -341,9 +574,11 @@ function playSuccessDing() {
 
     successDing.pause();
 
-    successDing.currentTime = 0;
+    successDing.currentTime =
+      0;
 
-    successDing.volume = 0.55;
+    successDing.volume =
+      0.55;
 
 
     successDing
@@ -368,6 +603,7 @@ function playSuccessDing() {
     );
 
   }
+
 }
 
 
@@ -381,14 +617,17 @@ function playFinishSound() {
 
     successDing.pause();
 
-    successDing.currentTime = 0;
+    successDing.currentTime =
+      0;
 
 
     finishSound.pause();
 
-    finishSound.currentTime = 0;
+    finishSound.currentTime =
+      0;
 
-    finishSound.volume = 0.75;
+    finishSound.volume =
+      0.75;
 
 
     finishSound
@@ -413,6 +652,7 @@ function playFinishSound() {
     );
 
   }
+
 }
 
 
@@ -420,7 +660,9 @@ function playFinishSound() {
 // SUCCESS TEXT PICKER
 // ==========================================
 
-function pickSuccessText(wasRetry) {
+function pickSuccessText(
+  wasRetry
+) {
 
   const choices =
     wasRetry
@@ -435,9 +677,12 @@ function pickSuccessText(wasRetry) {
     );
 
 
-  if (available.length === 0) {
+  if (
+    available.length === 0
+  ) {
 
-    available = choices;
+    available =
+      choices;
 
   }
 
@@ -456,29 +701,32 @@ function pickSuccessText(wasRetry) {
 
 
   return selected;
+
 }
 
 
 // ==========================================
 // LUXURY CONFETTI ✨
-// FALLS FROM TOP ONLY
+// TOP-DOWN ONLY
 // ==========================================
 
 function launchConfetti() {
 
   const colors = [
-    "#D6B768", // gold
-    "#EFE1BB", // champagne
-    "#EAC4C4", // blush
-    "#D4CEE9", // lavender
-    "#C5D6CF", // sage
-    "#F7F4ED", // ivory
+    "#D6B768",
+    "#EFE1BB",
+    "#EAC4C4",
+    "#D4CEE9",
+    "#C5D6CF",
+    "#F7F4ED",
     "#FFFFFF"
   ];
 
 
   const container =
-    document.createElement("div");
+    document.createElement(
+      "div"
+    );
 
 
   Object.assign(
@@ -502,7 +750,6 @@ function launchConfetti() {
     window.innerWidth <= 600;
 
 
-  // Not too many pieces
   const totalPieces =
     isMobile
       ? 30
@@ -516,7 +763,9 @@ function launchConfetti() {
   ) {
 
     const piece =
-      document.createElement("div");
+      document.createElement(
+        "div"
+      );
 
 
     const width =
@@ -534,7 +783,6 @@ function launchConfetti() {
       window.innerWidth;
 
 
-    // Small natural movement
     const drift =
       -90 +
       Math.random() * 180;
@@ -545,13 +793,11 @@ function launchConfetti() {
       Math.random() * 720;
 
 
-    // Slow luxurious fall
     const duration =
       5200 +
       Math.random() * 2500;
 
 
-    // Pieces start at different times
     const delay =
       Math.random() * 1700;
 
@@ -671,6 +917,7 @@ function launchConfetti() {
           "forwards"
       }
     );
+
   }
 
 
@@ -683,6 +930,7 @@ function launchConfetti() {
 
     10000
   );
+
 }
 
 
@@ -694,8 +942,8 @@ function celebrateCompletion() {
 
   playFinishSound();
 
-  // Only one gentle fall
   launchConfetti();
+
 }
 
 
@@ -707,6 +955,7 @@ function showCorrectionLayout() {
 
   correctionHeading.style.display =
     "block";
+
 
   correctionHeading.textContent =
     "Better ✨";
@@ -729,9 +978,9 @@ function showCorrectionLayout() {
     "1 / -1";
 
 
-  // Wrong answer cannot continue
   continueBtn.style.display =
     "none";
+
 }
 
 
@@ -760,6 +1009,7 @@ function showSuccessLayout() {
 
   continueBtn.style.gridColumn =
     "1 / -1";
+
 }
 
 
@@ -767,7 +1017,9 @@ function showSuccessLayout() {
 // WORD DIFF
 // ==========================================
 
-function normalizeWord(word = "") {
+function normalizeWord(
+  word = ""
+) {
 
   return String(word)
     .toLowerCase()
@@ -775,6 +1027,7 @@ function normalizeWord(word = "") {
       /^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu,
       ""
     );
+
 }
 
 
@@ -784,12 +1037,21 @@ function createWordSpan(
 ) {
 
   const span =
-    document.createElement("span");
+    document.createElement(
+      "span"
+    );
 
-  span.textContent = text;
-  span.className = className;
+
+  span.textContent =
+    text;
+
+
+  span.className =
+    className;
+
 
   return span;
+
 }
 
 
@@ -818,15 +1080,20 @@ function renderCorrectionDiff(
   const m =
     originalWords.length;
 
+
   const n =
     correctedWords.length;
 
 
   const dp =
     Array.from(
-      { length: m + 1 },
+      {
+        length: m + 1
+      },
       () =>
-        Array(n + 1).fill(0)
+        Array(
+          n + 1
+        ).fill(0)
     );
 
 
@@ -852,9 +1119,12 @@ function renderCorrectionDiff(
       ) {
 
         dp[i][j] =
-          dp[i + 1][j + 1] + 1;
+          dp[i + 1][j + 1] +
+          1;
 
-      } else {
+      }
+
+      else {
 
         dp[i][j] =
           Math.max(
@@ -863,13 +1133,17 @@ function renderCorrectionDiff(
           );
 
       }
+
     }
+
   }
 
 
   const operations = [];
 
+
   let i = 0;
+
   let j = 0;
 
 
@@ -889,13 +1163,17 @@ function renderCorrectionDiff(
 
       operations.push({
         type: "same",
-        text: correctedWords[j]
+        text:
+          correctedWords[j]
       });
+
 
       i++;
       j++;
 
+
       continue;
+
     }
 
 
@@ -906,21 +1184,28 @@ function renderCorrectionDiff(
 
       operations.push({
         type: "removed",
-        text: originalWords[i]
+        text:
+          originalWords[i]
       });
+
 
       i++;
 
-    } else {
+    }
+
+    else {
 
       operations.push({
         type: "added",
-        text: correctedWords[j]
+        text:
+          correctedWords[j]
       });
+
 
       j++;
 
     }
+
   }
 
 
@@ -928,10 +1213,13 @@ function renderCorrectionDiff(
 
     operations.push({
       type: "removed",
-      text: originalWords[i]
+      text:
+        originalWords[i]
     });
 
+
     i++;
+
   }
 
 
@@ -939,22 +1227,29 @@ function renderCorrectionDiff(
 
     operations.push({
       type: "added",
-      text: correctedWords[j]
+      text:
+        correctedWords[j]
     });
 
+
     j++;
+
   }
 
 
   operations.forEach(
-    (operation, index) => {
+    (
+      operation,
+      index
+    ) => {
 
       let className =
         "word-normal";
 
 
       if (
-        operation.type === "removed"
+        operation.type ===
+        "removed"
       ) {
 
         className =
@@ -964,7 +1259,8 @@ function renderCorrectionDiff(
 
 
       if (
-        operation.type === "added"
+        operation.type ===
+        "added"
       ) {
 
         className =
@@ -987,12 +1283,16 @@ function renderCorrectionDiff(
       ) {
 
         better.appendChild(
-          document.createTextNode(" ")
+          document.createTextNode(
+            " "
+          )
         );
 
       }
+
     }
   );
+
 }
 
 
@@ -1017,25 +1317,31 @@ function updateProgress() {
         );
 
 
-      if (number === turn) {
+      if (
+        number === turn
+      ) {
 
         step.classList.add(
           "active"
         );
 
-      } else {
+      }
+
+      else {
 
         step.classList.remove(
           "active"
         );
 
       }
+
     }
   );
 
 
   turnEl.textContent =
     String(turn);
+
 }
 
 
@@ -1059,7 +1365,8 @@ async function transcribeAudio(
             "application/octet-stream"
         },
 
-        body: audioBlob
+        body:
+          audioBlob
       }
     );
 
@@ -1074,15 +1381,20 @@ async function transcribeAudio(
       data?.error ||
       "Could not transcribe audio"
     );
+
   }
 
 
-  return data.transcript || "";
+  return (
+    data.transcript ||
+    ""
+  );
+
 }
 
 
 // ==========================================
-// GEMINI CORRECTION
+// AI CORRECTION
 // ==========================================
 
 async function getAICorrection(
@@ -1102,6 +1414,9 @@ async function getAICorrection(
 
         body:
           JSON.stringify({
+            lesson_id:
+              lessonId,
+
             transcript,
 
             turn,
@@ -1125,10 +1440,12 @@ async function getAICorrection(
       data?.error ||
       "Could not check answer"
     );
+
   }
 
 
   return data;
+
 }
 
 
@@ -1154,6 +1471,7 @@ function saveCurrentTurn(
 
 
   pendingAnswer = null;
+
 }
 
 
@@ -1180,6 +1498,7 @@ function resetFeedbackUI() {
 
   correctionHeading.style.display =
     "block";
+
 
   correctionHeading.textContent =
     "Better ✨";
@@ -1210,6 +1529,7 @@ function resetFeedbackUI() {
 
   continueBtn.disabled =
     false;
+
 }
 
 
@@ -1271,7 +1591,8 @@ async function showFeedback(
     // ======================================
 
     if (
-      result.answer_relevant === false
+      result.answer_relevant ===
+      false
     ) {
 
       showCorrectionLayout();
@@ -1326,11 +1647,12 @@ async function showFeedback(
 
 
       return;
+
     }
 
 
     // ======================================
-    // NEEDS CORRECTION
+    // CORRECTION NEEDED
     // ======================================
 
     if (
@@ -1378,6 +1700,7 @@ async function showFeedback(
 
 
       return;
+
     }
 
 
@@ -1415,13 +1738,14 @@ async function showFeedback(
 
 
     continueBtn.textContent =
-      turn >= 5
+      turn >= totalTurns
         ? "Finish →"
         : "Continue →";
 
 
     continueBtn.style.display =
       "block";
+
 
     continueBtn.disabled =
       false;
@@ -1456,7 +1780,9 @@ async function showFeedback(
 
     continueBtn.style.display =
       "none";
+
   }
+
 }
 
 
@@ -1465,6 +1791,13 @@ async function showFeedback(
 // ==========================================
 
 async function startRecording() {
+
+  if (!activeLesson) {
+
+    return;
+
+  }
+
 
   try {
 
@@ -1489,9 +1822,10 @@ async function startRecording() {
 
 
     if (
-      MediaRecorder.isTypeSupported(
-        "audio/webm;codecs=opus"
-      )
+      MediaRecorder
+        .isTypeSupported(
+          "audio/webm;codecs=opus"
+        )
     ) {
 
       options = {
@@ -1502,9 +1836,10 @@ async function startRecording() {
     }
 
     else if (
-      MediaRecorder.isTypeSupported(
-        "audio/webm"
-      )
+      MediaRecorder
+        .isTypeSupported(
+          "audio/webm"
+        )
     ) {
 
       options = {
@@ -1515,15 +1850,17 @@ async function startRecording() {
     }
 
     else if (
-      MediaRecorder.isTypeSupported(
-        "audio/mp4"
-      )
+      MediaRecorder
+        .isTypeSupported(
+          "audio/mp4"
+        )
     ) {
 
       options = {
         mimeType:
           "audio/mp4"
       };
+
     }
 
 
@@ -1547,6 +1884,7 @@ async function startRecording() {
           );
 
         }
+
       };
 
 
@@ -1565,7 +1903,8 @@ async function startRecording() {
     );
 
 
-    micBtn.textContent = "■";
+    micBtn.textContent =
+      "■";
 
 
     statusEl.textContent =
@@ -1590,15 +1929,19 @@ async function startRecording() {
     );
 
 
-    micBtn.textContent = "🎙";
+    micBtn.textContent =
+      "🎙";
 
 
-    micBtn.disabled = false;
+    micBtn.disabled =
+      false;
 
 
     statusEl.textContent =
       "Please allow microphone access and try again.";
+
   }
+
 }
 
 
@@ -1615,6 +1958,7 @@ function stopRecording() {
   ) {
 
     return;
+
   }
 
 
@@ -1626,9 +1970,12 @@ function stopRecording() {
   );
 
 
-  micBtn.textContent = "🎙";
+  micBtn.textContent =
+    "🎙";
 
-  micBtn.disabled = true;
+
+  micBtn.disabled =
+    true;
 
 
   statusEl.textContent =
@@ -1646,7 +1993,9 @@ function stopRecording() {
         (track) =>
           track.stop()
       );
+
   }
+
 }
 
 
@@ -1680,6 +2029,7 @@ async function handleRecordingFinished() {
       throw new Error(
         "Recording too short"
       );
+
     }
 
 
@@ -1702,6 +2052,7 @@ async function handleRecordingFinished() {
 
 
       return;
+
     }
 
 
@@ -1728,10 +2079,14 @@ async function handleRecordingFinished() {
 
   } finally {
 
-    micBtn.disabled = false;
+    micBtn.disabled =
+      false;
+
 
     audioChunks = [];
+
   }
+
 }
 
 
@@ -1747,11 +2102,14 @@ micBtn.addEventListener(
 
       stopRecording();
 
-    } else {
+    }
+
+    else {
 
       startRecording();
 
     }
+
   }
 );
 
@@ -1764,6 +2122,13 @@ listenBtn.addEventListener(
   "click",
   async () => {
 
+    if (!activeLesson) {
+
+      return;
+
+    }
+
+
     listenBtn.disabled =
       true;
 
@@ -1774,12 +2139,15 @@ listenBtn.addEventListener(
         currentQuestion
       );
 
-    } finally {
+    }
+
+    finally {
 
       listenBtn.disabled =
         false;
 
     }
+
   }
 );
 
@@ -1818,6 +2186,7 @@ tryAgainBtn.addEventListener(
 
 
       return;
+
     }
 
 
@@ -1830,6 +2199,7 @@ tryAgainBtn.addEventListener(
 
     statusEl.textContent =
       "Answer the same question again.";
+
   }
 );
 
@@ -1845,7 +2215,8 @@ function showCompleteScreen() {
 
   successDing.pause();
 
-  successDing.currentTime = 0;
+  successDing.currentTime =
+    0;
 
 
   lessonCard.style.display =
@@ -1861,7 +2232,9 @@ function showCompleteScreen() {
 
 
   completedQuestions.textContent =
-    "5";
+    String(
+      totalTurns
+    );
 
 
   window.scrollTo({
@@ -1871,6 +2244,7 @@ function showCompleteScreen() {
 
 
   celebrateCompletion();
+
 }
 
 
@@ -1882,25 +2256,37 @@ continueBtn.addEventListener(
   "click",
   async () => {
 
-    // Cannot skip correction
     if (pendingAnswer) {
 
       return;
+
     }
 
 
-    if (turn >= 5) {
+    // ======================================
+    // FINISH
+    // ======================================
+
+    if (
+      turn >= totalTurns
+    ) {
 
       showCompleteScreen();
 
       return;
+
     }
 
 
     successDing.pause();
 
-    successDing.currentTime = 0;
+    successDing.currentTime =
+      0;
 
+
+    // ======================================
+    // NEXT TURN
+    // ======================================
 
     turn += 1;
 
@@ -1910,7 +2296,7 @@ continueBtn.addEventListener(
 
     currentQuestion =
       nextQuestion ||
-      "Tell me more about it.";
+      getFallbackQuestion();
 
 
     questionEl.textContent =
@@ -1935,12 +2321,10 @@ continueBtn.addEventListener(
       "Tap the mic to answer";
 
 
-    // Automatically play next question.
-    // If a phone blocks autoplay,
-    // learner can still tap Listen.
     await speakQuestion(
       currentQuestion
     );
+
   }
 );
 
@@ -1953,35 +2337,49 @@ practiceAgainBtn.addEventListener(
   "click",
   () => {
 
+    if (!activeLesson) {
+
+      return;
+
+    }
+
+
     stopQuestionAudio();
 
 
     successDing.pause();
 
-    successDing.currentTime = 0;
+    successDing.currentTime =
+      0;
 
 
     finishSound.pause();
 
-    finishSound.currentTime = 0;
+    finishSound.currentTime =
+      0;
 
 
     turn = 1;
 
 
     currentQuestion =
-      "Hey! How was your weekend?";
+      activeLesson.openingQuestion ||
+      questionBank[0].text;
 
 
     nextQuestion = "";
 
+
     history = [];
 
+
     pendingAnswer = null;
+
 
     isRetrying = false;
 
     isRecording = false;
+
 
     lastSuccessText = "";
 
@@ -2049,6 +2447,7 @@ practiceAgainBtn.addEventListener(
       top: 0,
       behavior: "smooth"
     });
+
   }
 );
 
@@ -2057,4 +2456,4 @@ practiceAgainBtn.addEventListener(
 // INITIAL
 // ==========================================
 
-updateProgress();
+loadLesson();
