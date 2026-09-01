@@ -29,6 +29,14 @@ let history = [];
 
 let currentAudio = null;
 
+// false = normal answer to tutor question
+// true = learner is retrying the same answer/correction
+let isRetrying = false;
+
+// Store the original answer for the current turn.
+// We only save ONE final version to history.
+let pendingAnswer = null;
+
 
 // ==========================================
 // ELEVENLABS TTS
@@ -157,6 +165,22 @@ async function getAICorrection(transcript) {
 
 
 // ==========================================
+// SAVE ANSWER ONCE
+// ==========================================
+
+function saveCurrentTurn(answer, correctedAnswer) {
+  history.push({
+    question: currentQuestion,
+    answer,
+    corrected_answer:
+      correctedAnswer || answer
+  });
+
+  pendingAnswer = null;
+}
+
+
+// ==========================================
 // SHOW FEEDBACK
 // ==========================================
 
@@ -203,7 +227,8 @@ async function showFeedback(transcript) {
 
 
     // ======================================
-    // ANSWER DOES NOT MATCH THE QUESTION
+    // NOT RELEVANT
+    // Must answer SAME question again
     // ======================================
 
     if (result.answer_relevant === false) {
@@ -238,6 +263,10 @@ async function showFeedback(transcript) {
       tryAgainBtn.style.fontWeight =
         "700";
 
+      // Do not save anything
+      pendingAnswer = null;
+      isRetrying = false;
+
       feedback.scrollIntoView({
         behavior: "smooth",
         block: "nearest"
@@ -264,43 +293,81 @@ async function showFeedback(transcript) {
         "normal";
 
       statusEl.textContent =
-        "Good answer! Just one small fix ✨";
+        "Good answer! Try the corrected version ✨";
 
+      // Keep this answer waiting.
+      // We won't save it yet if learner wants to retry.
+      pendingAnswer = {
+        original: transcript,
+        corrected:
+          result.corrected_sentence || transcript
+      };
+
+      tryAgainBtn.textContent =
+        "🎙️ Try again";
+
+      tryAgainBtn.style.fontWeight =
+        "700";
+
+      continueBtn.style.display =
+        "block";
+
+      continueBtn.textContent =
+        turn >= 5
+          ? "Finish →"
+          : "Continue →";
+
+      continueBtn.disabled =
+        false;
+
+      feedback.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest"
+      });
+
+      return;
     }
+
 
     // ======================================
     // RELEVANT + CORRECT
     // ======================================
 
-    else {
+    better.textContent =
+      "Sounds good! ✅";
 
-      better.textContent =
-        "Sounds good! ✅";
+    why.textContent =
+      isRetrying
+        ? "ดีมากค่ะ รอบนี้ประโยคฟังเป็นธรรมชาติแล้ว"
+        : "ประโยคนี้เป็นธรรมชาติและตอบคำถามได้ดีค่ะ";
 
-      why.textContent =
-        "ประโยคนี้เป็นธรรมชาติและตอบคำถามได้ดีค่ะ";
+    why.style.whiteSpace =
+      "normal";
 
-      why.style.whiteSpace =
-        "normal";
-
-      statusEl.textContent =
-        "Nice! Your answer works well.";
-    }
+    statusEl.textContent =
+      isRetrying
+        ? "Nice! That sounds better."
+        : "Nice! Your answer works well.";
 
 
-    // SAVE ONLY RELEVANT ANSWERS
+    // If this was a retry, save ONLY this corrected retry
+    if (isRetrying) {
 
-    history.push({
-      question:
-        currentQuestion,
-
-      answer:
+      saveCurrentTurn(
         transcript,
-
-      corrected_answer:
-        result.corrected_sentence ||
         transcript
-    });
+      );
+
+      isRetrying = false;
+
+    } else {
+
+      saveCurrentTurn(
+        transcript,
+        result.corrected_sentence ||
+          transcript
+      );
+    }
 
 
     tryAgainBtn.textContent =
@@ -319,6 +386,7 @@ async function showFeedback(transcript) {
 
     continueBtn.disabled =
       false;
+
 
   } catch (error) {
 
@@ -439,7 +507,9 @@ async function startRecording() {
       "⏹️";
 
     statusEl.textContent =
-      "Listening… take your time.";
+      isRetrying
+        ? "Try the sentence again. Take your time."
+        : "Listening… take your time.";
 
   } catch (error) {
 
@@ -669,11 +739,31 @@ tryAgainBtn.addEventListener(
   "click",
   () => {
 
+    // If we have a meaningful correction,
+    // this becomes correction practice.
+    if (pendingAnswer) {
+
+      isRetrying = true;
+
+      feedback.style.display =
+        "none";
+
+      statusEl.textContent =
+        "Now say the corrected sentence in your own voice.";
+
+      return;
+    }
+
+
+    // Otherwise just answer
+    // the same question again.
+    isRetrying = false;
+
     feedback.style.display =
       "none";
 
     statusEl.textContent =
-      "Your turn — answer the same question again.";
+      "Answer the same question again when you're ready.";
 
   }
 );
@@ -686,6 +776,19 @@ tryAgainBtn.addEventListener(
 continueBtn.addEventListener(
   "click",
   async () => {
+
+    // If learner had a correction but chose
+    // Continue instead of retrying,
+    // save the original turn once.
+    if (pendingAnswer) {
+
+      saveCurrentTurn(
+        pendingAnswer.original,
+        pendingAnswer.corrected
+      );
+
+      isRetrying = false;
+    }
 
 
     if (turn >= 5) {
