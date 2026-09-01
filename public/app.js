@@ -1,4 +1,5 @@
-const $ = (id) => document.getElementById(id);
+const $ = (id) =>
+  document.getElementById(id);
 
 
 // ==========================================
@@ -23,175 +24,237 @@ const continueBtn = $("continueBtn");
 const lessonCard = $("lessonCard");
 const completeScreen = $("completeScreen");
 
-const practiceAgainBtn = $("practiceAgain");
-const completedQuestions = $("completedQuestions");
+const practiceAgainBtn =
+  $("practiceAgain");
 
-const progressBar = $("progressBar");
+const completedQuestions =
+  $("completedQuestions");
 
-const retryView = $("retryView");
-const retrySentence = $("retrySentence");
+const progressBar =
+  $("progressBar");
+
+const retryView =
+  $("retryView");
+
+const retrySentence =
+  $("retrySentence");
 
 const speakArea =
-  document.querySelector(".speak-area");
+  document.querySelector(
+    ".speak-area"
+  );
 
 const correctionHeading =
-  document.querySelector(".correction-heading");
+  document.querySelector(
+    ".correction-heading"
+  );
 
 const whyDivider =
-  document.querySelector(".why-divider");
+  document.querySelector(
+    ".why-divider"
+  );
 
 const whyLabel =
-  document.querySelector(".why-label");
+  document.querySelector(
+    ".why-label"
+  );
 
 
 // ==========================================
-// SUCCESS VOICE BANK
+// SUCCESS TEXTS
 // ==========================================
 
 const FIRST_TRY_SUCCESS = [
-  {
-    text: "Nice!",
-    audio: "/audio/weekend/success/nice.mp3"
-  },
-  {
-    text: "Great job!",
-    audio: "/audio/weekend/success/great-job.mp3"
-  },
-  {
-    text: "That sounds great!",
-    audio: "/audio/weekend/success/sounds-great.mp3"
-  }
+  "Nice!",
+  "Great job!",
+  "That sounds great!"
 ];
+
 
 const RETRY_SUCCESS = [
-  {
-    text: "Perfect!",
-    audio: "/audio/weekend/success/perfect.mp3"
-  },
-  {
-    text: "Well done!",
-    audio: "/audio/weekend/success/well-done.mp3"
-  },
-  {
-    text: "Much better!",
-    audio: "/audio/weekend/success/much-better.mp3"
-  }
+  "Perfect!",
+  "Well done!",
+  "Much better!"
 ];
 
-const successVoicePlayer = new Audio();
 
-successVoicePlayer.preload = "auto";
-successVoicePlayer.volume = 0.9;
-
-let successVoiceUnlocked = false;
-let lastSuccessAudio = "";
+let lastSuccessText =
+  "";
 
 
-// Preload
-[
-  ...FIRST_TRY_SUCCESS,
-  ...RETRY_SUCCESS
-].forEach((item) => {
-  const audio = new Audio(item.audio);
-  audio.preload = "auto";
-});
+// ==========================================
+// CLEAN DING 🔔
+// STATIC MP3 = FREE TO PLAY
+// ==========================================
+
+const successDing =
+  new Audio(
+    "/audio/weekend/effects/clean-ding.mp3"
+  );
 
 
-async function unlockSuccessVoice() {
+successDing.preload =
+  "auto";
 
-  if (successVoiceUnlocked) {
+
+successDing.volume =
+  0.55;
+
+
+let successDingUnlocked =
+  false;
+
+
+// ==========================================
+// UNLOCK DING FOR iPHONE
+// ==========================================
+
+async function unlockSuccessDing() {
+
+  if (
+    successDingUnlocked
+  ) {
+
     return;
+
   }
+
 
   try {
 
-    successVoicePlayer.src =
-      FIRST_TRY_SUCCESS[0].audio;
+    const oldVolume =
+      successDing.volume;
 
-    successVoicePlayer.volume = 0;
 
-    await successVoicePlayer.play();
+    successDing.volume =
+      0;
 
-    successVoicePlayer.pause();
-    successVoicePlayer.currentTime = 0;
 
-    successVoicePlayer.volume = 0.9;
+    await successDing.play();
 
-    successVoiceUnlocked = true;
+
+    successDing.pause();
+
+
+    successDing.currentTime =
+      0;
+
+
+    successDing.volume =
+      oldVolume;
+
+
+    successDingUnlocked =
+      true;
+
 
   } catch (error) {
 
     console.log(
-      "Success voice waiting for another user tap."
+      "Ding waiting for another user tap."
     );
 
   }
+
 }
 
 
-function pickRandomSuccess(choices) {
+// ==========================================
+// PLAY DING
+// ==========================================
 
-  let available =
-    choices.filter(
-      (item) =>
-        item.audio !== lastSuccessAudio
+function playSuccessDing() {
+
+  try {
+
+    successDing.pause();
+
+
+    successDing.currentTime =
+      0;
+
+
+    successDing.volume =
+      0.55;
+
+
+    successDing
+      .play()
+      .catch(
+        (error) => {
+
+          console.log(
+            "Success ding blocked:",
+            error
+          );
+
+        }
+      );
+
+
+  } catch (error) {
+
+    console.log(
+      "Success ding error:",
+      error
     );
 
-  if (available.length === 0) {
-    available = choices;
   }
 
-  const randomIndex =
-    Math.floor(
-      Math.random() * available.length
-    );
-
-  return available[randomIndex];
 }
 
 
-function playSuccessVoice(wasRetry) {
+// ==========================================
+// PICK SUCCESS TEXT
+// ==========================================
+
+function pickSuccessText(
+  wasRetry
+) {
 
   const choices =
     wasRetry
       ? RETRY_SUCCESS
       : FIRST_TRY_SUCCESS;
 
-  const selected =
-    pickRandomSuccess(choices);
 
-  lastSuccessAudio =
-    selected.audio;
-
-  try {
-
-    successVoicePlayer.pause();
-
-    successVoicePlayer.src =
-      selected.audio;
-
-    successVoicePlayer.currentTime = 0;
-    successVoicePlayer.volume = 0.9;
-
-    successVoicePlayer
-      .play()
-      .catch((error) => {
-        console.log(
-          "Success voice blocked:",
-          error
-        );
-      });
-
-  } catch (error) {
-
-    console.log(
-      "Success voice error:",
-      error
+  let available =
+    choices.filter(
+      (text) =>
+        text !==
+        lastSuccessText
     );
+
+
+  if (
+    available.length === 0
+  ) {
+
+    available =
+      choices;
 
   }
 
-  return selected.text;
+
+  const randomIndex =
+    Math.floor(
+      Math.random() *
+      available.length
+    );
+
+
+  const selected =
+    available[
+      randomIndex
+    ];
+
+
+  lastSuccessText =
+    selected;
+
+
+  return selected;
+
 }
 
 
@@ -200,46 +263,87 @@ function playSuccessVoice(wasRetry) {
 // ==========================================
 
 const QUESTION_AUDIO = [
+
   {
-    text: "Hey! How was your weekend?",
-    audio: "/audio/weekend/q1.mp3"
+    text:
+      "Hey! How was your weekend?",
+
+    audio:
+      "/audio/weekend/q1.mp3"
   },
+
   {
-    text: "What did you do?",
-    audio: "/audio/weekend/q2.mp3"
+    text:
+      "What did you do?",
+
+    audio:
+      "/audio/weekend/q2.mp3"
   },
+
   {
-    text: "Tell me more about it.",
-    audio: "/audio/weekend/q3.mp3"
+    text:
+      "Tell me more about it.",
+
+    audio:
+      "/audio/weekend/q3.mp3"
   },
+
   {
-    text: "Where did you go?",
-    audio: "/audio/weekend/q4.mp3"
+    text:
+      "Where did you go?",
+
+    audio:
+      "/audio/weekend/q4.mp3"
   },
+
   {
-    text: "Who were you with?",
-    audio: "/audio/weekend/q5.mp3"
+    text:
+      "Who were you with?",
+
+    audio:
+      "/audio/weekend/q5.mp3"
   },
+
   {
-    text: "What happened next?",
-    audio: "/audio/weekend/q6.mp3"
+    text:
+      "What happened next?",
+
+    audio:
+      "/audio/weekend/q6.mp3"
   },
+
   {
-    text: "How did you feel?",
-    audio: "/audio/weekend/q7.mp3"
+    text:
+      "How did you feel?",
+
+    audio:
+      "/audio/weekend/q7.mp3"
   },
+
   {
-    text: "What did you like about it?",
-    audio: "/audio/weekend/q8.mp3"
+    text:
+      "What did you like about it?",
+
+    audio:
+      "/audio/weekend/q8.mp3"
   },
+
   {
-    text: "What was the best part?",
-    audio: "/audio/weekend/q9.mp3"
+    text:
+      "What was the best part?",
+
+    audio:
+      "/audio/weekend/q9.mp3"
   },
+
   {
-    text: "Would you do it again?",
-    audio: "/audio/weekend/q10.mp3"
+    text:
+      "Would you do it again?",
+
+    audio:
+      "/audio/weekend/q10.mp3"
   }
+
 ];
 
 
@@ -247,60 +351,104 @@ const QUESTION_AUDIO = [
 // STATE
 // ==========================================
 
-let turn = 1;
+let turn =
+  1;
+
 
 let currentQuestion =
   "Hey! How was your weekend?";
 
-let nextQuestion = "";
 
-let history = [];
+let nextQuestion =
+  "";
 
-let mediaRecorder = null;
-let mediaStream = null;
-let audioChunks = [];
 
-let isRecording = false;
-let currentAudio = null;
+let history =
+  [];
 
-let isRetrying = false;
-let pendingAnswer = null;
+
+let mediaRecorder =
+  null;
+
+
+let mediaStream =
+  null;
+
+
+let audioChunks =
+  [];
+
+
+let isRecording =
+  false;
+
+
+let currentAudio =
+  null;
+
+
+let isRetrying =
+  false;
+
+
+let pendingAnswer =
+  null;
 
 
 // ==========================================
 // QUESTION HELPERS
 // ==========================================
 
-function normalizeQuestion(text = "") {
+function normalizeQuestion(
+  text = ""
+) {
 
   return text
     .toLowerCase()
-    .replace(/[.,!?;:'"]/g, "")
-    .replace(/\s+/g, " ")
+    .replace(
+      /[.,!?;:'"]/g,
+      ""
+    )
+    .replace(
+      /\s+/g,
+      " "
+    )
     .trim();
+
 }
 
 
-function getQuestionAudio(text) {
+function getQuestionAudio(
+  text
+) {
 
   const normalized =
-    normalizeQuestion(text);
+    normalizeQuestion(
+      text
+    );
+
 
   const match =
     QUESTION_AUDIO.find(
       (item) =>
-        normalizeQuestion(item.text) ===
+
+        normalizeQuestion(
+          item.text
+        ) ===
         normalized
     );
+
 
   return match
     ? match.audio
     : null;
+
 }
 
 
 // ==========================================
 // FEEDBACK LAYOUT
+// WRONG ANSWER
 // ==========================================
 
 function showCorrectionLayout() {
@@ -308,61 +456,83 @@ function showCorrectionLayout() {
   correctionHeading.style.display =
     "block";
 
+
   correctionHeading.textContent =
     "Better ✨";
+
 
   whyDivider.style.display =
     "block";
 
+
   whyLabel.style.display =
     "block";
+
 
   why.style.display =
     "block";
 
+
   tryAgainBtn.style.display =
     "block";
+
 
   tryAgainBtn.style.gridColumn =
     "1 / -1";
 
-  // IMPORTANT:
-  // Wrong answer = NO Continue
+
+  // Wrong answer:
+  // learner MUST retry
   continueBtn.style.display =
     "none";
+
 }
 
+
+// ==========================================
+// FEEDBACK LAYOUT
+// CORRECT ANSWER
+// ==========================================
 
 function showSuccessLayout() {
 
   correctionHeading.style.display =
     "none";
 
+
   whyDivider.style.display =
     "none";
+
 
   whyLabel.style.display =
     "none";
 
+
   why.style.display =
     "none";
+
 
   tryAgainBtn.style.display =
     "none";
 
+
   continueBtn.style.display =
     "block";
 
+
   continueBtn.style.gridColumn =
     "1 / -1";
+
 }
 
 
 // ==========================================
-// WORD DIFF
+// WORD HELPERS
 // ==========================================
 
-function normalizeWord(word = "") {
+function normalizeWord(
+  word = ""
+) {
 
   return word
     .toLowerCase()
@@ -370,6 +540,7 @@ function normalizeWord(word = "") {
       /^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu,
       ""
     );
+
 }
 
 
@@ -379,21 +550,36 @@ function createWordSpan(
 ) {
 
   const span =
-    document.createElement("span");
+    document.createElement(
+      "span"
+    );
 
-  span.textContent = text;
-  span.className = className;
+
+  span.textContent =
+    text;
+
+
+  span.className =
+    className;
+
 
   return span;
+
 }
 
+
+// ==========================================
+// CORRECTION DIFF
+// ==========================================
 
 function renderCorrectionDiff(
   originalText,
   correctedText
 ) {
 
-  better.innerHTML = "";
+  better.innerHTML =
+    "";
+
 
   const originalWords =
     originalText
@@ -401,24 +587,35 @@ function renderCorrectionDiff(
       .split(/\s+/)
       .filter(Boolean);
 
+
   const correctedWords =
     correctedText
       .trim()
       .split(/\s+/)
       .filter(Boolean);
 
+
   const m =
     originalWords.length;
+
 
   const n =
     correctedWords.length;
 
+
   const dp =
     Array.from(
-      { length: m + 1 },
+      {
+        length:
+          m + 1
+      },
+
       () =>
-        Array(n + 1).fill(0)
+        Array(
+          n + 1
+        ).fill(0)
     );
+
 
   for (
     let i = m - 1;
@@ -444,6 +641,7 @@ function renderCorrectionDiff(
         dp[i][j] =
           dp[i + 1][j + 1] + 1;
 
+
       } else {
 
         dp[i][j] =
@@ -453,13 +651,23 @@ function renderCorrectionDiff(
           );
 
       }
+
     }
+
   }
 
-  const operations = [];
 
-  let i = 0;
-  let j = 0;
+  const operations =
+    [];
+
+
+  let i =
+    0;
+
+
+  let j =
+    0;
+
 
   while (
     i < m &&
@@ -476,15 +684,24 @@ function renderCorrectionDiff(
     ) {
 
       operations.push({
-        type: "same",
-        text: correctedWords[j]
+
+        type:
+          "same",
+
+        text:
+          correctedWords[j]
+
       });
+
 
       i++;
       j++;
 
+
       continue;
+
     }
+
 
     if (
       dp[i + 1][j] >=
@@ -492,48 +709,88 @@ function renderCorrectionDiff(
     ) {
 
       operations.push({
-        type: "removed",
-        text: originalWords[i]
+
+        type:
+          "removed",
+
+        text:
+          originalWords[i]
+
       });
 
+
       i++;
+
 
     } else {
 
       operations.push({
-        type: "added",
-        text: correctedWords[j]
+
+        type:
+          "added",
+
+        text:
+          correctedWords[j]
+
       });
 
+
       j++;
+
     }
+
   }
 
-  while (i < m) {
+
+  while (
+    i < m
+  ) {
 
     operations.push({
-      type: "removed",
-      text: originalWords[i]
+
+      type:
+        "removed",
+
+      text:
+        originalWords[i]
+
     });
+
 
     i++;
+
   }
 
-  while (j < n) {
+
+  while (
+    j < n
+  ) {
 
     operations.push({
-      type: "added",
-      text: correctedWords[j]
+
+      type:
+        "added",
+
+      text:
+        correctedWords[j]
+
     });
 
+
     j++;
+
   }
 
+
   operations.forEach(
-    (operation, index) => {
+    (
+      operation,
+      index
+    ) => {
 
       let className =
         "word-normal";
+
 
       if (
         operation.type ===
@@ -542,7 +799,9 @@ function renderCorrectionDiff(
 
         className =
           "word-removed";
+
       }
+
 
       if (
         operation.type ===
@@ -551,7 +810,9 @@ function renderCorrectionDiff(
 
         className =
           "word-added";
+
       }
+
 
       better.appendChild(
         createWordSpan(
@@ -560,17 +821,23 @@ function renderCorrectionDiff(
         )
       );
 
+
       if (
         index <
         operations.length - 1
       ) {
 
         better.appendChild(
-          document.createTextNode(" ")
+          document.createTextNode(
+            " "
+          )
         );
+
       }
+
     }
   );
+
 }
 
 
@@ -580,48 +847,94 @@ function renderCorrectionDiff(
 
 function stopCurrentAudio() {
 
-  if (!currentAudio) {
+  if (
+    !currentAudio
+  ) {
+
     return;
+
   }
 
-  currentAudio.pause();
-  currentAudio.currentTime = 0;
 
-  currentAudio = null;
+  currentAudio.pause();
+
+
+  currentAudio.currentTime =
+    0;
+
+
+  currentAudio =
+    null;
+
 }
 
 
-async function speakQuestion(text) {
+async function speakQuestion(
+  text
+) {
 
   const audioPath =
-    getQuestionAudio(text);
+    getQuestionAudio(
+      text
+    );
 
-  if (!audioPath) {
+
+  if (
+    !audioPath
+  ) {
 
     console.error(
       "Question MP3 not found:",
       text
     );
 
+
     return;
+
   }
+
 
   try {
 
     stopCurrentAudio();
 
+
     currentAudio =
-      new Audio(audioPath);
+      new Audio(
+        audioPath
+      );
+
 
     currentAudio.preload =
       "auto";
 
+
     currentAudio.onended =
       () => {
-        currentAudio = null;
+
+        currentAudio =
+          null;
+
       };
 
+
+    currentAudio.onerror =
+      () => {
+
+        console.error(
+          "Could not play:",
+          audioPath
+        );
+
+
+        currentAudio =
+          null;
+
+      };
+
+
     await currentAudio.play();
+
 
   } catch (error) {
 
@@ -629,7 +942,9 @@ async function speakQuestion(text) {
       "Question audio error:",
       error
     );
+
   }
+
 }
 
 
@@ -644,27 +959,40 @@ function updateProgress() {
       ".progress-step"
     );
 
-  steps.forEach((step) => {
 
-    const number =
-      Number(step.dataset.step);
+  steps.forEach(
+    (step) => {
 
-    if (number === turn) {
+      const number =
+        Number(
+          step.dataset.step
+        );
 
-      step.classList.add(
-        "active"
-      );
 
-    } else {
+      if (
+        number === turn
+      ) {
 
-      step.classList.remove(
-        "active"
-      );
+        step.classList.add(
+          "active"
+        );
+
+
+      } else {
+
+        step.classList.remove(
+          "active"
+        );
+
+      }
+
     }
-  });
+  );
+
 
   turnEl.textContent =
     String(turn);
+
 }
 
 
@@ -680,30 +1008,46 @@ async function transcribeAudio(
     await fetch(
       "/transcribe",
       {
-        method: "POST",
+
+        method:
+          "POST",
 
         headers: {
+
           "Content-Type":
             audioBlob.type ||
             "application/octet-stream"
+
         },
 
-        body: audioBlob
+        body:
+          audioBlob
+
       }
     );
+
 
   const data =
     await response.json();
 
-  if (!response.ok) {
+
+  if (
+    !response.ok
+  ) {
 
     throw new Error(
       data?.error ||
       "Could not transcribe audio"
     );
+
   }
 
-  return data.transcript || "";
+
+  return (
+    data.transcript ||
+    ""
+  );
+
 }
 
 
@@ -719,38 +1063,53 @@ async function getAICorrection(
     await fetch(
       "/correct",
       {
-        method: "POST",
+
+        method:
+          "POST",
 
         headers: {
+
           "Content-Type":
             "application/json"
+
         },
 
         body:
           JSON.stringify({
+
             transcript,
+
             turn,
 
             current_question:
               currentQuestion,
 
             history
+
           })
+
       }
     );
+
 
   const data =
     await response.json();
 
-  if (!response.ok) {
+
+  if (
+    !response.ok
+  ) {
 
     throw new Error(
       data?.error ||
       "Could not check answer"
     );
+
   }
 
+
   return data;
+
 }
 
 
@@ -764,6 +1123,7 @@ function saveCurrentTurn(
 ) {
 
   history.push({
+
     question:
       currentQuestion,
 
@@ -772,9 +1132,13 @@ function saveCurrentTurn(
     corrected_answer:
       correctedAnswer ||
       answer
+
   });
 
-  pendingAnswer = null;
+
+  pendingAnswer =
+    null;
+
 }
 
 
@@ -787,42 +1151,62 @@ function resetFeedbackUI() {
   feedback.style.display =
     "none";
 
+
   retryView.style.display =
     "none";
 
-  youSaid.textContent = "—";
-  better.textContent = "—";
-  why.textContent = "—";
+
+  youSaid.textContent =
+    "—";
+
+
+  better.textContent =
+    "—";
+
+
+  why.textContent =
+    "—";
+
 
   correctionHeading.style.display =
     "block";
 
+
   correctionHeading.textContent =
     "Better ✨";
+
 
   whyDivider.style.display =
     "block";
 
+
   whyLabel.style.display =
     "block";
+
 
   why.style.display =
     "block";
 
+
   tryAgainBtn.style.display =
     "block";
+
 
   tryAgainBtn.style.gridColumn =
     "auto";
 
+
   continueBtn.style.display =
     "block";
+
 
   continueBtn.style.gridColumn =
     "auto";
 
+
   continueBtn.disabled =
     false;
+
 }
 
 
@@ -834,29 +1218,39 @@ async function showFeedback(
   transcript
 ) {
 
+  // Hide microphone
   speakArea.style.display =
     "none";
+
 
   retryView.style.display =
     "none";
 
+
   feedback.style.display =
     "block";
+
 
   youSaid.textContent =
     transcript;
 
+
   better.textContent =
     "Checking…";
+
 
   why.textContent =
     "กำลังตรวจคำตอบ…";
 
+
+  // Hide buttons while AI checks
   continueBtn.style.display =
     "none";
 
+
   tryAgainBtn.style.display =
     "none";
+
 
   try {
 
@@ -865,12 +1259,14 @@ async function showFeedback(
         transcript
       );
 
+
     nextQuestion =
       result.next_question ||
       "";
 
+
     // ======================================
-    // ANSWER DOES NOT MATCH QUESTION
+    // ANSWER NOT RELEVANT
     // ======================================
 
     if (
@@ -880,15 +1276,19 @@ async function showFeedback(
 
       showCorrectionLayout();
 
+
       correctionHeading.textContent =
         "Try again 💬";
+
 
       better.textContent =
         "Answer the question above.";
 
+
       let explanation =
         result.relevance_explanation ||
         "คำตอบนี้ยังไม่ตรงกับคำถามค่ะ";
+
 
       if (
         result.example_answer
@@ -896,33 +1296,50 @@ async function showFeedback(
 
         explanation +=
           `\n\nตัวอย่าง: ${result.example_answer}`;
+
       }
+
 
       why.textContent =
         explanation;
 
+
       why.style.whiteSpace =
         "pre-line";
+
 
       pendingAnswer =
         null;
 
+
       isRetrying =
         false;
 
+
       tryAgainBtn.textContent =
         "🎙 Answer again";
+
+
+      tryAgainBtn.style.display =
+        "block";
+
+
+      tryAgainBtn.style.gridColumn =
+        "1 / -1";
+
 
       // NO CONTINUE
       continueBtn.style.display =
         "none";
 
+
       return;
+
     }
 
 
     // ======================================
-    // GRAMMAR / SPOKEN CORRECTION NEEDED
+    // CORRECTION NEEDED
     // ======================================
 
     if (
@@ -931,45 +1348,57 @@ async function showFeedback(
 
       showCorrectionLayout();
 
+
       renderCorrectionDiff(
+
         transcript,
+
         result.corrected_sentence
+
       );
+
 
       why.textContent =
         result.thai_explanation ||
         "ปรับนิดเดียวให้ประโยคฟังเป็นธรรมชาติมากขึ้นค่ะ";
 
+
       why.style.whiteSpace =
         "normal";
 
+
       pendingAnswer = {
+
         original:
           transcript,
 
         corrected:
           result.corrected_sentence ||
           transcript
+
       };
+
 
       tryAgainBtn.textContent =
         "🎙 Try again";
 
+
       tryAgainBtn.style.display =
         "block";
+
 
       tryAgainBtn.style.gridColumn =
         "1 / -1";
 
-      // ====================================
-      // IMPORTANT:
-      // WRONG = CANNOT CONTINUE
-      // ====================================
 
+      // IMPORTANT:
+      // Wrong answer = cannot continue
       continueBtn.style.display =
         "none";
 
+
       return;
+
     }
 
 
@@ -980,56 +1409,79 @@ async function showFeedback(
     const wasRetry =
       isRetrying;
 
+
     showSuccessLayout();
 
+
     const successText =
-      playSuccessVoice(
+      pickSuccessText(
         wasRetry
       );
 
+
     better.textContent =
       `${successText} ✅`;
+
+
+    // 🔔 Clean ding only
+    playSuccessDing();
+
 
     saveCurrentTurn(
       transcript,
       transcript
     );
 
+
     isRetrying =
       false;
+
 
     continueBtn.textContent =
       turn >= 5
         ? "Finish →"
         : "Continue →";
 
+
     continueBtn.style.display =
       "block";
+
 
     continueBtn.disabled =
       false;
 
+
   } catch (error) {
 
-    console.error(error);
+    console.error(
+      error
+    );
+
 
     showCorrectionLayout();
+
 
     correctionHeading.textContent =
       "Try again";
 
+
     better.textContent =
       "Let's try again.";
+
 
     why.textContent =
       "ระบบตรวจคำตอบมีปัญหาชั่วคราว ลองพูดอีกครั้งค่ะ";
 
+
     tryAgainBtn.textContent =
       "🎙 Try again";
 
+
     continueBtn.style.display =
       "none";
+
   }
+
 }
 
 
@@ -1043,58 +1495,89 @@ async function startRecording() {
 
     stopCurrentAudio();
 
-    unlockSuccessVoice();
 
-    audioChunks = [];
+    // iPhone audio unlock
+    // happens only from mic tap
+    unlockSuccessDing();
+
+
+    audioChunks =
+      [];
+
 
     mediaStream =
       await navigator
         .mediaDevices
         .getUserMedia({
-          audio: true
+
+          audio:
+            true
+
         });
 
-    let options = {};
+
+    let options =
+      {};
+
 
     if (
-      MediaRecorder.isTypeSupported(
-        "audio/webm;codecs=opus"
-      )
+      MediaRecorder
+        .isTypeSupported(
+          "audio/webm;codecs=opus"
+        )
     ) {
 
       options = {
+
         mimeType:
           "audio/webm;codecs=opus"
+
       };
 
-    } else if (
-      MediaRecorder.isTypeSupported(
-        "audio/webm"
-      )
+    }
+
+    else if (
+      MediaRecorder
+        .isTypeSupported(
+          "audio/webm"
+        )
     ) {
 
       options = {
+
         mimeType:
           "audio/webm"
+
       };
 
-    } else if (
-      MediaRecorder.isTypeSupported(
-        "audio/mp4"
-      )
+    }
+
+    else if (
+      MediaRecorder
+        .isTypeSupported(
+          "audio/mp4"
+        )
     ) {
 
       options = {
+
         mimeType:
           "audio/mp4"
+
       };
+
     }
+
 
     mediaRecorder =
       new MediaRecorder(
+
         mediaStream,
+
         options
+
       );
+
 
     mediaRecorder.ondataavailable =
       (event) => {
@@ -1107,34 +1590,50 @@ async function startRecording() {
           audioChunks.push(
             event.data
           );
+
         }
+
       };
+
 
     mediaRecorder.onstop =
       handleRecordingFinished;
 
+
     mediaRecorder.start();
 
-    isRecording = true;
+
+    isRecording =
+      true;
+
 
     micBtn.classList.add(
       "recording"
     );
 
-    micBtn.textContent = "■";
+
+    micBtn.textContent =
+      "■";
+
 
     statusEl.textContent =
       isRetrying
         ? "Listening… say it again."
         : "Listening… take your time.";
 
+
   } catch (error) {
 
-    console.error(error);
+    console.error(
+      error
+    );
+
 
     statusEl.textContent =
       "Please allow microphone access and try again.";
+
   }
+
 }
 
 
@@ -1146,28 +1645,42 @@ function stopRecording() {
 
   if (
     !mediaRecorder ||
-    mediaRecorder.state === "inactive"
+    mediaRecorder.state ===
+      "inactive"
   ) {
 
     return;
+
   }
 
-  isRecording = false;
+
+  isRecording =
+    false;
+
 
   micBtn.classList.remove(
     "recording"
   );
 
-  micBtn.textContent = "🎙";
 
-  micBtn.disabled = true;
+  micBtn.textContent =
+    "🎙";
+
+
+  micBtn.disabled =
+    true;
+
 
   statusEl.textContent =
     "Checking your answer…";
 
+
   mediaRecorder.stop();
 
-  if (mediaStream) {
+
+  if (
+    mediaStream
+  ) {
 
     mediaStream
       .getTracks()
@@ -1175,7 +1688,9 @@ function stopRecording() {
         (track) =>
           track.stop()
       );
+
   }
+
 }
 
 
@@ -1192,13 +1707,19 @@ async function handleRecordingFinished() {
       audioChunks?.[0]?.type ||
       "audio/webm";
 
+
     const audioBlob =
       new Blob(
+
         audioChunks,
+
         {
-          type: mimeType
+          type:
+            mimeType
         }
+
       );
+
 
     if (
       audioBlob.size < 500
@@ -1207,12 +1728,15 @@ async function handleRecordingFinished() {
       throw new Error(
         "Recording too short"
       );
+
     }
+
 
     const transcript =
       await transcribeAudio(
         audioBlob
       );
+
 
     if (
       !transcript.trim()
@@ -1221,32 +1745,47 @@ async function handleRecordingFinished() {
       statusEl.textContent =
         "I couldn't hear that. Try again.";
 
+
       speakArea.style.display =
         "block";
 
+
       return;
+
     }
+
 
     await showFeedback(
       transcript.trim()
     );
 
+
   } catch (error) {
 
-    console.error(error);
+    console.error(
+      error
+    );
+
 
     statusEl.textContent =
       "I couldn't process that. Please try again.";
 
+
     speakArea.style.display =
       "block";
 
+
   } finally {
 
-    micBtn.disabled = false;
+    micBtn.disabled =
+      false;
 
-    audioChunks = [];
+
+    audioChunks =
+      [];
+
   }
+
 }
 
 
@@ -1258,14 +1797,19 @@ micBtn.addEventListener(
   "click",
   () => {
 
-    if (isRecording) {
+    if (
+      isRecording
+    ) {
 
       stopRecording();
+
 
     } else {
 
       startRecording();
+
     }
+
   }
 );
 
@@ -1281,17 +1825,21 @@ listenBtn.addEventListener(
     listenBtn.disabled =
       true;
 
+
     try {
 
       await speakQuestion(
         currentQuestion
       );
 
+
     } finally {
 
       listenBtn.disabled =
         false;
+
     }
+
   }
 );
 
@@ -1304,32 +1852,43 @@ tryAgainBtn.addEventListener(
   "click",
   () => {
 
+    // Bring mic back
     speakArea.style.display =
       "block";
+
 
     feedback.style.display =
       "none";
 
+
     // ======================================
-    // HAS CORRECTED SENTENCE
+    // GRAMMAR RETRY
     // ======================================
 
-    if (pendingAnswer) {
+    if (
+      pendingAnswer
+    ) {
 
       isRetrying =
         true;
 
+
       retryView.style.display =
         "block";
+
 
       retrySentence.textContent =
         pendingAnswer.corrected;
 
+
       statusEl.textContent =
         "Tap the mic and say it again.";
 
+
       return;
+
     }
+
 
     // ======================================
     // IRRELEVANT ANSWER
@@ -1338,11 +1897,14 @@ tryAgainBtn.addEventListener(
     isRetrying =
       false;
 
+
     retryView.style.display =
       "none";
 
+
     statusEl.textContent =
       "Answer the same question again.";
+
   }
 );
 
@@ -1355,22 +1917,36 @@ function showCompleteScreen() {
 
   stopCurrentAudio();
 
+
+  successDing.pause();
+
+
   lessonCard.style.display =
     "none";
+
 
   progressBar.style.display =
     "none";
 
+
   completeScreen.style.display =
     "block";
+
 
   completedQuestions.textContent =
     "5";
 
+
   window.scrollTo({
-    top: 0,
-    behavior: "smooth"
+
+    top:
+      0,
+
+    behavior:
+      "smooth"
+
   });
+
 }
 
 
@@ -1383,45 +1959,80 @@ continueBtn.addEventListener(
   async () => {
 
     // Safety:
-    // if an answer still needs correction,
-    // Continue does nothing.
-    if (pendingAnswer) {
+    // cannot continue while correction
+    // is still pending.
+    if (
+      pendingAnswer
+    ) {
+
       return;
+
     }
 
-    if (turn >= 5) {
+
+    // ======================================
+    // FINISH
+    // ======================================
+
+    if (
+      turn >= 5
+    ) {
 
       showCompleteScreen();
 
+
       return;
+
     }
 
-    turn += 1;
+
+    // ======================================
+    // NEXT QUESTION
+    // ======================================
+
+    turn +=
+      1;
+
 
     updateProgress();
+
 
     currentQuestion =
       nextQuestion ||
       "Tell me more about it.";
 
+
     questionEl.textContent =
       currentQuestion;
 
-    nextQuestion = "";
 
-    isRetrying = false;
+    nextQuestion =
+      "";
+
+
+    pendingAnswer =
+      null;
+
+
+    isRetrying =
+      false;
+
 
     resetFeedbackUI();
+
 
     speakArea.style.display =
       "block";
 
+
     statusEl.textContent =
       "Tap the mic to answer";
+
 
     await speakQuestion(
       currentQuestion
     );
+
   }
 );
 
@@ -1436,71 +2047,115 @@ practiceAgainBtn.addEventListener(
 
     stopCurrentAudio();
 
-    successVoicePlayer.pause();
 
-    turn = 1;
+    successDing.pause();
+
+
+    successDing.currentTime =
+      0;
+
+
+    turn =
+      1;
+
 
     currentQuestion =
       "Hey! How was your weekend?";
 
-    nextQuestion = "";
 
-    history = [];
+    nextQuestion =
+      "";
 
-    pendingAnswer = null;
 
-    isRetrying = false;
-    isRecording = false;
+    history =
+      [];
 
-    lastSuccessAudio = "";
+
+    pendingAnswer =
+      null;
+
+
+    isRetrying =
+      false;
+
+
+    isRecording =
+      false;
+
+
+    lastSuccessText =
+      "";
+
 
     questionEl.textContent =
       currentQuestion;
 
+
     progressBar.style.display =
       "flex";
+
 
     completeScreen.style.display =
       "none";
 
+
     lessonCard.style.display =
       "block";
 
+
     resetFeedbackUI();
+
 
     speakArea.style.display =
       "block";
 
-    micBtn.disabled = false;
+
+    micBtn.disabled =
+      false;
+
 
     micBtn.textContent =
       "🎙";
+
 
     micBtn.classList.remove(
       "recording"
     );
 
+
     continueBtn.style.display =
       "block";
+
 
     continueBtn.disabled =
       false;
 
+
     continueBtn.textContent =
       "Continue →";
+
 
     tryAgainBtn.textContent =
       "🎙 Try again";
 
+
     statusEl.textContent =
       "Tap the mic to answer";
 
+
     updateProgress();
 
+
     window.scrollTo({
-      top: 0,
-      behavior: "smooth"
+
+      top:
+        0,
+
+      behavior:
+        "smooth"
+
     });
+
   }
 );
 
