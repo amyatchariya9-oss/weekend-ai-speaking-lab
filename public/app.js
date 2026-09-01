@@ -13,6 +13,11 @@ const hearCorrectionBtn = $("hearCorrection");
 const tryAgainBtn = $("tryAgain");
 const continueBtn = $("continueBtn");
 
+const lessonCard = $("lessonCard");
+const completeScreen = $("completeScreen");
+const practiceAgainBtn = $("practiceAgain");
+const completedQuestions = $("completedQuestions");
+
 let turn = 1;
 
 let mediaRecorder = null;
@@ -29,12 +34,7 @@ let history = [];
 
 let currentAudio = null;
 
-// false = normal answer to tutor question
-// true = learner is retrying the same answer/correction
 let isRetrying = false;
-
-// Store the original answer for the current turn.
-// We only save ONE final version to history.
 let pendingAnswer = null;
 
 
@@ -165,13 +165,19 @@ async function getAICorrection(transcript) {
 
 
 // ==========================================
-// SAVE ANSWER ONCE
+// SAVE TURN ONCE
 // ==========================================
 
-function saveCurrentTurn(answer, correctedAnswer) {
+function saveCurrentTurn(
+  answer,
+  correctedAnswer
+) {
   history.push({
-    question: currentQuestion,
+    question:
+      currentQuestion,
+
     answer,
+
     corrected_answer:
       correctedAnswer || answer
   });
@@ -185,6 +191,7 @@ function saveCurrentTurn(answer, correctedAnswer) {
 // ==========================================
 
 async function showFeedback(transcript) {
+
   youSaid.textContent =
     transcript;
 
@@ -227,11 +234,12 @@ async function showFeedback(transcript) {
 
 
     // ======================================
-    // NOT RELEVANT
-    // Must answer SAME question again
+    // ANSWER NOT RELEVANT
     // ======================================
 
-    if (result.answer_relevant === false) {
+    if (
+      result.answer_relevant === false
+    ) {
 
       better.textContent =
         "Let's try that question again 💬";
@@ -263,7 +271,6 @@ async function showFeedback(transcript) {
       tryAgainBtn.style.fontWeight =
         "700";
 
-      // Do not save anything
       pendingAnswer = null;
       isRetrying = false;
 
@@ -295,12 +302,13 @@ async function showFeedback(transcript) {
       statusEl.textContent =
         "Good answer! Try the corrected version ✨";
 
-      // Keep this answer waiting.
-      // We won't save it yet if learner wants to retry.
       pendingAnswer = {
-        original: transcript,
+        original:
+          transcript,
+
         corrected:
-          result.corrected_sentence || transcript
+          result.corrected_sentence ||
+          transcript
       };
 
       tryAgainBtn.textContent =
@@ -350,7 +358,6 @@ async function showFeedback(transcript) {
         : "Nice! Your answer works well.";
 
 
-    // If this was a retry, save ONLY this corrected retry
     if (isRetrying) {
 
       saveCurrentTurn(
@@ -365,7 +372,7 @@ async function showFeedback(transcript) {
       saveCurrentTurn(
         transcript,
         result.corrected_sentence ||
-          transcript
+        transcript
       );
     }
 
@@ -386,7 +393,6 @@ async function showFeedback(transcript) {
 
     continueBtn.disabled =
       false;
-
 
   } catch (error) {
 
@@ -662,7 +668,7 @@ micBtn.addEventListener(
 
 
 // ==========================================
-// LISTEN TO QUESTION
+// LISTEN QUESTION
 // ==========================================
 
 listenBtn.addEventListener(
@@ -695,7 +701,7 @@ listenBtn.addEventListener(
 
 
 // ==========================================
-// LISTEN TO CORRECTION
+// LISTEN CORRECTION
 // ==========================================
 
 hearCorrectionBtn.addEventListener(
@@ -739,11 +745,10 @@ tryAgainBtn.addEventListener(
   "click",
   () => {
 
-    // If we have a meaningful correction,
-    // this becomes correction practice.
     if (pendingAnswer) {
 
-      isRetrying = true;
+      isRetrying =
+        true;
 
       feedback.style.display =
         "none";
@@ -755,9 +760,8 @@ tryAgainBtn.addEventListener(
     }
 
 
-    // Otherwise just answer
-    // the same question again.
-    isRetrying = false;
+    isRetrying =
+      false;
 
     feedback.style.display =
       "none";
@@ -770,16 +774,44 @@ tryAgainBtn.addEventListener(
 
 
 // ==========================================
-// CONTINUE
+// SHOW COMPLETE SCREEN
+// ==========================================
+
+async function showCompleteScreen() {
+
+  lessonCard.style.display =
+    "none";
+
+  completeScreen.style.display =
+    "block";
+
+  completedQuestions.textContent =
+    "5";
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  });
+
+
+  if (closingMessage) {
+    await speak(
+      closingMessage
+    );
+  }
+}
+
+
+// ==========================================
+// CONTINUE / FINISH
 // ==========================================
 
 continueBtn.addEventListener(
   "click",
   async () => {
 
-    // If learner had a correction but chose
-    // Continue instead of retrying,
-    // save the original turn once.
+    // Save corrected answer if learner
+    // chooses Continue without retrying.
     if (pendingAnswer) {
 
       saveCurrentTurn(
@@ -787,73 +819,163 @@ continueBtn.addEventListener(
         pendingAnswer.corrected
       );
 
-      isRetrying = false;
+      isRetrying =
+        false;
     }
 
 
+    // ======================================
+    // FINISH
+    // ======================================
+
     if (turn >= 5) {
 
-      currentQuestion =
-        closingMessage ||
-        "Great job today! You finished your Weekend speaking practice.";
-
-
-      questionEl.textContent =
-        currentQuestion;
-
-
-      feedback.style.display =
-        "none";
-
-
-      micBtn.disabled =
-        true;
-
-
-      micBtn.style.opacity =
-        "0.45";
-
-
-      statusEl.textContent =
-        "Practice complete 🎉";
-
-
-      await speak(
-        currentQuestion
-      );
-
+      await showCompleteScreen();
 
       return;
     }
 
 
-    turn += 1;
+    // ======================================
+    // NEXT TURN
+    // ======================================
 
+    turn += 1;
 
     turnEl.textContent =
       String(turn);
-
 
     currentQuestion =
       nextQuestion ||
       "Tell me a little more about your weekend.";
 
-
     questionEl.textContent =
       currentQuestion;
-
 
     feedback.style.display =
       "none";
 
-
     statusEl.textContent =
       "Your turn when you're ready.";
+
+    lastCorrected =
+      "";
+
+    pendingAnswer =
+      null;
+
+    isRetrying =
+      false;
 
 
     await speak(
       currentQuestion
     );
+
+  }
+);
+
+
+// ==========================================
+// PRACTICE AGAIN
+// ==========================================
+
+practiceAgainBtn.addEventListener(
+  "click",
+  () => {
+
+    // Stop any playing audio
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio = null;
+    }
+
+
+    // Reset lesson state
+    turn = 1;
+
+    currentQuestion =
+      "Hey! How was your weekend?";
+
+    history = [];
+
+    nextQuestion =
+      "";
+
+    closingMessage =
+      "";
+
+    lastCorrected =
+      "";
+
+    pendingAnswer =
+      null;
+
+    isRetrying =
+      false;
+
+
+    // Reset UI
+    turnEl.textContent =
+      "1";
+
+    questionEl.textContent =
+      currentQuestion;
+
+    feedback.style.display =
+      "none";
+
+    completeScreen.style.display =
+      "none";
+
+    lessonCard.style.display =
+      "block";
+
+    micBtn.disabled =
+      false;
+
+    micBtn.style.opacity =
+      "1";
+
+    micBtn.textContent =
+      "🎙️";
+
+    micBtn.classList.remove(
+      "recording"
+    );
+
+    tryAgainBtn.textContent =
+      "🎙️ Try again";
+
+    tryAgainBtn.style.fontWeight =
+      "400";
+
+    continueBtn.textContent =
+      "Continue →";
+
+    continueBtn.style.display =
+      "block";
+
+    continueBtn.disabled =
+      false;
+
+    statusEl.textContent =
+      "Tap the microphone to answer.";
+
+    youSaid.textContent =
+      "—";
+
+    better.textContent =
+      "—";
+
+    why.textContent =
+      "—";
+
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
 
   }
 );
