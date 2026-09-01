@@ -40,6 +40,14 @@ const retrySentence =
   $("retrySentence");
 
 
+// NEW:
+// เอาไว้ซ่อน/แสดงพื้นที่ไมค์ทั้งก้อน
+const speakArea =
+  document.querySelector(
+    ".speak-area"
+  );
+
+
 // ==========================================
 // QUESTION AUDIO
 // ==========================================
@@ -162,23 +170,6 @@ function getQuestionAudio(text) {
 // ==========================================
 // CORRECTION DIFF
 // ==========================================
-//
-// Example:
-//
-// ORIGINAL:
-// I stay home
-//
-// CORRECTED:
-// I stayed home
-//
-// DISPLAY:
-// I [stay red] [stayed blue] home
-//
-// This works automatically for
-// go → went
-// buy → bought
-// is → was
-// etc.
 
 function normalizeWord(word = "") {
 
@@ -241,10 +232,6 @@ function renderCorrectionDiff(
     correctedWords.length;
 
 
-  // ----------------------------------------
-  // LCS TABLE
-  // ----------------------------------------
-
   const dp =
     Array.from(
       {
@@ -306,10 +293,6 @@ function renderCorrectionDiff(
   }
 
 
-  // ----------------------------------------
-  // BUILD OPERATIONS
-  // ----------------------------------------
-
   const operations = [];
 
   let i = 0;
@@ -340,10 +323,6 @@ function renderCorrectionDiff(
 
       operations.push({
         type: "same",
-
-        // Use corrected token here so
-        // punctuation can look clean,
-        // without highlighting punctuation.
         text:
           correctedWords[j]
       });
@@ -408,10 +387,6 @@ function renderCorrectionDiff(
 
   }
 
-
-  // ----------------------------------------
-  // RENDER
-  // ----------------------------------------
 
   operations.forEach(
     (operation, index) => {
@@ -495,11 +470,8 @@ function stopCurrentAudio() {
 
 
 // ==========================================
-// PLAY QUESTION MP3
+// PLAY QUESTION AUDIO
 // ==========================================
-//
-// Static file.
-// NO ElevenLabs TTS.
 
 async function speakQuestion(text) {
 
@@ -789,6 +761,12 @@ async function showFeedback(
   transcript
 ) {
 
+  // NEW:
+  // พอตอบเสร็จ ซ่อนไมค์
+  speakArea.style.display =
+    "none";
+
+
   retryView.style.display =
     "none";
 
@@ -807,10 +785,6 @@ async function showFeedback(
 
   why.textContent =
     "กำลังตรวจคำตอบ…";
-
-
-  statusEl.textContent =
-    "Checking your answer…";
 
 
   continueBtn.disabled =
@@ -873,10 +847,6 @@ async function showFeedback(
         "pre-line";
 
 
-      statusEl.textContent =
-        "Try answering the same question again.";
-
-
       pendingAnswer =
         null;
 
@@ -906,9 +876,6 @@ async function showFeedback(
       result.correction_needed
     ) {
 
-      // THIS is the new part:
-      // automatically mark changed words.
-
       renderCorrectionDiff(
 
         transcript,
@@ -925,10 +892,6 @@ async function showFeedback(
 
       why.style.whiteSpace =
         "normal";
-
-
-      statusEl.textContent =
-        "Nice try! Let's make it even better ✨";
 
 
       pendingAnswer = {
@@ -980,14 +943,6 @@ async function showFeedback(
         ? "ดีมากค่ะ รอบนี้ประโยคถูกต้องและฟังเป็นธรรมชาติแล้ว"
 
         : "ประโยคนี้เป็นธรรมชาติและตอบคำถามได้ดีค่ะ";
-
-
-    statusEl.textContent =
-      isRetrying
-
-        ? "Great! That sounds natural 👏"
-
-        : "Nice! Your answer works well.";
 
 
     if (
@@ -1050,10 +1005,6 @@ async function showFeedback(
 
     why.textContent =
       "ระบบตรวจคำตอบมีปัญหาชั่วคราว ลองพูดอีกครั้งค่ะ";
-
-
-    statusEl.textContent =
-      "Something went wrong.";
 
 
     continueBtn.disabled =
@@ -1178,14 +1129,6 @@ async function startRecording() {
     if (
       isRetrying
     ) {
-
-      retryView.style.display =
-        "block";
-
-
-      feedback.style.display =
-        "none";
-
 
       statusEl.textContent =
         "Listening… say the corrected sentence.";
@@ -1414,6 +1357,16 @@ tryAgainBtn.addEventListener(
   "click",
   () => {
 
+    // NEW:
+    // กด Try again → เอาไมค์กลับมา
+    speakArea.style.display =
+      "block";
+
+
+    // ======================================
+    // CORRECTED SENTENCE RETRY
+    // ======================================
+
     if (
       pendingAnswer
     ) {
@@ -1442,6 +1395,10 @@ tryAgainBtn.addEventListener(
 
     }
 
+
+    // ======================================
+    // WRONG TOPIC
+    // ======================================
 
     isRetrying =
       false;
@@ -1560,6 +1517,12 @@ continueBtn.addEventListener(
     resetFeedbackUI();
 
 
+    // NEW:
+    // ข้อใหม่ → ไมค์กลับมา
+    speakArea.style.display =
+      "block";
+
+
     statusEl.textContent =
       "Tap the mic to answer";
 
@@ -1623,6 +1586,12 @@ practiceAgainBtn.addEventListener(
 
 
     resetFeedbackUI();
+
+
+    // NEW:
+    // เริ่มบทใหม่ → แสดงไมค์
+    speakArea.style.display =
+      "block";
 
 
     micBtn.disabled =
