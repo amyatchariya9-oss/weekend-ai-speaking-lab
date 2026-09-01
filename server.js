@@ -1,19 +1,105 @@
 import "dotenv/config";
+
 import express from "express";
+
+import fs from "fs";
+
+import path from "path";
+
+import {
+  fileURLToPath
+} from "url";
+
+
+// ==========================================
+// APP
+// ==========================================
 
 const app = express();
 
-const port =
+const PORT =
   process.env.PORT || 3000;
 
 
 // ==========================================
-// STATIC FILES + JSON
+// PATHS
+// ==========================================
+
+const __filename =
+  fileURLToPath(
+    import.meta.url
+  );
+
+const __dirname =
+  path.dirname(
+    __filename
+  );
+
+const PUBLIC_DIR =
+  path.join(
+    __dirname,
+    "public"
+  );
+
+const LESSONS_PATH =
+  path.join(
+    PUBLIC_DIR,
+    "lessons.json"
+  );
+
+
+// ==========================================
+// LOAD LESSONS
+// ==========================================
+
+function loadLessons() {
+
+  try {
+
+    const raw =
+      fs.readFileSync(
+        LESSONS_PATH,
+        "utf8"
+      );
+
+
+    const lessons =
+      JSON.parse(raw);
+
+
+    return lessons;
+
+  }
+
+  catch (error) {
+
+    console.error(
+      "Could not load lessons.json:",
+      error
+    );
+
+
+    return {};
+
+  }
+
+}
+
+
+const LESSONS =
+  loadLessons();
+
+
+// ==========================================
+// MIDDLEWARE
 // ==========================================
 
 app.use(
-  express.static("public")
+  express.static(
+    PUBLIC_DIR
+  )
 );
+
 
 app.use(
   express.json({
@@ -23,54 +109,20 @@ app.use(
 
 
 // ==========================================
-// FIXED QUESTION BANK
-// ==========================================
-//
-// IMPORTANT:
-// Gemini is NOT allowed to create
-// new tutor questions.
-//
-// It only chooses one of these IDs.
-// ==========================================
-
-const QUESTION_BANK = {
-
-  Q1:
-    "Hey! How was your weekend?",
-
-  Q2:
-    "What did you do?",
-
-  Q3:
-    "Tell me more about it.",
-
-  Q4:
-    "Where did you go?",
-
-  Q5:
-    "Who were you with?",
-
-  Q6:
-    "What happened next?",
-
-  Q7:
-    "How did you feel?",
-
-  Q8:
-    "What did you like about it?",
-
-  Q9:
-    "What was the best part?",
-
-  Q10:
-    "Would you do it again?"
-
-};
-
-
-// ==========================================
 // HELPERS
 // ==========================================
+
+function getLesson(
+  lessonId = "weekend"
+) {
+
+  return (
+    LESSONS[lessonId] ||
+    null
+  );
+
+}
+
 
 function normalizeSpokenText(
   text = ""
@@ -79,7 +131,7 @@ function normalizeSpokenText(
   return String(text)
     .toLowerCase()
     .replace(
-      /[.,!?;:'"()[\]{}]/g,
+      /[^\p{L}\p{N}\s]/gu,
       ""
     )
     .replace(
@@ -91,64 +143,132 @@ function normalizeSpokenText(
 }
 
 
-// ==========================================
-// FIND QUESTION ID FROM TEXT
-// ==========================================
-
-function getQuestionIdFromText(
-  questionText = ""
+function normalizeQuestion(
+  text = ""
 ) {
 
-  const normalized =
-    normalizeSpokenText(
-      questionText
-    );
-
-
-  for (
-    const [
-      id,
-      text
-    ]
-    of Object.entries(
-      QUESTION_BANK
+  return String(text)
+    .toLowerCase()
+    .replace(
+      /[.,!?;:'"]/g,
+      ""
     )
-  ) {
-
-    if (
-      normalizeSpokenText(
-        text
-      ) === normalized
-    ) {
-
-      return id;
-
-    }
-
-  }
-
-
-  return null;
+    .replace(
+      /\s+/g,
+      " "
+    )
+    .trim();
 
 }
 
 
-// ==========================================
-// GET QUESTIONS ALREADY USED
-// ==========================================
+function getQuestionById(
+  lesson,
+  questionId
+) {
+
+  if (
+    !lesson ||
+    !Array.isArray(
+      lesson.questions
+    )
+  ) {
+
+    return null;
+
+  }
+
+
+  return (
+    lesson.questions.find(
+      (question) =>
+        question.id ===
+        questionId
+    ) ||
+    null
+  );
+
+}
+
+
+function getQuestionIdFromText(
+  lesson,
+  text
+) {
+
+  if (
+    !lesson ||
+    !Array.isArray(
+      lesson.questions
+    )
+  ) {
+
+    return null;
+
+  }
+
+
+  const normalized =
+    normalizeQuestion(
+      text
+    );
+
+
+  const match =
+    lesson.questions.find(
+      (question) =>
+        normalizeQuestion(
+          question.text
+        ) === normalized
+    );
+
+
+  return match
+    ? match.id
+    : null;
+
+}
+
 
 function getUsedQuestionIds(
-  currentQuestion,
-  history = []
+  lesson,
+  history,
+  currentQuestion
 ) {
 
   const used =
     new Set();
 
 
-  // Current question
+  if (
+    Array.isArray(history)
+  ) {
+
+    for (
+      const item of history
+    ) {
+
+      const id =
+        getQuestionIdFromText(
+          lesson,
+          item?.question
+        );
+
+
+      if (id) {
+
+        used.add(id);
+
+      }
+
+    }
+
+  }
+
+
   const currentId =
     getQuestionIdFromText(
+      lesson,
       currentQuestion
     );
 
@@ -162,122 +282,110 @@ function getUsedQuestionIds(
   }
 
 
-  // Previous questions
-  if (
-    Array.isArray(
-      history
-    )
-  ) {
-
-    history.forEach(
-      (item) => {
-
-        const id =
-          getQuestionIdFromText(
-            item?.question || ""
-          );
-
-
-        if (id) {
-
-          used.add(id);
-
-        }
-
-      }
-    );
-
-  }
-
-
   return used;
 
 }
 
 
+function getAvailableQuestionIds(
+  lesson,
+  usedIds
+) {
+
+  if (
+    !lesson ||
+    !Array.isArray(
+      lesson.questions
+    )
+  ) {
+
+    return [];
+
+  }
+
+
+  return lesson.questions
+    .map(
+      (question) =>
+        question.id
+    )
+    .filter(
+      (id) =>
+        !usedIds.has(id)
+    );
+
+}
+
+
 // ==========================================
-// ELEVENLABS SPEECH TO TEXT
+// HEALTH CHECK
 // ==========================================
-//
-// This is the ONLY ElevenLabs API
-// used by the app now.
-//
-// Tutor voices and success voices
-// are static MP3 files.
-//
+
+app.get(
+  "/health",
+  (req, res) => {
+
+    res.json({
+      ok: true,
+
+      lessons:
+        Object.keys(
+          LESSONS
+        )
+    });
+
+  }
+);
+
+
+// ==========================================
+// SPEECH TO TEXT
+// ELEVENLABS SCRIBE V2
 // ==========================================
 
 app.post(
   "/transcribe",
 
   express.raw({
-
-    type: [
-      "audio/webm",
-      "audio/mp4",
-      "audio/mpeg",
-      "audio/wav",
-      "audio/x-m4a",
-      "application/octet-stream"
-    ],
-
-    limit:
-      "25mb"
-
+    type: "*/*",
+    limit: "25mb"
   }),
 
-  async (
-    req,
-    res
-  ) => {
+  async (req, res) => {
 
     try {
 
-      // ======================================
-      // API KEY
-      // ======================================
+      const apiKey =
+        process.env
+          .ELEVENLABS_API_KEY;
 
-      if (
-        !process.env
-          .ELEVENLABS_API_KEY
-      ) {
+
+      if (!apiKey) {
 
         return res
           .status(500)
           .json({
-
             error:
-              "Missing ELEVENLABS_API_KEY"
-
+              "ELEVENLABS_API_KEY is missing."
           });
 
       }
 
 
-      // ======================================
-      // AUDIO CHECK
-      // ======================================
-
       if (
         !req.body ||
-        !req.body.length
+        req.body.length === 0
       ) {
 
         return res
           .status(400)
           .json({
-
             error:
-              "No audio received"
-
+              "No audio received."
           });
 
       }
 
-
-      // ======================================
-      // FILE TYPE
-      // ======================================
 
       const contentType =
         req.headers[
@@ -293,7 +401,40 @@ app.post(
       if (
         contentType.includes(
           "mp4"
+        )
+      ) {
+
+        extension =
+          "mp4";
+
+      }
+
+      else if (
+        contentType.includes(
+          "mpeg"
         ) ||
+        contentType.includes(
+          "mp3"
+        )
+      ) {
+
+        extension =
+          "mp3";
+
+      }
+
+      else if (
+        contentType.includes(
+          "wav"
+        )
+      ) {
+
+        extension =
+          "wav";
+
+      }
+
+      else if (
         contentType.includes(
           "m4a"
         )
@@ -305,39 +446,13 @@ app.post(
       }
 
 
-      if (
-        contentType.includes(
-          "mpeg"
-        )
-      ) {
+      const formData =
+        new FormData();
 
-        extension =
-          "mp3";
-
-      }
-
-
-      if (
-        contentType.includes(
-          "wav"
-        )
-      ) {
-
-        extension =
-          "wav";
-
-      }
-
-
-      // ======================================
-      // CREATE AUDIO FILE
-      // ======================================
 
       const audioBlob =
         new Blob(
-          [
-            req.body
-          ],
+          [req.body],
           {
             type:
               contentType
@@ -345,14 +460,10 @@ app.post(
         );
 
 
-      const formData =
-        new FormData();
-
-
       formData.append(
         "file",
         audioBlob,
-        `answer.${extension}`
+        `recording.${extension}`
       );
 
 
@@ -374,63 +485,171 @@ app.post(
       );
 
 
-      // ======================================
-      // ELEVENLABS STT
-      // ======================================
-
-      const elevenResponse =
+      const response =
         await fetch(
-
           "https://api.elevenlabs.io/v1/speech-to-text",
-
           {
-
-            method:
-              "POST",
+            method: "POST",
 
             headers: {
-
               "xi-api-key":
-                process.env
-                  .ELEVENLABS_API_KEY
-
+                apiKey
             },
 
             body:
               formData
-
           }
-
         );
 
 
       const data =
-        await elevenResponse
-          .json();
+        await response.json();
 
 
-      if (
-        !elevenResponse.ok
-      ) {
+      if (!response.ok) {
 
         console.error(
-          "ElevenLabs transcription error:",
+          "ElevenLabs error:",
           data
         );
 
 
         return res
           .status(
-            elevenResponse.status
+            response.status
           )
           .json({
-
             error:
-              "ElevenLabs transcription failed",
+              data?.detail?.message ||
+              data?.detail ||
+              data?.error ||
+              "Speech recognition failed."
+          });
 
-            details:
-              data
+      }
 
+
+      const transcript =
+        String(
+          data?.text ||
+          ""
+        ).trim();
+
+
+      res.json({
+        transcript
+      });
+
+    }
+
+    catch (error) {
+
+      console.error(
+        "Transcription error:",
+        error
+      );
+
+
+      res
+        .status(500)
+        .json({
+          error:
+            "Could not transcribe audio."
+        });
+
+    }
+
+  }
+);
+
+
+// ==========================================
+// AI CORRECTION
+// GEMINI
+// ==========================================
+
+app.post(
+  "/correct",
+
+  async (req, res) => {
+
+    try {
+
+      const {
+        lesson_id =
+          "weekend",
+
+        transcript =
+          "",
+
+        turn =
+          1,
+
+        current_question =
+          "",
+
+        history =
+          []
+      } =
+        req.body || {};
+
+
+      // ======================================
+      // API KEY
+      // ======================================
+
+      const apiKey =
+        process.env
+          .GEMINI_API_KEY;
+
+
+      if (!apiKey) {
+
+        return res
+          .status(500)
+          .json({
+            error:
+              "GEMINI_API_KEY is missing."
+          });
+
+      }
+
+
+      // ======================================
+      // GET LESSON
+      // ======================================
+
+      const lesson =
+        getLesson(
+          lesson_id
+        );
+
+
+      if (!lesson) {
+
+        return res
+          .status(400)
+          .json({
+            error:
+              `Unknown lesson: ${lesson_id}`
+          });
+
+      }
+
+
+      if (
+        !Array.isArray(
+          lesson.questions
+        ) ||
+        lesson.questions.length ===
+          0
+      ) {
+
+        return res
+          .status(500)
+          .json({
+            error:
+              "This lesson has no questions."
           });
 
       }
@@ -440,177 +659,108 @@ app.post(
       // TRANSCRIPT
       // ======================================
 
-      const transcript =
-        data?.text?.trim() ||
-        "";
+      const cleanTranscript =
+        String(
+          transcript
+        ).trim();
 
 
-      return res.json({
-
-        transcript
-
-      });
-
-
-    } catch (error) {
-
-      console.error(
-        "Transcription error:",
-        error
-      );
-
-
-      return res
-        .status(500)
-        .json({
-
-          error:
-            "Could not transcribe audio"
-
-        });
-
-    }
-
-  }
-
-);
-
-
-// ==========================================
-// IMPORTANT
-// ==========================================
-//
-// There is intentionally NO /tts endpoint.
-//
-// Questions:
-// public/audio/weekend/q1.mp3 - q10.mp3
-//
-// Success voices:
-// public/audio/weekend/success/
-//
-// This prevents unnecessary
-// ElevenLabs TTS credit usage.
-//
-// ==========================================
-
-
-// ==========================================
-// GEMINI CORRECTION
-// ==========================================
-
-app.post(
-  "/correct",
-
-  async (
-    req,
-    res
-  ) => {
-
-    try {
-
-      const {
-
-        transcript,
-
-        turn = 1,
-
-        current_question = "",
-
-        history = []
-
-      } = req.body;
-
-
-      // ======================================
-      // API KEY
-      // ======================================
-
-      if (
-        !process.env
-          .GEMINI_API_KEY
-      ) {
-
-        return res
-          .status(500)
-          .json({
-
-            error:
-              "Missing GEMINI_API_KEY"
-
-          });
-
-      }
-
-
-      // ======================================
-      // TRANSCRIPT VALIDATION
-      // ======================================
-
-      if (
-        !transcript ||
-        typeof transcript !==
-          "string"
-      ) {
+      if (!cleanTranscript) {
 
         return res
           .status(400)
           .json({
-
             error:
-              "Missing transcript"
-
+              "Transcript is empty."
           });
 
       }
 
 
       // ======================================
-      // TURN
+      // LESSON INFO
       // ======================================
 
-      const numericTurn =
-        Number(turn) || 1;
+      const totalTurns =
+        Number(
+          lesson.turns
+        ) || 5;
 
 
       const isFinalTurn =
-        numericTurn >= 5;
+        Number(turn) >=
+        totalTurns;
 
-
-      // ======================================
-      // USED QUESTIONS
-      // ======================================
 
       const usedQuestionIds =
         getUsedQuestionIds(
-
-          current_question,
-
-          history
-
+          lesson,
+          history,
+          current_question
         );
 
-
-      // ======================================
-      // AVAILABLE QUESTIONS
-      // ======================================
 
       const availableQuestionIds =
-        Object.keys(
-          QUESTION_BANK
-        ).filter(
-          (id) =>
-            !usedQuestionIds
-              .has(id)
+        getAvailableQuestionIds(
+          lesson,
+          usedQuestionIds
         );
 
 
-      const availableQuestions =
-        availableQuestionIds
+      const questionList =
+        lesson.questions
           .map(
-            (id) =>
-              `${id}: "${QUESTION_BANK[id]}"`
+            (question) =>
+              `${question.id}: ${question.text}`
           )
           .join("\n");
+
+
+      const availableQuestionList =
+        availableQuestionIds.length >
+        0
+          ? availableQuestionIds
+              .map(
+                (id) => {
+
+                  const question =
+                    getQuestionById(
+                      lesson,
+                      id
+                    );
+
+
+                  return `${id}: ${question?.text || ""}`;
+
+                }
+              )
+              .join("\n")
+
+          : "NONE";
+
+
+      const historyText =
+        Array.isArray(history) &&
+        history.length > 0
+          ? history
+              .map(
+                (
+                  item,
+                  index
+                ) => {
+
+                  return [
+                    `Turn ${index + 1}`,
+                    `Question: ${item?.question || ""}`,
+                    `Learner: ${item?.answer || ""}`,
+                    `Final answer: ${item?.corrected_answer || item?.answer || ""}`
+                  ].join("\n");
+
+                }
+              )
+              .join("\n\n")
+
+          : "No previous turns.";
 
 
       // ======================================
@@ -618,315 +768,139 @@ app.post(
       // ======================================
 
       const prompt = `
-You are an English speaking coach for Thai beginner learners.
+You are a friendly English speaking coach for Thai beginner learners.
 
-LESSON:
-My Weekend
+COURSE:
+Real English: Everyday Conversations
 
-CURRENT QUESTION:
-"${current_question}"
+CURRENT LESSON:
+${lesson.title || lesson_id}
 
-PREVIOUS CONVERSATION:
-${JSON.stringify(history)}
-
-LEARNER'S CURRENT SPOKEN ANSWER:
-"${transcript}"
+THIS IS SPOKEN ENGLISH.
+Evaluate what the learner SAID, not written punctuation or formatting.
 
 CURRENT TURN:
-${numericTurn} of 5
+${turn} of ${totalTurns}
+
+CURRENT QUESTION:
+${current_question}
+
+LEARNER SAID:
+${cleanTranscript}
 
 
-==========================================
-CORE RULE
-==========================================
-
-This is SPOKEN English practice.
-
-It is NOT writing practice.
-
-Evaluate:
-
-1. Whether the learner answered the question.
-2. Whether there is a meaningful spoken-English mistake.
+QUESTION BANK FOR THIS LESSON:
+${questionList}
 
 
-==========================================
-ANSWER RELEVANCE
-==========================================
-
-answer_relevant = true when the learner:
-
-- directly answers the question
-- gives information that clearly responds to the question
-- gives a natural short conversational answer
-- gives a short answer that makes sense in context
-
-Short beginner answers are allowed.
-
-Examples:
-
-Question:
-"How was your weekend?"
-
-"It was good."
-answer_relevant = true
+QUESTIONS STILL AVAILABLE FOR THE NEXT TURN:
+${availableQuestionList}
 
 
-Question:
-"What did you do?"
-
-"I stayed home."
-answer_relevant = true
+PREVIOUS CONVERSATION:
+${historyText}
 
 
-Question:
-"Where did you go?"
+YOUR JOB:
 
-"With my boyfriend."
-answer_relevant = false
+1. Decide whether the learner's answer is relevant to the CURRENT QUESTION.
 
+2. If it is NOT relevant:
+- answer_relevant = false
+- explain briefly in Thai what the current question is asking
+- give ONE very simple English example answer
+- correction_needed = false
+- corrected_sentence = learner's original transcript
+- next_question_id = ""
+- The learner must answer the SAME question again.
 
-Question:
-"What did you do?"
-
-"I love vegetables."
-answer_relevant = false
-
-
-If answer_relevant = false:
-
-- Do NOT praise the learner.
-- correction_needed should normally be false unless the answer itself contains an obvious meaningful spoken error.
-- relevance_explanation must briefly explain in Thai what the question is asking.
-- Give ONE simple example_answer.
-- Never pretend the example is something the learner actually did.
-- next_question_id MUST be "".
-
-
-==========================================
-SPOKEN CORRECTION RULES
-==========================================
-
-Only correct meaningful SPOKEN mistakes.
+3. If the answer IS relevant:
+- answer_relevant = true
+- check only meaningful SPOKEN English problems.
 
 Correct things such as:
-
-- wrong tense
-- wrong verb form
-- missing important subject
-- missing important verb
-- incorrect sentence structure
+- incorrect tense
+- incorrect verb form
+- missing important subject or verb
+- clearly incorrect sentence structure
 - clearly unnatural word choice
-- grammar mistakes that affect spoken English
-
+- mistakes that make the meaning confusing
 
 DO NOT correct:
-
 - punctuation
-- periods
-- commas
-- exclamation marks
-- question marks
 - capitalization
-- written formatting
-- speech-to-text sentence separation
+- commas
+- periods
+- question marks
+- transcript formatting
+- harmless spoken-English informality
+- natural conversational fragments when the meaning is clear
 
-
-VERY IMPORTANT:
-
-If the original answer and corrected sentence would sound the same when spoken:
-
-correction_needed MUST be false.
-
-
-Example:
-
-Original:
-"I bought snacks and food"
-
-Corrected:
-"I bought snacks and food."
-
-This is NOT a correction.
-
-
-Original:
-"i went shopping"
-
-Corrected:
-"I went shopping."
-
-This is NOT a correction.
-
-
-==========================================
-DO NOT INVENT INFORMATION
-==========================================
-
+IMPORTANT:
 Preserve the learner's intended meaning.
 
-NEVER invent:
+NEVER invent details the learner did not say.
 
+Do not invent:
+- colors
 - places
 - people
-- colors
-- objects
 - activities
+- objects
+- dates
 - times
 - reasons
 - opinions
 - events
 
-Do not guess missing personal information.
+If the learner's sentence is already natural spoken English:
+- correction_needed = false
+- corrected_sentence = the learner's original transcript
+- thai_explanation = ""
+
+If a meaningful correction is needed:
+- correction_needed = true
+- corrected_sentence = a natural corrected version
+- thai_explanation = a SHORT, beginner-friendly explanation in Thai
+- next_question_id = ""
+
+Do not give punctuation or capitalization advice.
+
+Do not say a word was "added" if the learner already said that word.
+
+Use friendly neutral Thai.
+Do not use "ครับ".
 
 
-Example:
+NEXT QUESTION RULES:
 
-Learner:
-"I go shopping."
+Only choose a next question when ALL are true:
+- answer_relevant = true
+- correction_needed = false
+- this is NOT the final turn
+- at least one unused question is available
 
-Allowed correction:
-"I went shopping."
+The next question MUST be chosen ONLY from:
+${availableQuestionIds.join(", ") || "NONE"}
 
-NOT allowed:
-"I went shopping at the mall with my boyfriend."
+Choose the question that follows the conversation most naturally.
 
+Do NOT ask for information the learner has already clearly given.
 
-==========================================
-THAI EXPLANATION
-==========================================
+Do NOT create your own question.
 
-If correction_needed = true:
+Do NOT rewrite a question.
 
-- explain only the REAL spoken mistake
-- explain briefly
-- use beginner-friendly Thai
-- do not explain punctuation
-- do not invent a correction
-- do not use "ครับ"
-- friendly neutral Thai is preferred
+Return only its exact question ID.
 
+If:
+- the answer is irrelevant
+- correction is needed
+- this is the final turn
+- or no unused questions remain
 
-If correction_needed = false:
-
-thai_explanation MUST be "".
-
-
-==========================================
-NEXT QUESTION
-==========================================
-
-You are NOT allowed to write a new tutor question.
-
-You may ONLY select one ID from the available fixed question bank below.
-
-AVAILABLE QUESTIONS:
-
-${availableQuestions || "NONE"}
-
-
-Choose the question that follows most naturally from what the learner ACTUALLY said.
-
-Do NOT ask something the learner already answered.
-
-Do NOT repeat a used question.
-
-Do NOT invent a new question.
-
-Do NOT modify the wording.
-
-Return only the question ID.
-
-
-Examples of natural selection:
-
-If learner says:
-"I went shopping."
-
-A natural choice could be:
-Q4: "Where did you go?"
-
-or:
-Q5: "Who were you with?"
-
-
-If learner says:
-"I went to the beach with my boyfriend."
-
-Do NOT choose:
-"Where did you go?"
-
-Do NOT choose:
-"Who were you with?"
-
-because both were already answered.
-
-A better available question could be:
-Q7: "How did you feel?"
-
-or:
-Q9: "What was the best part?"
-
-
-If the current answer needs correction:
-
-next_question_id MUST be "".
-
-The learner must try the same question again first.
-
-
-If answer_relevant = false:
-
-next_question_id MUST be "".
-
-
-If this is turn 5:
-
-next_question_id MUST be "".
-
-
-==========================================
-ENDING
-==========================================
-
-If this is NOT the final turn:
-
-closing_message MUST be "".
-
-
-If this IS the final turn
-AND the answer is relevant
-AND correction_needed = false:
-
-next_question_id MUST be "".
-
-closing_message may be one short friendly English sentence.
-
-
-If the final answer still needs correction:
-
-closing_message MUST be "".
-
-
-==========================================
-OUTPUT
-==========================================
-
-Return ONLY valid JSON.
-
-Use this structure:
-
-{
-  "corrected_sentence": "string",
-  "thai_explanation": "string",
-  "correction_needed": true,
-  "answer_relevant": true,
-  "relevance_explanation": "string",
-  "example_answer": "string",
-  "next_question_id": "Q1",
-  "closing_message": "string"
-}
-`.trim();
+then next_question_id MUST be "".
+`;
 
 
       // ======================================
@@ -935,178 +909,104 @@ Use this structure:
 
       const geminiResponse =
         await fetch(
-
-          "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent",
-
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${apiKey}`,
           {
-
-            method:
-              "POST",
+            method: "POST",
 
             headers: {
-
               "Content-Type":
-                "application/json",
-
-              "x-goog-api-key":
-                process.env
-                  .GEMINI_API_KEY
-
+                "application/json"
             },
 
             body:
               JSON.stringify({
-
                 contents: [
-
                   {
+                    role: "user",
 
                     parts: [
-
                       {
-
                         text:
                           prompt
-
                       }
-
                     ]
-
                   }
-
                 ],
 
-
                 generationConfig: {
-
                   temperature:
-                    0.05,
-
+                    0.2,
 
                   responseMimeType:
                     "application/json",
 
-
                   responseSchema: {
-
                     type:
                       "OBJECT",
 
-
                     properties: {
 
-                      corrected_sentence: {
-
-                        type:
-                          "STRING"
-
-                      },
-
-
-                      thai_explanation: {
-
-                        type:
-                          "STRING"
-
-                      },
-
-
-                      correction_needed: {
-
-                        type:
-                          "BOOLEAN"
-
-                      },
-
-
                       answer_relevant: {
-
                         type:
                           "BOOLEAN"
-
                       },
-
 
                       relevance_explanation: {
-
                         type:
                           "STRING"
-
                       },
-
 
                       example_answer: {
-
                         type:
                           "STRING"
-
                       },
 
+                      correction_needed: {
+                        type:
+                          "BOOLEAN"
+                      },
+
+                      corrected_sentence: {
+                        type:
+                          "STRING"
+                      },
+
+                      thai_explanation: {
+                        type:
+                          "STRING"
+                      },
 
                       next_question_id: {
-
                         type:
                           "STRING"
-
-                      },
-
-
-                      closing_message: {
-
-                        type:
-                          "STRING"
-
                       }
 
                     },
 
-
                     required: [
-
-                      "corrected_sentence",
-
-                      "thai_explanation",
-
-                      "correction_needed",
-
                       "answer_relevant",
-
                       "relevance_explanation",
-
                       "example_answer",
-
-                      "next_question_id",
-
-                      "closing_message"
-
+                      "correction_needed",
+                      "corrected_sentence",
+                      "thai_explanation",
+                      "next_question_id"
                     ]
-
                   }
-
                 }
-
               })
-
           }
-
         );
 
 
       const geminiData =
-        await geminiResponse
-          .json();
+        await geminiResponse.json();
 
 
-      // ======================================
-      // GEMINI ERROR
-      // ======================================
-
-      if (
-        !geminiResponse.ok
-      ) {
+      if (!geminiResponse.ok) {
 
         console.error(
-          "Gemini error:",
+          "Gemini API error:",
           geminiData
         );
 
@@ -1116,39 +1016,33 @@ Use this structure:
             geminiResponse.status
           )
           .json({
-
             error:
-              "Gemini request failed",
-
-            details:
-              geminiData
-
+              geminiData?.error?.message ||
+              "Gemini request failed."
           });
 
       }
 
 
       // ======================================
-      // READ JSON TEXT
+      // READ GEMINI JSON
       // ======================================
 
-      const text =
+      const modelText =
         geminiData
-          ?.candidates?.[0]
-          ?.content?.parts?.[0]
+          ?.candidates
+          ?.[0]
+          ?.content
+          ?.parts
+          ?.[0]
           ?.text;
 
 
-      if (!text) {
+      if (!modelText) {
 
-        return res
-          .status(500)
-          .json({
-
-            error:
-              "Gemini returned no text"
-
-          });
+        throw new Error(
+          "Gemini returned no text."
+        );
 
       }
 
@@ -1159,159 +1053,112 @@ Use this structure:
       try {
 
         result =
-          JSON.parse(text);
+          JSON.parse(
+            modelText
+          );
 
-      } catch (error) {
+      }
+
+      catch (error) {
 
         console.error(
           "Gemini JSON parse error:",
-          text
+          modelText
         );
 
 
-        return res
-          .status(500)
-          .json({
-
-            error:
-              "Gemini returned invalid JSON"
-
-          });
+        throw new Error(
+          "Gemini returned invalid JSON."
+        );
 
       }
+
+
+      // ======================================
+      // NORMALIZE RESULT
+      // ======================================
+
+      result.answer_relevant =
+        result.answer_relevant ===
+        true;
+
+
+      result.correction_needed =
+        result.correction_needed ===
+        true;
+
+
+      result.relevance_explanation =
+        String(
+          result.relevance_explanation ||
+          ""
+        ).trim();
+
+
+      result.example_answer =
+        String(
+          result.example_answer ||
+          ""
+        ).trim();
+
+
+      result.corrected_sentence =
+        String(
+          result.corrected_sentence ||
+          cleanTranscript
+        ).trim();
+
+
+      result.thai_explanation =
+        String(
+          result.thai_explanation ||
+          ""
+        ).trim();
+
+
+      result.next_question_id =
+        String(
+          result.next_question_id ||
+          ""
+        ).trim();
 
 
       // ======================================
       // HARD SAFETY:
-      // PUNCTUATION / CAPITALIZATION
-      // ==========================================
+      // PUNCTUATION / CASE ONLY
+      // ======================================
 
-      const originalNormalized =
-        normalizeSpokenText(
-          transcript
-        );
-
-
-      const correctedNormalized =
-        normalizeSpokenText(
-          result
-            .corrected_sentence ||
-          ""
-        );
-
-
-      let correctionNeeded =
-        Boolean(
-          result
-            .correction_needed
-        );
-
-
-      let correctedSentence =
-        result
-          .corrected_sentence ||
-        transcript;
-
-
-      let thaiExplanation =
-        result
-          .thai_explanation ||
-        "";
-
-
-      // If spoken result is identical,
-      // there is NO correction.
       if (
-        originalNormalized ===
-        correctedNormalized
+        result.answer_relevant &&
+        result.correction_needed
       ) {
 
-        correctionNeeded =
-          false;
+        const originalNormalized =
+          normalizeSpokenText(
+            cleanTranscript
+          );
 
 
-        correctedSentence =
-          transcript;
-
-
-        thaiExplanation =
-          "";
-
-      }
-
-
-      // ======================================
-      // RELEVANCE
-      // ======================================
-
-      const answerRelevant =
-        result
-          .answer_relevant ===
-        true;
-
-
-      // ======================================
-      // VALIDATE NEXT QUESTION
-      // ======================================
-
-      let nextQuestionId =
-        String(
-          result
-            .next_question_id ||
-          ""
-        )
-          .trim()
-          .toUpperCase();
-
-
-      let nextQuestion =
-        "";
-
-
-      // No next question if:
-      // - irrelevant
-      // - correction required
-      // - final turn
-      if (
-        !answerRelevant ||
-        correctionNeeded ||
-        isFinalTurn
-      ) {
-
-        nextQuestionId =
-          "";
-
-      }
-
-
-      // ======================================
-      // VALID QUESTION ID
-      // ======================================
-
-      if (nextQuestionId) {
-
-        const valid =
-          Object.prototype
-            .hasOwnProperty
-            .call(
-              QUESTION_BANK,
-              nextQuestionId
-            );
-
-
-        const alreadyUsed =
-          usedQuestionIds
-            .has(
-              nextQuestionId
-            );
+        const correctedNormalized =
+          normalizeSpokenText(
+            result.corrected_sentence
+          );
 
 
         if (
-          !valid ||
-          alreadyUsed
+          originalNormalized ===
+          correctedNormalized
         ) {
 
-          nextQuestionId =
+          result.correction_needed =
+            false;
+
+
+          result.corrected_sentence =
+            cleanTranscript;
+
+
+          result.thai_explanation =
             "";
 
         }
@@ -1320,154 +1167,160 @@ Use this structure:
 
 
       // ======================================
-      // FALLBACK QUESTION
-      // ======================================
-      //
-      // If Gemini fails to select a valid
-      // available question, use the first
-      // unused fixed question.
-      //
-      // Still NO AI-generated question.
+      // IRRELEVANT ANSWER SAFETY
       // ======================================
 
       if (
-        answerRelevant &&
-        !correctionNeeded &&
-        !isFinalTurn &&
-        !nextQuestionId
+        !result.answer_relevant
       ) {
 
-        const fallbackId =
-          availableQuestionIds[0];
+        result.correction_needed =
+          false;
 
 
-        if (fallbackId) {
+        result.corrected_sentence =
+          cleanTranscript;
 
-          nextQuestionId =
-            fallbackId;
 
-        }
+        result.next_question_id =
+          "";
 
       }
 
 
       // ======================================
-      // MAP ID TO EXACT QUESTION TEXT
+      // CORRECTION SAFETY
       // ======================================
+
+      if (
+        result.correction_needed
+      ) {
+
+        result.next_question_id =
+          "";
+
+      }
+
+
+      // ======================================
+      // FINAL TURN SAFETY
+      // ======================================
+
+      if (isFinalTurn) {
+
+        result.next_question_id =
+          "";
+
+      }
+
+
+      // ======================================
+      // NEXT QUESTION VALIDATION
+      // ======================================
+
+      let nextQuestionId =
+        result.next_question_id;
+
 
       if (
         nextQuestionId &&
-        QUESTION_BANK[
+        !availableQuestionIds.includes(
           nextQuestionId
-        ]
+        )
       ) {
 
-        nextQuestion =
-          QUESTION_BANK[
-            nextQuestionId
-          ];
-
-      }
+        console.warn(
+          "Gemini selected invalid or used question:",
+          nextQuestionId
+        );
 
 
-      // ======================================
-      // CLEAN IRRELEVANT FEEDBACK
-      // ======================================
-
-      let relevanceExplanation =
-        result
-          .relevance_explanation ||
-        "";
-
-
-      let exampleAnswer =
-        result
-          .example_answer ||
-        "";
-
-
-      if (answerRelevant) {
-
-        relevanceExplanation =
-          "";
-
-        exampleAnswer =
+        nextQuestionId =
           "";
 
       }
 
 
       // ======================================
-      // CLOSING MESSAGE
+      // SAFE FALLBACK
       // ======================================
-
-      let closingMessage =
-        result
-          .closing_message ||
-        "";
-
 
       if (
-        !isFinalTurn ||
-        !answerRelevant ||
-        correctionNeeded
+        result.answer_relevant &&
+        !result.correction_needed &&
+        !isFinalTurn &&
+        !nextQuestionId &&
+        availableQuestionIds.length >
+          0
       ) {
 
-        closingMessage =
+        nextQuestionId =
+          availableQuestionIds[0];
+
+      }
+
+
+      // ======================================
+      // MAP ID -> EXACT QUESTION
+      // ======================================
+
+      let nextQuestion =
+        "";
+
+
+      if (nextQuestionId) {
+
+        const nextQuestionObject =
+          getQuestionById(
+            lesson,
+            nextQuestionId
+          );
+
+
+        nextQuestion =
+          nextQuestionObject?.text ||
           "";
 
       }
 
 
       // ======================================
-      // RESPONSE
+      // RETURN TO FRONTEND
       // ======================================
 
-      return res.json({
+      res.json({
 
-        transcript,
-
-
-        corrected_sentence:
-          correctedSentence,
-
-
-        thai_explanation:
-          thaiExplanation,
-
-
-        correction_needed:
-          correctionNeeded,
-
+        lesson_id,
 
         answer_relevant:
-          answerRelevant,
-
+          result.answer_relevant,
 
         relevance_explanation:
-          relevanceExplanation,
-
+          result.relevance_explanation,
 
         example_answer:
-          exampleAnswer,
+          result.example_answer,
 
+        correction_needed:
+          result.correction_needed,
+
+        corrected_sentence:
+          result.corrected_sentence,
+
+        thai_explanation:
+          result.thai_explanation,
 
         next_question_id:
           nextQuestionId,
 
-
-        // Frontend currently uses this.
         next_question:
-          nextQuestion,
-
-
-        closing_message:
-          closingMessage
+          nextQuestion
 
       });
 
+    }
 
-    } catch (error) {
+    catch (error) {
 
       console.error(
         "Correction error:",
@@ -1475,19 +1328,16 @@ Use this structure:
       );
 
 
-      return res
+      res
         .status(500)
         .json({
-
           error:
-            "Could not process learner answer"
-
+            "Could not check answer."
         });
 
     }
 
   }
-
 );
 
 
@@ -1496,11 +1346,19 @@ Use this structure:
 // ==========================================
 
 app.listen(
-  port,
+  PORT,
   () => {
 
     console.log(
-      `Weekend AI Speaking Lab running on port ${port}`
+      `Speaking Lab running on port ${PORT}`
+    );
+
+
+    console.log(
+      "Loaded lessons:",
+      Object.keys(
+        LESSONS
+      )
     );
 
   }
