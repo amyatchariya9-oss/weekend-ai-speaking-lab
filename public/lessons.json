@@ -5,56 +5,16 @@
     "turns": 5,
     "openingQuestion": "Hey! How was your weekend?",
     "questions": [
-      {
-        "id": "q1",
-        "text": "Hey! How was your weekend?",
-        "audio": "/audio/weekend/q1.mp3"
-      },
-      {
-        "id": "q2",
-        "text": "What did you do?",
-        "audio": "/audio/weekend/q2.mp3"
-      },
-      {
-        "id": "q3",
-        "text": "Tell me more about it.",
-        "audio": "/audio/weekend/q3.mp3"
-      },
-      {
-        "id": "q4",
-        "text": "Where did you go?",
-        "audio": "/audio/weekend/q4.mp3"
-      },
-      {
-        "id": "q5",
-        "text": "Who were you with?",
-        "audio": "/audio/weekend/q5.mp3"
-      },
-      {
-        "id": "q6",
-        "text": "What happened next?",
-        "audio": "/audio/weekend/q6.mp3"
-      },
-      {
-        "id": "q7",
-        "text": "How did you feel?",
-        "audio": "/audio/weekend/q7.mp3"
-      },
-      {
-        "id": "q8",
-        "text": "What did you like about it?",
-        "audio": "/audio/weekend/q8.mp3"
-      },
-      {
-        "id": "q9",
-        "text": "What was the best part?",
-        "audio": "/audio/weekend/q9.mp3"
-      },
-      {
-        "id": "q10",
-        "text": "Would you do it again?",
-        "audio": "/audio/weekend/q10.mp3"
-      }
+      { "id": "q1", "text": "Hey! How was your weekend?", "audio": "/audio/weekend/q1.mp3" },
+      { "id": "q2", "text": "What did you do?", "audio": "/audio/weekend/q2.mp3" },
+      { "id": "q3", "text": "Tell me more about it.", "audio": "/audio/weekend/q3.mp3" },
+      { "id": "q4", "text": "Where did you go?", "audio": "/audio/weekend/q4.mp3" },
+      { "id": "q5", "text": "Who were you with?", "audio": "/audio/weekend/q5.mp3" },
+      { "id": "q6", "text": "What happened next?", "audio": "/audio/weekend/q6.mp3" },
+      { "id": "q7", "text": "How did you feel?", "audio": "/audio/weekend/q7.mp3" },
+      { "id": "q8", "text": "What did you like about it?", "audio": "/audio/weekend/q8.mp3" },
+      { "id": "q9", "text": "What was the best part?", "audio": "/audio/weekend/q9.mp3" },
+      { "id": "q10", "text": "Would you do it again?", "audio": "/audio/weekend/q10.mp3" }
     ]
   },
 
@@ -64,56 +24,16 @@
     "turns": 5,
     "openingQuestion": "Hey! How was your day?",
     "questions": [
-      {
-        "id": "q1",
-        "text": "Hey! How was your day?",
-        "audio": "/audio/my-day/q1.mp3"
-      },
-      {
-        "id": "q2",
-        "text": "What did you do today?",
-        "audio": "/audio/my-day/q2.mp3"
-      },
-      {
-        "id": "q3",
-        "text": "What time did you wake up?",
-        "audio": "/audio/my-day/q3.mp3"
-      },
-      {
-        "id": "q4",
-        "text": "What did you do in the morning?",
-        "audio": "/audio/my-day/q4.mp3"
-      },
-      {
-        "id": "q5",
-        "text": "What did you have for lunch?",
-        "audio": "/audio/my-day/q5.mp3"
-      },
-      {
-        "id": "q6",
-        "text": "Did you go anywhere today?",
-        "audio": "/audio/my-day/q6.mp3"
-      },
-      {
-        "id": "q7",
-        "text": "Who did you talk to today?",
-        "audio": "/audio/my-day/q7.mp3"
-      },
-      {
-        "id": "q8",
-        "text": "What was the best part of your day?",
-        "audio": "/audio/my-day/q8.mp3"
-      },
-      {
-        "id": "q9",
-        "text": "How are you feeling now?",
-        "audio": "/audio/my-day/q9.mp3"
-      },
-      {
-        "id": "q10",
-        "text": "What are you going to do tonight?",
-        "audio": "/audio/my-day/q10.mp3"
-      }
+      { "id": "q1", "text": "Hey! How was your day?", "audio": "/audio/my-day/q1.mp3" },
+      { "id": "q2", "text": "What did you do today?", "audio": "/audio/my-day/q2.mp3" },
+      { "id": "q3", "text": "What time did you wake up?", "audio": "/audio/my-day/q3.mp3" },
+      { "id": "q4", "text": "What did you do in the morning?", "audio": "/audio/my-day/q4.mp3" },
+      { "id": "q5", "text": "What did you have for lunch?", "audio": "/audio/my-day/q5.mp3" },
+      { "id": "q6", "text": "Did you go anywhere today?", "audio": "/audio/my-day/q6.mp3" },
+      { "id": "q7", "text": "Who did you talk to today?", "audio": "/audio/my-day/q7.mp3" },
+      { "id": "q8", "text": "What was the best part of your day?", "audio": "/audio/my-day/q8.mp3" },
+      { "id": "q9", "text": "How are you feeling now?", "audio": "/audio/my-day/q9.mp3" },
+      { "id": "q10", "text": "What are you going to do tonight?", "audio": "/audio/my-day/q10.mp3" }
     ]
   },
 
@@ -123,56 +43,16 @@
     "turns": 5,
     "openingQuestion": "Hi! How are you?",
     "questions": [
-      {
-        "id": "q1",
-        "text": "Hi! How are you?",
-        "audio": "/audio/introducing-yourself/q1.mp3"
-      },
-      {
-        "id": "q2",
-        "text": "What's your name?",
-        "audio": "/audio/introducing-yourself/q2.mp3"
-      },
-      {
-        "id": "q3",
-        "text": "Where are you from?",
-        "audio": "/audio/introducing-yourself/q3.mp3"
-      },
-      {
-        "id": "q4",
-        "text": "Where do you live now?",
-        "audio": "/audio/introducing-yourself/q4.mp3"
-      },
-      {
-        "id": "q5",
-        "text": "What do you do?",
-        "audio": "/audio/introducing-yourself/q5.mp3"
-      },
-      {
-        "id": "q6",
-        "text": "What do you like to do in your free time?",
-        "audio": "/audio/introducing-yourself/q6.mp3"
-      },
-      {
-        "id": "q7",
-        "text": "What kind of music do you like?",
-        "audio": "/audio/introducing-yourself/q7.mp3"
-      },
-      {
-        "id": "q8",
-        "text": "What's your favorite food?",
-        "audio": "/audio/introducing-yourself/q8.mp3"
-      },
-      {
-        "id": "q9",
-        "text": "How would you describe yourself?",
-        "audio": "/audio/introducing-yourself/q9.mp3"
-      },
-      {
-        "id": "q10",
-        "text": "Tell me one fun fact about yourself.",
-        "audio": "/audio/introducing-yourself/q10.mp3"
-      }
+      { "id": "q1", "text": "Hi! How are you?", "audio": "/audio/introducing-yourself/q1.mp3" },
+      { "id": "q2", "text": "What's your name?", "audio": "/audio/introducing-yourself/q2.mp3" },
+      { "id": "q3", "text": "Where are you from?", "audio": "/audio/introducing-yourself/q3.mp3" },
+      { "id": "q4", "text": "Where do you live now?", "audio": "/audio/introducing-yourself/q4.mp3" },
+      { "id": "q5", "text": "What do you do?", "audio": "/audio/introducing-yourself/q5.mp3" },
+      { "id": "q6", "text": "What do you like to do in your free time?", "audio": "/audio/introducing-yourself/q6.mp3" },
+      { "id": "q7", "text": "What kind of music do you like?", "audio": "/audio/introducing-yourself/q7.mp3" },
+      { "id": "q8", "text": "What's your favorite food?", "audio": "/audio/introducing-yourself/q8.mp3" },
+      { "id": "q9", "text": "How would you describe yourself?", "audio": "/audio/introducing-yourself/q9.mp3" },
+      { "id": "q10", "text": "Tell me one fun fact about yourself.", "audio": "/audio/introducing-yourself/q10.mp3" }
     ]
   },
 
@@ -182,56 +62,16 @@
     "turns": 5,
     "openingQuestion": "What's something you really like?",
     "questions": [
-      {
-        "id": "q1",
-        "text": "What's something you really like?",
-        "audio": "/audio/likes-dislikes/q1.mp3"
-      },
-      {
-        "id": "q2",
-        "text": "Why do you like it?",
-        "audio": "/audio/likes-dislikes/q2.mp3"
-      },
-      {
-        "id": "q3",
-        "text": "What kind of food do you like?",
-        "audio": "/audio/likes-dislikes/q3.mp3"
-      },
-      {
-        "id": "q4",
-        "text": "Is there any food you don't like?",
-        "audio": "/audio/likes-dislikes/q4.mp3"
-      },
-      {
-        "id": "q5",
-        "text": "What kind of music do you like?",
-        "audio": "/audio/likes-dislikes/q5.mp3"
-      },
-      {
-        "id": "q6",
-        "text": "Do you like watching movies or TV shows?",
-        "audio": "/audio/likes-dislikes/q6.mp3"
-      },
-      {
-        "id": "q7",
-        "text": "Do you prefer staying home or going out?",
-        "audio": "/audio/likes-dislikes/q7.mp3"
-      },
-      {
-        "id": "q8",
-        "text": "What's something you love doing?",
-        "audio": "/audio/likes-dislikes/q8.mp3"
-      },
-      {
-        "id": "q9",
-        "text": "What's something you're not really into?",
-        "audio": "/audio/likes-dislikes/q9.mp3"
-      },
-      {
-        "id": "q10",
-        "text": "What do you prefer, coffee or tea? Why?",
-        "audio": "/audio/likes-dislikes/q10.mp3"
-      }
+      { "id": "q1", "text": "What's something you really like?", "audio": "/audio/likes-dislikes/q1.mp3" },
+      { "id": "q2", "text": "Why do you like it?", "audio": "/audio/likes-dislikes/q2.mp3" },
+      { "id": "q3", "text": "What kind of food do you like?", "audio": "/audio/likes-dislikes/q3.mp3" },
+      { "id": "q4", "text": "Is there any food you don't like?", "audio": "/audio/likes-dislikes/q4.mp3" },
+      { "id": "q5", "text": "What kind of music do you like?", "audio": "/audio/likes-dislikes/q5.mp3" },
+      { "id": "q6", "text": "Do you like watching movies or TV shows?", "audio": "/audio/likes-dislikes/q6.mp3" },
+      { "id": "q7", "text": "Do you prefer staying home or going out?", "audio": "/audio/likes-dislikes/q7.mp3" },
+      { "id": "q8", "text": "What's something you love doing?", "audio": "/audio/likes-dislikes/q8.mp3" },
+      { "id": "q9", "text": "What's something you're not really into?", "audio": "/audio/likes-dislikes/q9.mp3" },
+      { "id": "q10", "text": "What do you prefer, coffee or tea? Why?", "audio": "/audio/likes-dislikes/q10.mp3" }
     ]
   },
 
@@ -241,56 +81,35 @@
     "turns": 5,
     "openingQuestion": "What are you doing this weekend?",
     "questions": [
-      {
-        "id": "q1",
-        "text": "What are you doing this weekend?",
-        "audio": "/audio/making-plans/q1.mp3"
-      },
-      {
-        "id": "q2",
-        "text": "Do you have any plans for Saturday?",
-        "audio": "/audio/making-plans/q2.mp3"
-      },
-      {
-        "id": "q3",
-        "text": "Would you like to go out this weekend?",
-        "audio": "/audio/making-plans/q3.mp3"
-      },
-      {
-        "id": "q4",
-        "text": "What would you like to do?",
-        "audio": "/audio/making-plans/q4.mp3"
-      },
-      {
-        "id": "q5",
-        "text": "Where would you like to go?",
-        "audio": "/audio/making-plans/q5.mp3"
-      },
-      {
-        "id": "q6",
-        "text": "Who would you like to go with?",
-        "audio": "/audio/making-plans/q6.mp3"
-      },
-      {
-        "id": "q7",
-        "text": "What time would you like to meet?",
-        "audio": "/audio/making-plans/q7.mp3"
-      },
-      {
-        "id": "q8",
-        "text": "Are you free in the afternoon?",
-        "audio": "/audio/making-plans/q8.mp3"
-      },
-      {
-        "id": "q9",
-        "text": "What should we do if it rains?",
-        "audio": "/audio/making-plans/q9.mp3"
-      },
-      {
-        "id": "q10",
-        "text": "Sounds good! So, what's the plan?",
-        "audio": "/audio/making-plans/q10.mp3"
-      }
+      { "id": "q1", "text": "What are you doing this weekend?", "audio": "/audio/making-plans/q1.mp3" },
+      { "id": "q2", "text": "Do you have any plans for Saturday?", "audio": "/audio/making-plans/q2.mp3" },
+      { "id": "q3", "text": "Would you like to go out this weekend?", "audio": "/audio/making-plans/q3.mp3" },
+      { "id": "q4", "text": "What would you like to do?", "audio": "/audio/making-plans/q4.mp3" },
+      { "id": "q5", "text": "Where would you like to go?", "audio": "/audio/making-plans/q5.mp3" },
+      { "id": "q6", "text": "Who would you like to go with?", "audio": "/audio/making-plans/q6.mp3" },
+      { "id": "q7", "text": "What time would you like to meet?", "audio": "/audio/making-plans/q7.mp3" },
+      { "id": "q8", "text": "Are you free in the afternoon?", "audio": "/audio/making-plans/q8.mp3" },
+      { "id": "q9", "text": "What should we do if it rains?", "audio": "/audio/making-plans/q9.mp3" },
+      { "id": "q10", "text": "Sounds good! So, what's the plan?", "audio": "/audio/making-plans/q10.mp3" }
+    ]
+  },
+
+  "small-talk": {
+    "id": "small-talk",
+    "title": "Lesson 06 · Small Talk",
+    "turns": 5,
+    "openingQuestion": "Hey! How's it going?",
+    "questions": [
+      { "id": "q1", "text": "Hey! How's it going?", "audio": "/audio/small-talk/q1.mp3" },
+      { "id": "q2", "text": "How's your day going?", "audio": "/audio/small-talk/q2.mp3" },
+      { "id": "q3", "text": "Have you been busy today?", "audio": "/audio/small-talk/q3.mp3" },
+      { "id": "q4", "text": "What are you doing today?", "audio": "/audio/small-talk/q4.mp3" },
+      { "id": "q5", "text": "How's the weather today?", "audio": "/audio/small-talk/q5.mp3" },
+      { "id": "q6", "text": "Do you have any plans for later?", "audio": "/audio/small-talk/q6.mp3" },
+      { "id": "q7", "text": "Have you watched anything good lately?", "audio": "/audio/small-talk/q7.mp3" },
+      { "id": "q8", "text": "What do you usually do in the evening?", "audio": "/audio/small-talk/q8.mp3" },
+      { "id": "q9", "text": "Is there anything you're looking forward to?", "audio": "/audio/small-talk/q9.mp3" },
+      { "id": "q10", "text": "Anyway, what are you up to this weekend?", "audio": "/audio/small-talk/q10.mp3" }
     ]
   }
 }
