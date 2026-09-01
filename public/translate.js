@@ -1,25 +1,36 @@
-const questionEl = document.getElementById("question");
+const questionEl =
+  document.getElementById("question");
 
 if (questionEl) {
-  const params = new URLSearchParams(window.location.search);
-  const lessonId = params.get("lesson") || "weekend";
+  const params =
+    new URLSearchParams(
+      window.location.search
+    );
+
+  const lessonId =
+    params.get("lesson") ||
+    "weekend";
 
   let lessonsData = {};
   let vocabData = {};
-  let isRendering = false;
   let currentVocabEntry = null;
+  let lastRenderedQuestion = "";
 
   const typeLabels = {
     noun: "noun · คำนาม",
     verb: "verb · คำกริยา",
-    adjective: "adjective · คำคุณศัพท์",
-    adverb: "adverb · คำวิเศษณ์",
+    adjective:
+      "adjective · คำคุณศัพท์",
+    adverb:
+      "adverb · คำวิเศษณ์",
     phrase: "phrase · วลี",
-    expression: "expression · สำนวน / วลี"
+    expression:
+      "expression · สำนวน / วลี"
   };
 
   function injectStyles() {
-    const style = document.createElement("style");
+    const style =
+      document.createElement("style");
 
     style.textContent = `
       .tap-vocab {
@@ -65,7 +76,9 @@ if (questionEl) {
         width: min(100%, 440px);
         border-radius: 24px;
         background: white;
-        box-shadow: 0 22px 60px rgba(28, 31, 56, 0.22);
+        box-shadow:
+          0 22px 60px
+          rgba(28, 31, 56, 0.22);
         padding: 20px;
       }
 
@@ -148,45 +161,92 @@ if (questionEl) {
   }
 
   function createTranslateButton() {
-    let button = document.getElementById("translateQuestionBtn");
+    let button =
+      document.getElementById(
+        "translateQuestionBtn"
+      );
 
-    if (!button) {
-      button = document.createElement("button");
-      button.id = "translateQuestionBtn";
-      button.className = "translate-question-btn";
-      button.type = "button";
-      button.textContent = "ดูคำแปลทั้งคำถาม";
+    if (button) {
+      return button;
+    }
 
-      questionEl.insertAdjacentElement("afterend", button);
+    button =
+      document.createElement(
+        "button"
+      );
 
-      button.addEventListener("click", () => {
-        if (!currentVocabEntry?.questionThai) return;
+    button.id =
+      "translateQuestionBtn";
+
+    button.className =
+      "translate-question-btn";
+
+    button.type =
+      "button";
+
+    button.textContent =
+      "ดูคำแปลทั้งคำถาม";
+
+    questionEl.insertAdjacentElement(
+      "afterend",
+      button
+    );
+
+    button.addEventListener(
+      "click",
+      () => {
+        if (
+          !currentVocabEntry
+            ?.questionThai
+        ) {
+          return;
+        }
 
         openQuestionTranslation(
-          questionEl.textContent.trim(),
-          currentVocabEntry.questionThai
+          getPlainQuestionText(),
+          currentVocabEntry
+            .questionThai
         );
-      });
-    }
+      }
+    );
 
     return button;
   }
 
   function createPopup() {
-    let overlay = document.getElementById("translateOverlay");
+    let overlay =
+      document.getElementById(
+        "translateOverlay"
+      );
 
-    if (overlay) return overlay;
+    if (overlay) {
+      return overlay;
+    }
 
-    overlay = document.createElement("div");
-    overlay.id = "translateOverlay";
-    overlay.className = "translate-overlay";
+    overlay =
+      document.createElement(
+        "div"
+      );
+
+    overlay.id =
+      "translateOverlay";
+
+    overlay.className =
+      "translate-overlay";
 
     overlay.innerHTML = `
       <div class="translate-sheet">
         <div class="translate-head">
           <div>
-            <h3 class="translate-word" id="translateTitle"></h3>
-            <div class="translate-type" id="translateType"></div>
+            <h3
+              class="translate-word"
+              id="translateTitle"
+            ></h3>
+
+            <div
+              class="translate-type"
+              id="translateType"
+            ></div>
           </div>
 
           <button
@@ -198,12 +258,19 @@ if (questionEl) {
           </button>
         </div>
 
-        <div class="translate-thai" id="translateThai"></div>
+        <div
+          class="translate-thai"
+          id="translateThai"
+        ></div>
 
         <div id="translateExampleBlock">
-          <div class="translate-divider"></div>
+          <div
+            class="translate-divider"
+          ></div>
 
-          <div class="translate-label">
+          <div
+            class="translate-label"
+          >
             EXAMPLE
           </div>
 
@@ -220,70 +287,118 @@ if (questionEl) {
       </div>
     `;
 
-    document.body.appendChild(overlay);
+    document.body.appendChild(
+      overlay
+    );
 
     overlay
-      .querySelector("#translateClose")
-      .addEventListener("click", closePopup);
+      .querySelector(
+        "#translateClose"
+      )
+      .addEventListener(
+        "click",
+        closePopup
+      );
 
-    overlay.addEventListener("click", (event) => {
-      if (event.target === overlay) {
-        closePopup();
+    overlay.addEventListener(
+      "click",
+      (event) => {
+        if (
+          event.target ===
+          overlay
+        ) {
+          closePopup();
+        }
       }
-    });
+    );
 
     return overlay;
   }
 
   function closePopup() {
     document
-      .getElementById("translateOverlay")
-      ?.classList.remove("open");
+      .getElementById(
+        "translateOverlay"
+      )
+      ?.classList.remove(
+        "open"
+      );
   }
 
   function openPopup(vocab) {
-    const overlay = createPopup();
+    const overlay =
+      createPopup();
 
-    overlay.querySelector("#translateTitle").textContent =
+    overlay.querySelector(
+      "#translateTitle"
+    ).textContent =
       vocab.text || "";
 
-    overlay.querySelector("#translateType").textContent =
-      typeLabels[vocab.type] || vocab.type || "";
+    overlay.querySelector(
+      "#translateType"
+    ).textContent =
+      typeLabels[
+        vocab.type
+      ] ||
+      vocab.type ||
+      "";
 
-    overlay.querySelector("#translateThai").textContent =
+    overlay.querySelector(
+      "#translateThai"
+    ).textContent =
       vocab.thai || "";
 
-    overlay.querySelector("#translateExample").textContent =
+    overlay.querySelector(
+      "#translateExample"
+    ).textContent =
       vocab.example || "";
 
-    overlay.querySelector("#translateExampleThai").textContent =
+    overlay.querySelector(
+      "#translateExampleThai"
+    ).textContent =
       vocab.exampleThai || "";
 
-    overlay
-      .querySelector("#translateExampleBlock")
-      .style.display =
-        vocab.example || vocab.exampleThai
-          ? "block"
-          : "none";
+    overlay.querySelector(
+      "#translateExampleBlock"
+    ).style.display =
+      vocab.example ||
+      vocab.exampleThai
+        ? "block"
+        : "none";
 
-    overlay.classList.add("open");
+    overlay.classList.add(
+      "open"
+    );
   }
 
-  function openQuestionTranslation(english, thai) {
-    const overlay = createPopup();
+  function openQuestionTranslation(
+    english,
+    thai
+  ) {
+    const overlay =
+      createPopup();
 
-    overlay.querySelector("#translateTitle").textContent =
+    overlay.querySelector(
+      "#translateTitle"
+    ).textContent =
       "แปลทั้งคำถาม";
 
-    overlay.querySelector("#translateType").textContent = "";
+    overlay.querySelector(
+      "#translateType"
+    ).textContent = "";
 
     const thaiContainer =
-      overlay.querySelector("#translateThai");
+      overlay.querySelector(
+        "#translateThai"
+      );
 
-    thaiContainer.innerHTML = "";
+    thaiContainer.innerHTML =
+      "";
 
     const englishEl =
-      document.createElement("div");
+      document.createElement(
+        "div"
+      );
 
     englishEl.className =
       "translate-question-en";
@@ -292,7 +407,9 @@ if (questionEl) {
       english;
 
     const thaiEl =
-      document.createElement("div");
+      document.createElement(
+        "div"
+      );
 
     thaiEl.className =
       "translate-thai";
@@ -300,93 +417,189 @@ if (questionEl) {
     thaiEl.textContent =
       thai;
 
-    thaiContainer.appendChild(englishEl);
-    thaiContainer.appendChild(thaiEl);
+    thaiContainer.appendChild(
+      englishEl
+    );
 
-    overlay
-      .querySelector("#translateExampleBlock")
-      .style.display = "none";
+    thaiContainer.appendChild(
+      thaiEl
+    );
 
-    overlay.classList.add("open");
+    overlay.querySelector(
+      "#translateExampleBlock"
+    ).style.display =
+      "none";
+
+    overlay.classList.add(
+      "open"
+    );
   }
 
-  function findQuestionId(text) {
-    const questions =
-      lessonsData?.[lessonId]?.questions;
+  function normalizeText(
+    text = ""
+  ) {
+    return String(text)
+      .toLowerCase()
+      .replace(/\s+/g, " ")
+      .trim();
+  }
 
-    if (!Array.isArray(questions)) {
+  function getPlainQuestionText() {
+    return questionEl.textContent
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function findQuestionId(
+    text
+  ) {
+    const questions =
+      lessonsData?.[
+        lessonId
+      ]?.questions;
+
+    if (
+      !Array.isArray(
+        questions
+      )
+    ) {
       return "";
     }
 
     const normalized =
-      text
-        .toLowerCase()
-        .replace(/\s+/g, " ")
-        .trim();
+      normalizeText(text);
 
     const match =
       questions.find(
         (question) =>
-          String(question.text || "")
-            .toLowerCase()
-            .replace(/\s+/g, " ")
-            .trim() === normalized
+          normalizeText(
+            question.text
+          ) === normalized
       );
 
     return match?.id || "";
   }
 
+  function escapeRegExp(
+    text
+  ) {
+    return text.replace(
+      /[.*+?^${}()|[\]\\]/g,
+      "\\$&"
+    );
+  }
+
   function renderQuestion() {
-    if (isRendering) return;
-
     const questionText =
-      questionEl.textContent
-        .replace(/\s+/g, " ")
-        .trim();
+      getPlainQuestionText();
 
-    if (!questionText) return;
+    if (!questionText) {
+      return;
+    }
+
+    /*
+      If this exact question has
+      already been decorated,
+      do nothing.
+
+      This prevents the
+      MutationObserver from
+      repeatedly rendering itself.
+    */
+    if (
+      questionText ===
+        lastRenderedQuestion &&
+      questionEl.querySelector(
+        ".tap-vocab"
+      )
+    ) {
+      return;
+    }
 
     const questionId =
-      findQuestionId(questionText);
+      findQuestionId(
+        questionText
+      );
 
     currentVocabEntry =
-      vocabData?.[lessonId]?.[questionId] ||
-      null;
+      vocabData?.[
+        lessonId
+      ]?.[
+        questionId
+      ] || null;
 
     const button =
       createTranslateButton();
 
-    if (!currentVocabEntry) {
-      button.classList.remove("show");
+    if (
+      !currentVocabEntry
+    ) {
+      button.classList.remove(
+        "show"
+      );
+
+      lastRenderedQuestion =
+        questionText;
+
       return;
     }
 
-    if (currentVocabEntry.questionThai) {
-      button.classList.add("show");
+    if (
+      currentVocabEntry
+        .questionThai
+    ) {
+      button.classList.add(
+        "show"
+      );
     } else {
-      button.classList.remove("show");
+      button.classList.remove(
+        "show"
+      );
     }
 
     const vocabList =
-      currentVocabEntry.vocab || [];
+      Array.isArray(
+        currentVocabEntry
+          .vocab
+      )
+        ? currentVocabEntry
+            .vocab
+        : [];
 
-    if (!vocabList.length) return;
+    if (
+      vocabList.length === 0
+    ) {
+      lastRenderedQuestion =
+        questionText;
 
-    isRendering = true;
+      return;
+    }
 
-    let html = questionText;
+    let html =
+      questionText;
 
     const sorted =
       [...vocabList].sort(
         (a, b) =>
-          b.text.length - a.text.length
+          String(
+            b.text
+          ).length -
+          String(
+            a.text
+          ).length
       );
 
-    for (const vocab of sorted) {
+    for (
+      const vocab
+      of sorted
+    ) {
+      if (!vocab.text) {
+        continue;
+      }
+
       const escaped =
-        vocab.text.replace(
-          /[.*+?^${}()|[\]\\]/g,
-          "\\$&"
+        escapeRegExp(
+          vocab.text
         );
 
       const regex =
@@ -398,9 +611,12 @@ if (questionEl) {
       html =
         html.replace(
           regex,
-          `<span class="tap-vocab" data-vocab="${encodeURIComponent(
-            vocab.text
-          )}">$1</span>`
+          `<span
+            class="tap-vocab"
+            data-vocab="${encodeURIComponent(
+              vocab.text
+            )}"
+          >$1</span>`
         );
     }
 
@@ -408,35 +624,47 @@ if (questionEl) {
       html;
 
     questionEl
-      .querySelectorAll(".tap-vocab")
-      .forEach((element) => {
-        element.addEventListener(
-          "click",
-          () => {
-            const text =
-              decodeURIComponent(
-                element.dataset.vocab
-              );
+      .querySelectorAll(
+        ".tap-vocab"
+      )
+      .forEach(
+        (element) => {
+          element.addEventListener(
+            "click",
+            () => {
+              const text =
+                decodeURIComponent(
+                  element
+                    .dataset
+                    .vocab
+                );
 
-            const vocab =
-              vocabList.find(
-                (item) =>
-                  item.text === text
-              );
+              const vocab =
+                vocabList.find(
+                  (item) =>
+                    item.text ===
+                    text
+                );
 
-            if (vocab) {
-              openPopup(vocab);
+              if (vocab) {
+                openPopup(
+                  vocab
+                );
+              }
             }
-          }
-        );
-      });
+          );
+        }
+      );
 
-    isRendering = false;
+    lastRenderedQuestion =
+      questionText;
   }
 
   async function initTranslate() {
     injectStyles();
+
     createPopup();
+
     createTranslateButton();
 
     try {
@@ -448,30 +676,62 @@ if (questionEl) {
           fetch(
             "/lessons.json",
             {
-              cache: "no-store"
+              cache:
+                "no-store"
             }
           ),
 
           fetch(
             "/vocab.json",
             {
-              cache: "no-store"
+              cache:
+                "no-store"
             }
           )
         ]);
 
+      if (
+        !lessonsResponse.ok
+      ) {
+        throw new Error(
+          "Could not load lessons.json"
+        );
+      }
+
+      if (
+        !vocabResponse.ok
+      ) {
+        throw new Error(
+          "Could not load vocab.json"
+        );
+      }
+
       lessonsData =
-        await lessonsResponse.json();
+        await lessonsResponse
+          .json();
 
       vocabData =
-        await vocabResponse.json();
+        await vocabResponse
+          .json();
 
       renderQuestion();
 
       const observer =
         new MutationObserver(
           () => {
-            if (!isRendering) {
+            const text =
+              getPlainQuestionText();
+
+            /*
+              Only render again
+              when app.js changes
+              to a genuinely
+              different question.
+            */
+            if (
+              text !==
+              lastRenderedQuestion
+            ) {
               requestAnimationFrame(
                 renderQuestion
               );
