@@ -1,181 +1,331 @@
 {
   "weekend": {
     "q1": {
-      "questionThai": "สุดสัปดาห์ของคุณเป็นยังไงบ้าง?",
-      "vocab": [
-        {
-          "text": "weekend",
-          "thai": "วันหยุดสุดสัปดาห์ / เสาร์-อาทิตย์",
-          "type": "noun",
-          "example": "I had a great weekend.",
-          "exampleThai": "ฉันมีวันหยุดสุดสัปดาห์ที่ดีมาก"
-        }
-      ]
+      "questionThai": "เฮ้! สุดสัปดาห์ของคุณเป็นยังไงบ้าง?"
     },
-
     "q2": {
-      "questionThai": "คุณทำอะไรมา?",
-      "vocab": [
-        {
-          "text": "did you do",
-          "thai": "คุณทำอะไรมา",
-          "type": "phrase",
-          "example": "What did you do yesterday?",
-          "exampleThai": "เมื่อวานคุณทำอะไรมา?"
-        }
-      ]
+      "questionThai": "คุณทำอะไรมา?"
     },
-
     "q3": {
-      "questionThai": "เล่าให้ฟังเพิ่มอีกหน่อยสิ",
-      "vocab": [
-        {
-          "text": "Tell me more",
-          "thai": "เล่าให้ฟังเพิ่มอีกหน่อย / เล่าต่อสิ",
-          "type": "phrase",
-          "example": "That sounds fun. Tell me more!",
-          "exampleThai": "ฟังดูสนุกนะ เล่าให้ฟังเพิ่มอีกหน่อยสิ"
-        }
-      ]
+      "questionThai": "เล่าให้ฟังเพิ่มอีกหน่อยสิ"
     },
-
     "q4": {
-      "questionThai": "คุณไปที่ไหนมา?",
-      "vocab": [
-        {
-          "text": "did you go",
-          "thai": "คุณไป...มา",
-          "type": "phrase",
-          "example": "Where did you go last night?",
-          "exampleThai": "เมื่อคืนคุณไปที่ไหนมา?"
-        }
-      ]
+      "questionThai": "คุณไปที่ไหนมา?"
     },
-
     "q5": {
-      "questionThai": "คุณไปกับใคร?",
-      "vocab": [
-        {
-          "text": "Who were you with",
-          "thai": "คุณอยู่กับใคร / คุณไปกับใคร",
-          "type": "phrase",
-          "example": "Who were you with at the party?",
-          "exampleThai": "คุณอยู่กับใครที่งานปาร์ตี้?"
-        }
-      ]
+      "questionThai": "คุณไปกับใคร?"
     },
-
     "q6": {
-      "questionThai": "แล้วหลังจากนั้นเกิดอะไรขึ้น?",
-      "vocab": [
-        {
-          "text": "happened next",
-          "thai": "เกิดอะไรขึ้นต่อ / หลังจากนั้นเกิดอะไรขึ้น",
-          "type": "phrase",
-          "example": "What happened next?",
-          "exampleThai": "แล้วหลังจากนั้นเกิดอะไรขึ้น?"
-        }
-      ]
+      "questionThai": "แล้วหลังจากนั้นเกิดอะไรขึ้น?"
     },
-
     "q7": {
-      "questionThai": "ตอนนั้นคุณรู้สึกยังไง?",
-      "vocab": [
-        {
-          "text": "How did you feel",
-          "thai": "คุณรู้สึกยังไง",
-          "type": "phrase",
-          "example": "How did you feel after that?",
-          "exampleThai": "หลังจากนั้นคุณรู้สึกยังไง?"
-        }
-      ]
+      "questionThai": "ตอนนั้นคุณรู้สึกยังไง?"
     },
-
     "q8": {
-      "questionThai": "คุณชอบอะไรเกี่ยวกับมัน?",
-      "vocab": [
-        {
-          "text": "What did you like about it",
-          "thai": "คุณชอบอะไรเกี่ยวกับมัน",
-          "type": "phrase",
-          "example": "What did you like about the trip?",
-          "exampleThai": "คุณชอบอะไรเกี่ยวกับทริปนี้?"
-        }
-      ]
+      "questionThai": "คุณชอบอะไรเกี่ยวกับมัน?"
     },
-
     "q9": {
-      "questionThai": "ส่วนที่ดีที่สุดคืออะไร?",
-      "vocab": [
-        {
-          "text": "the best part",
-          "thai": "ส่วนที่ดีที่สุด / ช่วงที่ดีที่สุด",
-          "type": "phrase",
-          "example": "The food was the best part.",
-          "exampleThai": "อาหารคือส่วนที่ดีที่สุด"
-        }
-      ]
+      "questionThai": "ส่วนที่ดีที่สุดคืออะไร?"
     },
-
     "q10": {
-      "questionThai": "คุณอยากทำแบบนั้นอีกไหม?",
-      "vocab": [
-        {
-          "text": "Would you do it again",
-          "thai": "คุณจะทำมันอีกไหม / คุณอยากทำแบบนั้นอีกไหม",
-          "type": "phrase",
-          "example": "Yes, I would do it again.",
-          "exampleThai": "ใช่ ฉันอยากทำแบบนั้นอีก"
-        }
-      ]
+      "questionThai": "คุณอยากทำแบบนั้นอีกไหม?"
+    }
+  },
+
+  "my-day": {
+    "q1": {
+      "questionThai": "เฮ้! วันนี้เป็นยังไงบ้าง?"
+    },
+    "q2": {
+      "questionThai": "วันนี้คุณทำอะไรบ้าง?"
+    },
+    "q3": {
+      "questionThai": "วันนี้คุณตื่นกี่โมง?"
+    },
+    "q4": {
+      "questionThai": "ตอนเช้าคุณทำอะไรบ้าง?"
+    },
+    "q5": {
+      "questionThai": "มื้อกลางวันคุณกินอะไร?"
+    },
+    "q6": {
+      "questionThai": "วันนี้คุณได้ไปไหนไหม?"
+    },
+    "q7": {
+      "questionThai": "วันนี้คุณได้คุยกับใครบ้าง?"
+    },
+    "q8": {
+      "questionThai": "ช่วงที่ดีที่สุดของวันนี้คืออะไร?"
+    },
+    "q9": {
+      "questionThai": "ตอนนี้คุณรู้สึกยังไงบ้าง?"
+    },
+    "q10": {
+      "questionThai": "คืนนี้คุณจะทำอะไร?"
+    }
+  },
+
+  "introducing-yourself": {
+    "q1": {
+      "questionThai": "สวัสดี! เป็นยังไงบ้าง?"
+    },
+    "q2": {
+      "questionThai": "คุณชื่ออะไร?"
+    },
+    "q3": {
+      "questionThai": "คุณมาจากที่ไหน?"
+    },
+    "q4": {
+      "questionThai": "ตอนนี้คุณอาศัยอยู่ที่ไหน?"
+    },
+    "q5": {
+      "questionThai": "คุณทำงานอะไร / ทำอะไรอยู่?"
+    },
+    "q6": {
+      "questionThai": "เวลาว่างคุณชอบทำอะไร?"
+    },
+    "q7": {
+      "questionThai": "คุณชอบฟังเพลงแนวไหน?"
+    },
+    "q8": {
+      "questionThai": "อาหารโปรดของคุณคืออะไร?"
+    },
+    "q9": {
+      "questionThai": "คุณจะอธิบายตัวเองว่าเป็นคนแบบไหน?"
+    },
+    "q10": {
+      "questionThai": "เล่าเรื่องน่าสนใจเกี่ยวกับตัวคุณมาหนึ่งอย่างสิ"
+    }
+  },
+
+  "likes-dislikes": {
+    "q1": {
+      "questionThai": "มีอะไรที่คุณชอบมาก ๆ บ้าง?"
+    },
+    "q2": {
+      "questionThai": "ทำไมคุณถึงชอบมัน?"
+    },
+    "q3": {
+      "questionThai": "คุณชอบอาหารแบบไหน?"
+    },
+    "q4": {
+      "questionThai": "มีอาหารอะไรที่คุณไม่ชอบไหม?"
+    },
+    "q5": {
+      "questionThai": "คุณชอบฟังเพลงแนวไหน?"
+    },
+    "q6": {
+      "questionThai": "คุณชอบดูหนังหรือซีรีส์ไหม?"
+    },
+    "q7": {
+      "questionThai": "คุณชอบอยู่บ้านหรือออกไปข้างนอกมากกว่ากัน?"
+    },
+    "q8": {
+      "questionThai": "มีอะไรที่คุณชอบทำมาก ๆ บ้าง?"
+    },
+    "q9": {
+      "questionThai": "มีอะไรที่คุณไม่ค่อยชอบหรือไม่ค่อยอินบ้าง?"
+    },
+    "q10": {
+      "questionThai": "คุณชอบกาแฟหรือชามากกว่ากัน? เพราะอะไร?"
+    }
+  },
+
+  "making-plans": {
+    "q1": {
+      "questionThai": "สุดสัปดาห์นี้คุณจะทำอะไร?"
+    },
+    "q2": {
+      "questionThai": "วันเสาร์คุณมีแผนอะไรไหม?"
+    },
+    "q3": {
+      "questionThai": "สุดสัปดาห์นี้อยากออกไปข้างนอกไหม?"
+    },
+    "q4": {
+      "questionThai": "คุณอยากทำอะไร?"
+    },
+    "q5": {
+      "questionThai": "คุณอยากไปที่ไหน?"
+    },
+    "q6": {
+      "questionThai": "คุณอยากไปกับใคร?"
+    },
+    "q7": {
+      "questionThai": "คุณอยากนัดเจอกันกี่โมง?"
+    },
+    "q8": {
+      "questionThai": "ตอนบ่ายคุณว่างไหม?"
+    },
+    "q9": {
+      "questionThai": "ถ้าฝนตกเราควรทำอะไรดี?"
+    },
+    "q10": {
+      "questionThai": "ฟังดูดีนะ! สรุปแล้วแผนคืออะไร?"
+    }
+  },
+
+  "small-talk": {
+    "q1": {
+      "questionThai": "เฮ้! เป็นยังไงบ้าง?"
+    },
+    "q2": {
+      "questionThai": "วันนี้เป็นยังไงบ้าง?"
+    },
+    "q3": {
+      "questionThai": "วันนี้ยุ่งไหม?"
+    },
+    "q4": {
+      "questionThai": "วันนี้คุณทำอะไรอยู่?"
+    },
+    "q5": {
+      "questionThai": "วันนี้อากาศเป็นยังไงบ้าง?"
+    },
+    "q6": {
+      "questionThai": "เดี๋ยวหลังจากนี้มีแผนอะไรไหม?"
+    },
+    "q7": {
+      "questionThai": "ช่วงนี้ได้ดูอะไรสนุก ๆ บ้างไหม?"
+    },
+    "q8": {
+      "questionThai": "ปกติตอนเย็นคุณทำอะไร?"
+    },
+    "q9": {
+      "questionThai": "มีอะไรที่คุณกำลังตั้งตารออยู่ไหม?"
+    },
+    "q10": {
+      "questionThai": "ว่าแต่สุดสัปดาห์นี้คุณจะทำอะไร?"
     }
   },
 
   "food-everyday-life": {
     "q1": {
-      "questionThai": "วันนี้คุณกินอะไรมา?",
-      "vocab": [
-        {
-          "text": "did you eat",
-          "thai": "คุณกิน...มา / คุณได้กิน...",
-          "type": "phrase",
-          "example": "What did you eat for lunch?",
-          "exampleThai": "คุณกินอะไรเป็นมื้อกลางวัน?"
-        }
-      ]
+      "questionThai": "วันนี้คุณกินอะไรมา?"
     },
-
+    "q2": {
+      "questionThai": "ปกติเวลาหิวคุณกินอะไร?"
+    },
+    "q3": {
+      "questionThai": "คุณทำอาหารบ่อยไหม?"
+    },
+    "q4": {
+      "questionThai": "มีเมนูอะไรที่คุณทำเก่งบ้าง?"
+    },
+    "q5": {
+      "questionThai": "คุณสั่งอาหารบ่อยไหม?"
+    },
     "q6": {
-      "questionThai": "เมนูประจำของคุณคืออะไร?",
-      "vocab": [
-        {
-          "text": "go-to meal",
-          "thai": "เมนูประจำ / เมนูที่มักเลือกกิน",
-          "type": "phrase",
-          "example": "Pizza is my go-to meal.",
-          "exampleThai": "พิซซ่าคือเมนูประจำของฉัน"
-        }
-      ]
+      "questionThai": "เมนูประจำของคุณคืออะไร?"
     },
-
+    "q7": {
+      "questionThai": "มีอะไรที่คุณกินได้ทุกวันโดยไม่เบื่อ?"
+    },
+    "q8": {
+      "questionThai": "ช่วงนี้ได้ลองกินอะไรอร่อย ๆ บ้างไหม?"
+    },
     "q9": {
-      "questionThai": "ช่วงนี้คุณอยากกินอะไรมากเป็นพิเศษ?",
-      "vocab": [
-        {
-          "text": "craving",
-          "thai": "อยากกินหรืออยากได้บางอย่างมาก ๆ",
-          "type": "verb",
-          "example": "I've been craving sushi.",
-          "exampleThai": "ช่วงนี้ฉันอยากกินซูชิมาก"
-        },
-        {
-          "text": "lately",
-          "thai": "ช่วงนี้ / ระยะนี้",
-          "type": "adverb",
-          "example": "I've been busy lately.",
-          "exampleThai": "ช่วงนี้ฉันยุ่ง"
-        }
-      ]
+      "questionThai": "ช่วงนี้คุณอยากกินอะไรมากเป็นพิเศษ?"
+    },
+    "q10": {
+      "questionThai": "ตอนนี้ถ้าเลือกได้คุณอยากกินอะไรมากที่สุด?"
+    }
+  },
+
+  "life-lately": {
+    "q1": {
+      "questionThai": "ช่วงนี้เป็นยังไงบ้าง?"
+    },
+    "q2": {
+      "questionThai": "ช่วงนี้ยุ่งไหม?"
+    },
+    "q3": {
+      "questionThai": "ช่วงนี้มีอะไรทำให้คุณยุ่งบ้าง?"
+    },
+    "q4": {
+      "questionThai": "สัปดาห์นี้จนถึงตอนนี้เป็นยังไงบ้าง?"
+    },
+    "q5": {
+      "questionThai": "สัปดาห์นี้มีเรื่องดี ๆ เกิดขึ้นบ้างไหม?"
+    },
+    "q6": {
+      "questionThai": "ช่วงนี้มีอะไรทำให้คุณเครียดบ้างไหม?"
+    },
+    "q7": {
+      "questionThai": "เวลาที่อยากพัก คุณชอบทำอะไร?"
+    },
+    "q8": {
+      "questionThai": "อะไรที่ทำให้คุณรู้สึกดีขึ้นได้เสมอ?"
+    },
+    "q9": {
+      "questionThai": "มีอะไรที่คุณกำลังตั้งตารออยู่ไหม?"
+    },
+    "q10": {
+      "questionThai": "สัปดาห์นี้คุณหวังว่าจะได้ทำอะไร?"
+    }
+  },
+
+  "keep-conversation-going": {
+    "q1": {
+      "questionThai": "วันนี้ฉันยุ่งมากเลย"
+    },
+    "q2": {
+      "questionThai": "เมื่อวานฉันลองทำอะไรใหม่ ๆ ด้วย"
+    },
+    "q3": {
+      "questionThai": "เมื่อคืนฉันนอนไม่ค่อยหลับเลย"
+    },
+    "q4": {
+      "questionThai": "ฉันกำลังคิดอยู่ว่าสุดสัปดาห์นี้จะไปเที่ยวที่ไหนสักแห่ง"
+    },
+    "q5": {
+      "questionThai": "ช่วงนี้ฉันได้ดูหนังเรื่องหนึ่งที่ดีมากเลย"
+    },
+    "q6": {
+      "questionThai": "วันนี้มีเรื่องตลกเกิดขึ้นกับฉันด้วย"
+    },
+    "q7": {
+      "questionThai": "ช่วงนี้ฉันพยายามออกกำลังกายให้มากขึ้น"
+    },
+    "q8": {
+      "questionThai": "ฉันอาจจะไปเที่ยวเร็ว ๆ นี้"
+    },
+    "q9": {
+      "questionThai": "ฉันตั้งตารอสุดสัปดาห์นี้มากเลย"
+    },
+    "q10": {
+      "questionThai": "ในที่สุดฉันก็ทำสิ่งที่ทำมาสักพักเสร็จแล้ว"
+    }
+  },
+
+  "just-talk": {
+    "q1": {
+      "questionThai": "เฮ้! ช่วงนี้เป็นยังไงบ้าง?"
+    },
+    "q2": {
+      "questionThai": "ช่วงนี้คุณทำอะไรอยู่บ้าง?"
+    },
+    "q3": {
+      "questionThai": "เล่าอะไรเกี่ยวกับสัปดาห์นี้ของคุณให้ฟังหน่อยสิ"
+    },
+    "q4": {
+      "questionThai": "ช่วงนี้ได้ทำอะไรสนุก ๆ บ้างไหม?"
+    },
+    "q5": {
+      "questionThai": "ช่วงนี้คุณกำลังอินหรือสนใจอะไรอยู่?"
+    },
+    "q6": {
+      "questionThai": "มีอะไรที่คุณกำลังตื่นเต้นหรือรอคอยอยู่ไหม?"
+    },
+    "q7": {
+      "questionThai": "ช่วงนี้เวลาว่างคุณทำอะไรบ้าง?"
+    },
+    "q8": {
+      "questionThai": "เร็ว ๆ นี้คุณมีแผนอะไรไหม?"
+    },
+    "q9": {
+      "questionThai": "เล่าเรื่องดี ๆ ที่เกิดขึ้นกับคุณช่วงนี้ให้ฟังหน่อย"
+    },
+    "q10": {
+      "questionThai": "แล้วหลังจากนี้คุณจะทำอะไรต่อ?"
     }
   }
 }
