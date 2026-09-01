@@ -12,47 +12,32 @@
   <title>My Weekend · Speaking Practice</title>
 
   <style>
-
     :root {
       --navy: #0d2b5b;
       --navy-2: #143b76;
-
       --text: #172033;
       --muted: #7b8497;
-
       --page: #faf9f6;
       --white: #ffffff;
-
       --lavender: #f3f0ff;
       --blue-soft: #eef6ff;
       --cream: #fffaf0;
       --green-soft: #effaf3;
-
       --line: #e7e9ef;
-
       --purple: #7367f0;
       --green: #20a96b;
-      --red: #ff6373;
-
-      --shadow:
-        0 14px 40px rgba(30, 45, 75, .08);
+      --red: #ff5c69;
+      --shadow: 0 14px 40px rgba(30,45,75,.08);
     }
-
 
     * {
       box-sizing: border-box;
     }
 
-
     body {
       margin: 0;
-
-      background:
-        var(--page);
-
-      color:
-        var(--text);
-
+      background: var(--page);
+      color: var(--text);
       font-family:
         Inter,
         -apple-system,
@@ -61,187 +46,99 @@
         sans-serif;
     }
 
-
     button {
       font: inherit;
     }
 
-
     .page {
       min-height: 100vh;
-
-      padding:
-        22px 14px 50px;
+      padding: 22px 14px 50px;
     }
-
 
     .phone {
-      width:
-        min(100%, 480px);
-
-      margin:
-        0 auto;
-
-      background:
-        var(--white);
-
-      border:
-        1px solid #eeeeee;
-
-      border-radius:
-        28px;
-
-      box-shadow:
-        var(--shadow);
-
-      overflow:
-        hidden;
+      width: min(100%, 480px);
+      margin: 0 auto;
+      background: var(--white);
+      border: 1px solid #eeeeee;
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
     }
 
 
-    /* ====================================
-       TOP BAR
-    ==================================== */
+    /* ==============================
+       TOP
+    ============================== */
 
     .topbar {
-      min-height:
-        72px;
-
-      display:
-        grid;
-
-      grid-template-columns:
-        44px 1fr 44px;
-
-      align-items:
-        center;
-
-      padding:
-        10px 18px 4px;
+      min-height: 72px;
+      display: grid;
+      grid-template-columns: 44px 1fr 44px;
+      align-items: center;
+      padding: 10px 18px 4px;
     }
-
 
     .icon-button {
-      width:
-        42px;
-
-      height:
-        42px;
-
-      border:
-        0;
-
-      background:
-        transparent;
-
-      border-radius:
-        12px;
-
-      color:
-        var(--navy);
-
-      font-size:
-        25px;
-
-      cursor:
-        pointer;
+      width: 42px;
+      height: 42px;
+      border: 0;
+      background: transparent;
+      border-radius: 12px;
+      color: var(--navy);
+      font-size: 25px;
+      cursor: pointer;
     }
-
 
     .lesson-title {
-      text-align:
-        center;
-
-      font-size:
-        21px;
-
-      font-weight:
-        800;
+      text-align: center;
+      font-size: 21px;
+      font-weight: 800;
     }
 
 
-    /* ====================================
+    /* ==============================
        PROGRESS
-    ==================================== */
+    ============================== */
 
     .progress {
-      display:
-        flex;
-
-      align-items:
-        center;
-
-      justify-content:
-        center;
-
-      padding:
-        8px 25px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 25px 18px;
     }
-
 
     .progress-step {
-      width:
-        34px;
-
-      height:
-        34px;
-
-      border-radius:
-        50%;
-
-      display:
-        grid;
-
-      place-items:
-        center;
-
-      border:
-        1px solid #ccd2dc;
-
-      color:
-        #647087;
-
-      background:
-        white;
-
-      font-size:
-        14px;
-
-      font-weight:
-        700;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      border: 1px solid #ccd2dc;
+      color: #647087;
+      background: white;
+      font-size: 14px;
+      font-weight: 700;
     }
-
 
     .progress-step.active {
-      background:
-        var(--navy);
-
-      color:
-        white;
-
-      border-color:
-        var(--navy);
+      background: var(--navy);
+      color: white;
+      border-color: var(--navy);
     }
-
 
     .progress-line {
-      width:
-        30px;
-
-      border-top:
-        1px dashed #cfd5de;
+      width: 30px;
+      border-top: 1px dashed #cfd5de;
     }
 
 
-    /* ====================================
-       MAIN LESSON
-    ==================================== */
+    /* ==============================
+       LESSON
+    ============================== */
 
     #lessonCard {
-      padding:
-        4px 24px 28px;
+      padding: 4px 24px 28px;
     }
-
 
     .coach-card {
       background:
@@ -251,47 +148,24 @@
           #f8f6ff
         );
 
-      border:
-        1px solid #ebe6ff;
-
-      border-radius:
-        22px;
-
-      padding:
-        18px;
-
-      margin-top:
-        4px;
+      border: 1px solid #ebe6ff;
+      border-radius: 22px;
+      padding: 18px;
+      margin-top: 4px;
     }
-
 
     .coach-row {
-      display:
-        flex;
-
-      align-items:
-        center;
-
-      gap:
-        10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
 
-
     .avatar {
-      width:
-        38px;
-
-      height:
-        38px;
-
-      border-radius:
-        50%;
-
-      display:
-        grid;
-
-      place-items:
-        center;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
 
       background:
         linear-gradient(
@@ -300,154 +174,81 @@
           #7568e8
         );
 
-      color:
-        white;
-
-      font-weight:
-        800;
+      color: white;
+      font-weight: 800;
     }
-
 
     .coach-name {
-      font-size:
-        14px;
-
-      font-weight:
-        800;
+      font-size: 14px;
+      font-weight: 800;
     }
 
-
-    .wave-icon {
-      margin-left:
-        auto;
-
-      color:
-        #8993a7;
-
-      font-size:
-        20px;
-    }
-
+    /*
+      ก้อนสี่เหลี่ยมเดิมถูกเอาออกแล้ว
+    */
 
     .question-row {
-      display:
-        flex;
-
-      align-items:
-        center;
-
-      gap:
-        12px;
-
-      margin-top:
-        17px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 17px;
     }
-
 
     .play-question {
-      width:
-        42px;
-
-      height:
-        42px;
-
-      flex:
-        0 0 42px;
-
-      border:
-        0;
-
-      border-radius:
-        50%;
-
-      background:
-        var(--navy);
-
-      color:
-        white;
-
-      cursor:
-        pointer;
-
-      font-size:
-        16px;
+      width: 42px;
+      height: 42px;
+      flex: 0 0 42px;
+      border: 0;
+      border-radius: 50%;
+      background: var(--navy);
+      color: white;
+      cursor: pointer;
+      font-size: 16px;
     }
-
 
     .question {
-      font-size:
-        20px;
-
-      font-weight:
-        750;
-
-      line-height:
-        1.4;
+      font-size: 20px;
+      font-weight: 750;
+      line-height: 1.4;
     }
 
 
-    /* ====================================
+    /* ==============================
        USER ANSWER
-    ==================================== */
+    ============================== */
 
     .feedback {
-      display:
-        none;
-
-      margin-top:
-        22px;
+      display: none;
+      margin-top: 22px;
     }
-
 
     .user-bubble {
-      margin-left:
-        70px;
-
-      background:
-        var(--blue-soft);
-
-      border-radius:
-        20px 20px 5px 20px;
-
-      padding:
-        15px 17px;
+      margin-left: 70px;
+      background: var(--blue-soft);
+      border-radius: 20px 20px 5px 20px;
+      padding: 15px 17px;
     }
-
 
     .bubble-label {
-      color:
-        #54709a;
-
-      font-size:
-        12px;
-
-      font-weight:
-        700;
-
-      margin-bottom:
-        7px;
+      color: #54709a;
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 7px;
     }
-
 
     #youSaid {
-      font-size:
-        18px;
-
-      line-height:
-        1.5;
+      font-size: 18px;
+      line-height: 1.5;
     }
 
 
-    /* ====================================
-       CORRECTION CARD
-    ==================================== */
+    /* ==============================
+       CORRECTION
+    ============================== */
 
     .correction-card {
-      margin-top:
-        18px;
-
-      border:
-        1px solid #f1e5c8;
+      margin-top: 18px;
+      border: 1px solid #f1e5c8;
 
       background:
         linear-gradient(
@@ -456,126 +257,109 @@
           #fffdf7
         );
 
-      border-radius:
-        22px;
-
-      padding:
-        20px;
+      border-radius: 22px;
+      padding: 20px;
     }
-
 
     .correction-heading {
-      color:
-        var(--navy);
+      color: var(--navy);
+      font-size: 15px;
+      font-weight: 800;
+      margin-bottom: 12px;
+    }
 
-      font-size:
-        15px;
-
-      font-weight:
-        800;
-
-      margin-bottom:
-        10px;
+    #better {
+      font-size: 22px;
+      line-height: 1.7;
+      font-weight: 600;
     }
 
 
-    #better {
-      font-size:
-        22px;
+    /* คำที่ผิด */
 
-      line-height:
-        1.55;
+    .word-removed {
+      color: var(--red);
 
-      font-weight:
-        650;
+      text-decoration:
+        line-through;
+
+      text-decoration-thickness:
+        2px;
+
+      text-decoration-color:
+        var(--red);
+
+      opacity: .9;
+
+      margin-right: 4px;
+    }
+
+
+    /* คำที่แก้ใหม่ */
+
+    .word-added {
+      color: #173b85;
+
+      background: #e7e4ff;
+
+      border-radius: 8px;
+
+      padding: 2px 7px;
+
+      font-weight: 800;
+
+      margin-right: 4px;
+    }
+
+
+    .word-normal {
+      margin-right: 4px;
     }
 
 
     .why-divider {
-      height:
-        1px;
-
-      background:
-        #eee5d4;
-
-      margin:
-        16px 0;
+      height: 1px;
+      background: #eee5d4;
+      margin: 16px 0;
     }
-
 
     .why-label {
-      font-size:
-        12px;
-
-      font-weight:
-        800;
-
-      margin-bottom:
-        7px;
+      font-size: 12px;
+      font-weight: 800;
+      margin-bottom: 7px;
     }
-
 
     #why {
-      line-height:
-        1.6;
-
-      font-size:
-        15px;
+      line-height: 1.6;
+      font-size: 15px;
     }
 
 
-    /* ====================================
+    /* ==============================
        BUTTONS
-    ==================================== */
+    ============================== */
 
     .actions {
-      display:
-        grid;
-
-      grid-template-columns:
-        1fr 1.25fr;
-
-      gap:
-        10px;
-
-      margin-top:
-        16px;
+      display: grid;
+      grid-template-columns: 1fr 1.25fr;
+      gap: 10px;
+      margin-top: 16px;
     }
-
 
     .secondary {
-      min-height:
-        52px;
-
-      border:
-        1px solid #dce0e8;
-
-      border-radius:
-        15px;
-
-      background:
-        white;
-
-      color:
-        var(--navy);
-
-      font-weight:
-        700;
-
-      cursor:
-        pointer;
+      min-height: 52px;
+      border: 1px solid #dce0e8;
+      border-radius: 15px;
+      background: white;
+      color: var(--navy);
+      font-weight: 700;
+      cursor: pointer;
     }
 
-
     .primary {
-      min-height:
-        52px;
-
-      border:
-        0;
-
-      border-radius:
-        15px;
+      min-height: 52px;
+      border: 0;
+      border-radius: 15px;
 
       background:
         linear-gradient(
@@ -584,77 +368,46 @@
           var(--navy-2)
         );
 
-      color:
-        white;
-
-      font-weight:
-        800;
-
-      cursor:
-        pointer;
+      color: white;
+      font-weight: 800;
+      cursor: pointer;
 
       box-shadow:
         0 8px 18px
-        rgba(13, 43, 91, .18);
+        rgba(13,43,91,.18);
     }
 
-
-    /* keep old JS safe for now */
     #hearCorrection {
-      display:
-        none !important;
+      display: none !important;
     }
 
 
-    /* ====================================
-       RETRY AREA
-    ==================================== */
+    /* ==============================
+       RETRY
+    ============================== */
 
     #retryView {
-      display:
-        none;
-
-      margin-top:
-        20px;
+      display: none;
+      margin-top: 22px;
     }
-
 
     .retry-title {
-      text-align:
-        center;
-
-      color:
-        var(--green);
-
-      font-size:
-        18px;
-
-      font-weight:
-        800;
-
-      margin-bottom:
-        8px;
+      text-align: center;
+      color: var(--green);
+      font-size: 18px;
+      font-weight: 800;
+      margin-bottom: 7px;
     }
-
 
     .retry-subtitle {
-      text-align:
-        center;
-
-      color:
-        var(--muted);
-
-      font-size:
-        14px;
-
-      margin-bottom:
-        14px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 14px;
     }
 
-
     .retry-sentence {
-      padding:
-        18px;
+      padding: 18px;
 
       background:
         var(--green-soft);
@@ -676,59 +429,39 @@
     }
 
 
-    /* ====================================
-       MICROPHONE
-    ==================================== */
+    /* ==============================
+       MIC
+    ============================== */
 
     .speak-area {
-      text-align:
-        center;
-
-      padding:
-        28px 0 6px;
+      text-align: center;
+      padding: 28px 0 6px;
     }
 
-
     .mic-ring {
-      width:
-        132px;
+      width: 132px;
+      height: 132px;
+      border-radius: 50%;
 
-      height:
-        132px;
+      display: grid;
+      place-items: center;
 
-      border-radius:
-        50%;
-
-      display:
-        grid;
-
-      place-items:
-        center;
-
-      margin:
-        0 auto;
+      margin: 0 auto;
 
       background:
-        rgba(112, 97, 240, .08);
+        rgba(112,97,240,.08);
 
       box-shadow:
         0 0 0 12px
-        rgba(112, 97, 240, .04);
+        rgba(112,97,240,.04);
     }
 
-
     .mic {
-      width:
-        98px;
+      width: 98px;
+      height: 98px;
 
-      height:
-        98px;
-
-      border:
-        0;
-
-      border-radius:
-        50%;
+      border: 0;
+      border-radius: 50%;
 
       background:
         radial-gradient(
@@ -737,212 +470,114 @@
           var(--navy)
         );
 
-      color:
-        white;
-
-      font-size:
-        36px;
-
-      cursor:
-        pointer;
+      color: white;
+      font-size: 36px;
+      cursor: pointer;
 
       box-shadow:
         0 9px 24px
-        rgba(13, 43, 91, .25);
+        rgba(13,43,91,.25);
     }
-
 
     .mic.recording {
       animation:
         pulse 1.2s infinite;
     }
 
-
     @keyframes pulse {
-
       50% {
-        transform:
-          scale(1.05);
+        transform: scale(1.05);
 
         box-shadow:
           0 0 0 17px
-          rgba(115, 103, 240, .12);
+          rgba(115,103,240,.12);
       }
-
     }
-
 
     .status {
-      margin-top:
-        20px;
-
-      color:
-        var(--muted);
-
-      font-size:
-        14px;
+      margin-top: 20px;
+      color: var(--muted);
+      font-size: 14px;
     }
 
 
-    /* ====================================
-       COMPLETE SCREEN
-    ==================================== */
+    /* ==============================
+       COMPLETE
+    ============================== */
 
     #completeScreen {
-      display:
-        none;
-
-      text-align:
-        center;
-
-      padding:
-        55px 26px 35px;
+      display: none;
+      text-align: center;
+      padding: 55px 26px 35px;
     }
-
 
     .complete-icon {
-      width:
-        100px;
+      width: 100px;
+      height: 100px;
 
-      height:
-        100px;
+      display: grid;
+      place-items: center;
 
-      display:
-        grid;
-
-      place-items:
-        center;
-
-      margin:
-        0 auto 18px;
-
-      border-radius:
-        50%;
-
-      font-size:
-        45px;
-
-      background:
-        var(--lavender);
+      margin: 0 auto 18px;
+      border-radius: 50%;
+      font-size: 45px;
+      background: var(--lavender);
     }
-
 
     #completeScreen h2 {
-      font-size:
-        32px;
-
-      color:
-        var(--navy);
-
-      margin:
-        0 0 8px;
+      font-size: 32px;
+      color: var(--navy);
+      margin: 0 0 8px;
     }
-
 
     .complete-subtitle {
-      color:
-        var(--muted);
-
-      line-height:
-        1.5;
+      color: var(--muted);
+      line-height: 1.5;
     }
-
 
     .complete-card {
-      margin:
-        25px 0;
-
-      background:
-        #fbfaf8;
-
-      border-radius:
-        20px;
-
-      padding:
-        20px;
-
-      text-align:
-        left;
+      margin: 25px 0;
+      background: #fbfaf8;
+      border-radius: 20px;
+      padding: 20px;
+      text-align: left;
     }
-
 
     .check-item {
-      margin:
-        11px 0;
-
-      font-size:
-        14px;
+      margin: 11px 0;
+      font-size: 14px;
     }
-
 
     .check {
-      color:
-        var(--green);
-
-      font-weight:
-        900;
-
-      margin-right:
-        8px;
+      color: var(--green);
+      font-weight: 900;
+      margin-right: 8px;
     }
-
 
     #practiceAgain {
-      width:
-        100%;
+      width: 100%;
     }
 
-
-    /* ====================================
-       MOBILE
-    ==================================== */
 
     @media(max-width:520px) {
-
       .page {
-        padding:
-          0;
+        padding: 0;
       }
-
 
       .phone {
-        min-height:
-          100vh;
-
-        border:
-          0;
-
-        border-radius:
-          0;
-
-        box-shadow:
-          none;
+        min-height: 100vh;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
       }
-
 
       #lessonCard {
-        padding:
-          4px 18px 28px;
+        padding: 4px 18px 28px;
       }
-
 
       .user-bubble {
-        margin-left:
-          45px;
+        margin-left: 45px;
       }
-
-    }
-
-
-    @media(
-      prefers-reduced-motion: reduce
-    ) {
-
-      .mic.recording {
-        animation:
-          none;
-      }
-
     }
 
   </style>
@@ -956,10 +591,6 @@
 
   <main class="phone">
 
-
-    <!-- =================================
-         TOP
-    ================================== -->
 
     <header class="topbar">
 
@@ -986,10 +617,6 @@
     </header>
 
 
-
-    <!-- =================================
-         PROGRESS
-    ================================== -->
 
     <div
       class="progress"
@@ -1042,8 +669,6 @@
     </div>
 
 
-
-    <!-- old JS still uses this -->
     <span
       id="turn"
       style="display:none"
@@ -1053,14 +678,8 @@
 
 
 
-    <!-- =================================
-         LESSON
-    ================================== -->
-
     <section id="lessonCard">
 
-
-      <!-- COACH QUESTION -->
 
       <div class="coach-card">
 
@@ -1074,10 +693,6 @@
             Amy · Speaking Coach
           </div>
 
-          <div class="wave-icon">
-            ▮▯▮▮▯
-          </div>
-
         </div>
 
 
@@ -1087,7 +702,6 @@
             class="play-question"
             id="listen"
             type="button"
-            aria-label="Listen to question"
           >
             ▶
           </button>
@@ -1105,10 +719,6 @@
       </div>
 
 
-
-      <!-- =================================
-           FEEDBACK
-      ================================== -->
 
       <section
         class="feedback"
@@ -1161,11 +771,6 @@
 
         <div class="actions">
 
-          <!--
-          kept temporarily so the
-          current app.js doesn't break
-          -->
-
           <button
             id="hearCorrection"
             type="button"
@@ -1197,10 +802,6 @@
 
 
 
-      <!-- =================================
-           RETRY VIEW
-      ================================== -->
-
       <section id="retryView">
 
         <div class="retry-title">
@@ -1225,10 +826,6 @@
 
 
 
-      <!-- =================================
-           MICROPHONE
-      ================================== -->
-
       <div class="speak-area">
 
         <div class="mic-ring">
@@ -1237,7 +834,6 @@
             class="mic"
             id="mic"
             type="button"
-            aria-label="Tap to speak"
           >
             🎙
           </button>
@@ -1258,10 +854,6 @@
     </section>
 
 
-
-    <!-- =================================
-         COMPLETE
-    ================================== -->
 
     <section id="completeScreen">
 
@@ -1290,19 +882,16 @@
           questions
         </div>
 
-
         <div class="check-item">
           <span class="check">✓</span>
           You practiced speaking
           without a script
         </div>
 
-
         <div class="check-item">
           <span class="check">✓</span>
           You improved your sentences
         </div>
-
 
         <div class="check-item">
           <span class="check">✓</span>
@@ -1334,4 +923,5 @@
 ></script>
 
 </body>
+
 </html>
