@@ -22,9 +22,7 @@ const tryAgainBtn = $("tryAgain");
 const continueBtn = $("continueBtn");
 
 const lessonCard = $("lessonCard");
-
-const completeScreen =
-  $("completeScreen");
+const completeScreen = $("completeScreen");
 
 const practiceAgainBtn =
   $("practiceAgain");
@@ -43,97 +41,59 @@ const retrySentence =
 
 
 // ==========================================
-// QUESTION BANK AUDIO
+// QUESTION AUDIO
 // ==========================================
-//
-// These are STATIC MP3 files.
-//
-// They DO NOT call ElevenLabs.
-//
-// public/audio/weekend/q1.mp3
-// ...
-// public/audio/weekend/q10.mp3
 
 const QUESTION_AUDIO = [
 
   {
-    text:
-      "Hey! How was your weekend?",
-
-    audio:
-      "/audio/weekend/q1.mp3"
+    text: "Hey! How was your weekend?",
+    audio: "/audio/weekend/q1.mp3"
   },
 
   {
-    text:
-      "What did you do?",
-
-    audio:
-      "/audio/weekend/q2.mp3"
+    text: "What did you do?",
+    audio: "/audio/weekend/q2.mp3"
   },
 
   {
-    text:
-      "Tell me more about it.",
-
-    audio:
-      "/audio/weekend/q3.mp3"
+    text: "Tell me more about it.",
+    audio: "/audio/weekend/q3.mp3"
   },
 
   {
-    text:
-      "Where did you go?",
-
-    audio:
-      "/audio/weekend/q4.mp3"
+    text: "Where did you go?",
+    audio: "/audio/weekend/q4.mp3"
   },
 
   {
-    text:
-      "Who were you with?",
-
-    audio:
-      "/audio/weekend/q5.mp3"
+    text: "Who were you with?",
+    audio: "/audio/weekend/q5.mp3"
   },
 
   {
-    text:
-      "What happened next?",
-
-    audio:
-      "/audio/weekend/q6.mp3"
+    text: "What happened next?",
+    audio: "/audio/weekend/q6.mp3"
   },
 
   {
-    text:
-      "How did you feel?",
-
-    audio:
-      "/audio/weekend/q7.mp3"
+    text: "How did you feel?",
+    audio: "/audio/weekend/q7.mp3"
   },
 
   {
-    text:
-      "What did you like about it?",
-
-    audio:
-      "/audio/weekend/q8.mp3"
+    text: "What did you like about it?",
+    audio: "/audio/weekend/q8.mp3"
   },
 
   {
-    text:
-      "What was the best part?",
-
-    audio:
-      "/audio/weekend/q9.mp3"
+    text: "What was the best part?",
+    audio: "/audio/weekend/q9.mp3"
   },
 
   {
-    text:
-      "Would you do it again?",
-
-    audio:
-      "/audio/weekend/q10.mp3"
+    text: "Would you do it again?",
+    audio: "/audio/weekend/q10.mp3"
   }
 
 ];
@@ -152,34 +112,24 @@ let nextQuestion = "";
 
 let history = [];
 
-
 let mediaRecorder = null;
 let mediaStream = null;
 
 let audioChunks = [];
-
 let isRecording = false;
 
 let currentAudio = null;
 
-
-// True when learner pressed
-// Try again after a correction.
 let isRetrying = false;
 
-
-// Keeps the correction until
-// learner retries or continues.
 let pendingAnswer = null;
 
 
 // ==========================================
-// NORMALIZE QUESTION
+// QUESTION HELPERS
 // ==========================================
 
-function normalizeQuestion(
-  text = ""
-) {
+function normalizeQuestion(text = "") {
 
   return text
     .toLowerCase()
@@ -190,27 +140,17 @@ function normalizeQuestion(
 }
 
 
-// ==========================================
-// FIND STATIC AUDIO
-// ==========================================
-
-function getQuestionAudio(
-  text
-) {
+function getQuestionAudio(text) {
 
   const normalized =
     normalizeQuestion(text);
 
-
   const match =
     QUESTION_AUDIO.find(
       (item) =>
-
-        normalizeQuestion(
-          item.text
-        ) === normalized
+        normalizeQuestion(item.text) ===
+        normalized
     );
-
 
   return match
     ? match.audio
@@ -220,7 +160,321 @@ function getQuestionAudio(
 
 
 // ==========================================
-// STOP CURRENT AUDIO
+// CORRECTION DIFF
+// ==========================================
+//
+// Example:
+//
+// ORIGINAL:
+// I stay home
+//
+// CORRECTED:
+// I stayed home
+//
+// DISPLAY:
+// I [stay red] [stayed blue] home
+//
+// This works automatically for
+// go → went
+// buy → bought
+// is → was
+// etc.
+
+function normalizeWord(word = "") {
+
+  return word
+    .toLowerCase()
+    .replace(
+      /^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu,
+      ""
+    );
+
+}
+
+
+function createWordSpan(
+  text,
+  className
+) {
+
+  const span =
+    document.createElement("span");
+
+  span.textContent =
+    text;
+
+  span.className =
+    className;
+
+  return span;
+
+}
+
+
+function renderCorrectionDiff(
+  originalText,
+  correctedText
+) {
+
+  better.innerHTML =
+    "";
+
+
+  const originalWords =
+    originalText
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
+
+
+  const correctedWords =
+    correctedText
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
+
+
+  const m =
+    originalWords.length;
+
+  const n =
+    correctedWords.length;
+
+
+  // ----------------------------------------
+  // LCS TABLE
+  // ----------------------------------------
+
+  const dp =
+    Array.from(
+      {
+        length:
+          m + 1
+      },
+
+      () =>
+        Array(
+          n + 1
+        ).fill(0)
+    );
+
+
+  for (
+    let i = m - 1;
+    i >= 0;
+    i--
+  ) {
+
+    for (
+      let j = n - 1;
+      j >= 0;
+      j--
+    ) {
+
+      const originalNormalized =
+        normalizeWord(
+          originalWords[i]
+        );
+
+
+      const correctedNormalized =
+        normalizeWord(
+          correctedWords[j]
+        );
+
+
+      if (
+        originalNormalized ===
+        correctedNormalized
+      ) {
+
+        dp[i][j] =
+          dp[i + 1][j + 1] + 1;
+
+      } else {
+
+        dp[i][j] =
+          Math.max(
+            dp[i + 1][j],
+            dp[i][j + 1]
+          );
+
+      }
+
+    }
+
+  }
+
+
+  // ----------------------------------------
+  // BUILD OPERATIONS
+  // ----------------------------------------
+
+  const operations = [];
+
+  let i = 0;
+  let j = 0;
+
+
+  while (
+    i < m &&
+    j < n
+  ) {
+
+    const originalNormalized =
+      normalizeWord(
+        originalWords[i]
+      );
+
+
+    const correctedNormalized =
+      normalizeWord(
+        correctedWords[j]
+      );
+
+
+    if (
+      originalNormalized ===
+      correctedNormalized
+    ) {
+
+      operations.push({
+        type: "same",
+
+        // Use corrected token here so
+        // punctuation can look clean,
+        // without highlighting punctuation.
+        text:
+          correctedWords[j]
+      });
+
+      i++;
+      j++;
+
+      continue;
+    }
+
+
+    if (
+      dp[i + 1][j] >=
+      dp[i][j + 1]
+    ) {
+
+      operations.push({
+        type: "removed",
+        text:
+          originalWords[i]
+      });
+
+      i++;
+
+    } else {
+
+      operations.push({
+        type: "added",
+        text:
+          correctedWords[j]
+      });
+
+      j++;
+
+    }
+
+  }
+
+
+  while (i < m) {
+
+    operations.push({
+      type: "removed",
+      text:
+        originalWords[i]
+    });
+
+    i++;
+
+  }
+
+
+  while (j < n) {
+
+    operations.push({
+      type: "added",
+      text:
+        correctedWords[j]
+    });
+
+    j++;
+
+  }
+
+
+  // ----------------------------------------
+  // RENDER
+  // ----------------------------------------
+
+  operations.forEach(
+    (operation, index) => {
+
+      let className =
+        "word-normal";
+
+
+      if (
+        operation.type ===
+        "removed"
+      ) {
+
+        className =
+          "word-removed";
+
+      }
+
+
+      if (
+        operation.type ===
+        "added"
+      ) {
+
+        className =
+          "word-added";
+
+      }
+
+
+      const span =
+        createWordSpan(
+          operation.text,
+          className
+        );
+
+
+      better.appendChild(
+        span
+      );
+
+
+      if (
+        index <
+        operations.length - 1
+      ) {
+
+        better.appendChild(
+          document.createTextNode(
+            " "
+          )
+        );
+
+      }
+
+    }
+  );
+
+}
+
+
+// ==========================================
+// STOP AUDIO
 // ==========================================
 
 function stopCurrentAudio() {
@@ -228,7 +482,6 @@ function stopCurrentAudio() {
   if (!currentAudio) {
     return;
   }
-
 
   currentAudio.pause();
 
@@ -242,39 +495,29 @@ function stopCurrentAudio() {
 
 
 // ==========================================
-// PLAY STATIC QUESTION AUDIO
+// PLAY QUESTION MP3
 // ==========================================
 //
-// IMPORTANT:
-//
-// This does NOT call /tts.
-//
-// Therefore tutor questions
-// do not spend ElevenLabs TTS credits.
+// Static file.
+// NO ElevenLabs TTS.
 
-async function speakQuestion(
-  text
-) {
+async function speakQuestion(text) {
 
   try {
 
     const audioPath =
-      getQuestionAudio(
-        text
-      );
+      getQuestionAudio(text);
 
 
     if (!audioPath) {
 
       console.error(
-        "No saved audio for:",
+        "No audio for question:",
         text
       );
 
-
       statusEl.textContent =
         "Question audio unavailable.";
-
 
       return;
 
@@ -285,9 +528,7 @@ async function speakQuestion(
 
 
     currentAudio =
-      new Audio(
-        audioPath
-      );
+      new Audio(audioPath);
 
 
     currentAudio.onended =
@@ -302,15 +543,8 @@ async function speakQuestion(
     currentAudio.onerror =
       () => {
 
-        console.error(
-          "Could not play:",
-          audioPath
-        );
-
-
         currentAudio =
           null;
-
 
         statusEl.textContent =
           "Question audio unavailable.";
@@ -324,7 +558,7 @@ async function speakQuestion(
   } catch (error) {
 
     console.error(
-      "Question audio error:",
+      "Audio error:",
       error
     );
 
@@ -334,7 +568,7 @@ async function speakQuestion(
 
 
 // ==========================================
-// UPDATE PROGRESS
+// PROGRESS
 // ==========================================
 
 function updateProgress() {
@@ -348,14 +582,14 @@ function updateProgress() {
   steps.forEach(
     (step) => {
 
-      const stepNumber =
+      const number =
         Number(
           step.dataset.step
         );
 
 
       if (
-        stepNumber === turn
+        number === turn
       ) {
 
         step.classList.add(
@@ -393,8 +627,7 @@ async function transcribeAudio(
       "/transcribe",
       {
 
-        method:
-          "POST",
+        method: "POST",
 
         headers: {
 
@@ -433,7 +666,7 @@ async function transcribeAudio(
 
 
 // ==========================================
-// GEMINI CORRECTION
+// GEMINI
 // ==========================================
 
 async function getAICorrection(
@@ -445,8 +678,7 @@ async function getAICorrection(
       "/correct",
       {
 
-        method:
-          "POST",
+        method: "POST",
 
         headers: {
 
@@ -493,7 +725,7 @@ async function getAICorrection(
 
 
 // ==========================================
-// SAVE CURRENT TURN
+// SAVE TURN
 // ==========================================
 
 function saveCurrentTurn(
@@ -522,7 +754,7 @@ function saveCurrentTurn(
 
 
 // ==========================================
-// RESET FEEDBACK DISPLAY
+// RESET FEEDBACK
 // ==========================================
 
 function resetFeedbackUI() {
@@ -574,7 +806,7 @@ async function showFeedback(
 
 
   why.textContent =
-    "กำลังตรวจคำตอบของคุณ…";
+    "กำลังตรวจคำตอบ…";
 
 
   statusEl.textContent =
@@ -661,17 +893,6 @@ async function showFeedback(
         "🎙 Answer again";
 
 
-      feedback.scrollIntoView({
-
-        behavior:
-          "smooth",
-
-        block:
-          "nearest"
-
-      });
-
-
       return;
 
     }
@@ -685,8 +906,16 @@ async function showFeedback(
       result.correction_needed
     ) {
 
-      better.textContent =
-        result.corrected_sentence;
+      // THIS is the new part:
+      // automatically mark changed words.
+
+      renderCorrectionDiff(
+
+        transcript,
+
+        result.corrected_sentence
+
+      );
 
 
       why.textContent =
@@ -732,24 +961,13 @@ async function showFeedback(
         false;
 
 
-      feedback.scrollIntoView({
-
-        behavior:
-          "smooth",
-
-        block:
-          "nearest"
-
-      });
-
-
       return;
 
     }
 
 
     // ======================================
-    // CORRECT ANSWER
+    // CORRECT
     // ======================================
 
     better.textContent =
@@ -764,10 +982,6 @@ async function showFeedback(
         : "ประโยคนี้เป็นธรรมชาติและตอบคำถามได้ดีค่ะ";
 
 
-    why.style.whiteSpace =
-      "normal";
-
-
     statusEl.textContent =
       isRetrying
 
@@ -775,10 +989,6 @@ async function showFeedback(
 
         : "Nice! Your answer works well.";
 
-
-    // --------------------------------------
-    // SAVE ONLY ONE FINAL ANSWER
-    // --------------------------------------
 
     if (
       isRetrying
@@ -851,17 +1061,6 @@ async function showFeedback(
 
   }
 
-
-  feedback.scrollIntoView({
-
-    behavior:
-      "smooth",
-
-    block:
-      "nearest"
-
-  });
-
 }
 
 
@@ -881,10 +1080,7 @@ async function startRecording() {
       await navigator
         .mediaDevices
         .getUserMedia({
-
-          audio:
-            true
-
+          audio: true
         });
 
 
@@ -900,10 +1096,8 @@ async function startRecording() {
     ) {
 
       options = {
-
         mimeType:
           "audio/webm;codecs=opus"
-
       };
 
     }
@@ -916,10 +1110,8 @@ async function startRecording() {
     ) {
 
       options = {
-
         mimeType:
           "audio/webm"
-
       };
 
     }
@@ -932,10 +1124,8 @@ async function startRecording() {
     ) {
 
       options = {
-
         mimeType:
           "audio/mp4"
-
       };
 
     }
@@ -943,11 +1133,8 @@ async function startRecording() {
 
     mediaRecorder =
       new MediaRecorder(
-
         mediaStream,
-
         options
-
       );
 
 
@@ -1101,14 +1288,11 @@ async function handleRecordingFinished() {
 
     const audioBlob =
       new Blob(
-
         audioChunks,
-
         {
           type:
             mimeType
         }
-
       );
 
 
@@ -1135,10 +1319,6 @@ async function handleRecordingFinished() {
 
       statusEl.textContent =
         "I couldn't hear that. Try again.";
-
-
-      micBtn.disabled =
-        false;
 
 
       return;
@@ -1177,7 +1357,7 @@ async function handleRecordingFinished() {
 
 
 // ==========================================
-// MIC BUTTON
+// MIC
 // ==========================================
 
 micBtn.addEventListener(
@@ -1203,12 +1383,8 @@ micBtn.addEventListener(
 
 
 // ==========================================
-// LISTEN TO QUESTION
+// LISTEN QUESTION
 // ==========================================
-//
-// STATIC MP3.
-//
-// NO ElevenLabs TTS charge.
 
 listenBtn.addEventListener(
   "click",
@@ -1218,21 +1394,9 @@ listenBtn.addEventListener(
       true;
 
 
-    const originalText =
-      listenBtn.textContent;
-
-
-    listenBtn.textContent =
-      "…";
-
-
     await speakQuestion(
       currentQuestion
     );
-
-
-    listenBtn.textContent =
-      originalText;
 
 
     listenBtn.disabled =
@@ -1249,10 +1413,6 @@ listenBtn.addEventListener(
 tryAgainBtn.addEventListener(
   "click",
   () => {
-
-    // ======================================
-    // RETRY A CORRECTED SENTENCE
-    // ======================================
 
     if (
       pendingAnswer
@@ -1283,10 +1443,6 @@ tryAgainBtn.addEventListener(
     }
 
 
-    // ======================================
-    // WRONG TOPIC / ANSWER AGAIN
-    // ======================================
-
     isRetrying =
       false;
 
@@ -1307,7 +1463,7 @@ tryAgainBtn.addEventListener(
 
 
 // ==========================================
-// COMPLETE SCREEN
+// COMPLETE
 // ==========================================
 
 function showCompleteScreen() {
@@ -1332,49 +1488,28 @@ function showCompleteScreen() {
 
 
   window.scrollTo({
-
-    top:
-      0,
-
-    behavior:
-      "smooth"
-
+    top: 0,
+    behavior: "smooth"
   });
-
-
-  // IMPORTANT:
-  //
-  // No ElevenLabs TTS here.
-  //
-  // This keeps the ending free too.
 
 }
 
 
 // ==========================================
-// CONTINUE / FINISH
+// CONTINUE
 // ==========================================
 
 continueBtn.addEventListener(
   "click",
   async () => {
 
-    // --------------------------------------
-    // Learner had correction
-    // but chose Continue instead.
-    // Save it once.
-    // --------------------------------------
-
     if (
       pendingAnswer
     ) {
 
       saveCurrentTurn(
-
         pendingAnswer.original,
-
         pendingAnswer.corrected
-
       );
 
 
@@ -1383,10 +1518,6 @@ continueBtn.addEventListener(
 
     }
 
-
-    // ======================================
-    // FINISH
-    // ======================================
 
     if (
       turn >= 5
@@ -1399,12 +1530,7 @@ continueBtn.addEventListener(
     }
 
 
-    // ======================================
-    // NEXT TURN
-    // ======================================
-
-    turn +=
-      1;
+    turn += 1;
 
 
     updateProgress();
@@ -1438,10 +1564,6 @@ continueBtn.addEventListener(
       "Tap the mic to answer";
 
 
-    // --------------------------------------
-    // Static saved MP3
-    // --------------------------------------
-
     await speakQuestion(
       currentQuestion
     );
@@ -1461,8 +1583,7 @@ practiceAgainBtn.addEventListener(
     stopCurrentAudio();
 
 
-    turn =
-      1;
+    turn = 1;
 
 
     currentQuestion =
@@ -1482,10 +1603,6 @@ practiceAgainBtn.addEventListener(
 
 
     isRetrying =
-      false;
-
-
-    isRecording =
       false;
 
 
@@ -1516,11 +1633,6 @@ practiceAgainBtn.addEventListener(
       "🎙";
 
 
-    micBtn.classList.remove(
-      "recording"
-    );
-
-
     continueBtn.style.display =
       "block";
 
@@ -1545,13 +1657,8 @@ practiceAgainBtn.addEventListener(
 
 
     window.scrollTo({
-
-      top:
-        0,
-
-      behavior:
-        "smooth"
-
+      top: 0,
+      behavior: "smooth"
     });
 
   }
@@ -1559,7 +1666,7 @@ practiceAgainBtn.addEventListener(
 
 
 // ==========================================
-// INITIAL UI
+// INITIAL
 // ==========================================
 
 updateProgress();
