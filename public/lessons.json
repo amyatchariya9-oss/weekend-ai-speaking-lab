@@ -113,22 +113,79 @@
     ]
   },
 
-  "food-eating-out": {
-    "id": "food-eating-out",
-    "title": "Lesson 07 · Food & Eating Out",
+  "food-everyday-life": {
+    "id": "food-everyday-life",
+    "title": "Lesson 07 · Food & Everyday Life",
     "turns": 5,
     "openingQuestion": "What did you eat today?",
     "questions": [
-      { "id": "q1", "text": "What did you eat today?", "audio": "/audio/food-eating-out/q1.mp3" },
-      { "id": "q2", "text": "Was it good?", "audio": "/audio/food-eating-out/q2.mp3" },
-      { "id": "q3", "text": "What do you usually eat for lunch?", "audio": "/audio/food-eating-out/q3.mp3" },
-      { "id": "q4", "text": "Do you cook much?", "audio": "/audio/food-eating-out/q4.mp3" },
-      { "id": "q5", "text": "What's something you're really good at cooking?", "audio": "/audio/food-eating-out/q5.mp3" },
-      { "id": "q6", "text": "Do you eat out a lot?", "audio": "/audio/food-eating-out/q6.mp3" },
-      { "id": "q7", "text": "What kind of places do you usually go to?", "audio": "/audio/food-eating-out/q7.mp3" },
-      { "id": "q8", "text": "Have you tried any good food lately?", "audio": "/audio/food-eating-out/q8.mp3" },
-      { "id": "q9", "text": "Is there anything you've been craving recently?", "audio": "/audio/food-eating-out/q9.mp3" },
-      { "id": "q10", "text": "If you could eat anything right now, what would you have?", "audio": "/audio/food-eating-out/q10.mp3" }
+      { "id": "q1", "text": "What did you eat today?", "audio": "/audio/food-everyday-life/q1.mp3" },
+      { "id": "q2", "text": "What do you usually eat when you're hungry?", "audio": "/audio/food-everyday-life/q2.mp3" },
+      { "id": "q3", "text": "Do you cook much?", "audio": "/audio/food-everyday-life/q3.mp3" },
+      { "id": "q4", "text": "What's something you're good at cooking?", "audio": "/audio/food-everyday-life/q4.mp3" },
+      { "id": "q5", "text": "Do you order food a lot?", "audio": "/audio/food-everyday-life/q5.mp3" },
+      { "id": "q6", "text": "What's your go-to meal?", "audio": "/audio/food-everyday-life/q6.mp3" },
+      { "id": "q7", "text": "What's something you could eat every day?", "audio": "/audio/food-everyday-life/q7.mp3" },
+      { "id": "q8", "text": "Have you tried anything good lately?", "audio": "/audio/food-everyday-life/q8.mp3" },
+      { "id": "q9", "text": "What have you been craving lately?", "audio": "/audio/food-everyday-life/q9.mp3" },
+      { "id": "q10", "text": "What would you love to eat right now?", "audio": "/audio/food-everyday-life/q10.mp3" }
+    ]
+  },
+
+  "life-lately": {
+    "id": "life-lately",
+    "title": "Lesson 08 · Life Lately",
+    "turns": 5,
+    "openingQuestion": "How have you been lately?",
+    "questions": [
+      { "id": "q1", "text": "How have you been lately?", "audio": "/audio/life-lately/q1.mp3" },
+      { "id": "q2", "text": "Have you been busy?", "audio": "/audio/life-lately/q2.mp3" },
+      { "id": "q3", "text": "What's been keeping you busy?", "audio": "/audio/life-lately/q3.mp3" },
+      { "id": "q4", "text": "How has your week been so far?", "audio": "/audio/life-lately/q4.mp3" },
+      { "id": "q5", "text": "Did anything good happen this week?", "audio": "/audio/life-lately/q5.mp3" },
+      { "id": "q6", "text": "Has anything been stressing you out lately?", "audio": "/audio/life-lately/q6.mp3" },
+      { "id": "q7", "text": "What do you do when you need a break?", "audio": "/audio/life-lately/q7.mp3" },
+      { "id": "q8", "text": "What always makes you feel better?", "audio": "/audio/life-lately/q8.mp3" },
+      { "id": "q9", "text": "Is there anything you're looking forward to?", "audio": "/audio/life-lately/q9.mp3" },
+      { "id": "q10", "text": "What are you hoping to do this week?", "audio": "/audio/life-lately/q10.mp3" }
+    ]
+  },
+
+  "keep-conversation-going": {
+    "id": "keep-conversation-going",
+    "title": "Lesson 09 · Keep the Conversation Going",
+    "turns": 5,
+    "openingQuestion": "I had such a busy day today.",
+    "questions": [
+      { "id": "q1", "text": "I had such a busy day today.", "audio": "/audio/keep-conversation-going/q1.mp3" },
+      { "id": "q2", "text": "I tried something new yesterday.", "audio": "/audio/keep-conversation-going/q2.mp3" },
+      { "id": "q3", "text": "I didn't sleep very well last night.", "audio": "/audio/keep-conversation-going/q3.mp3" },
+      { "id": "q4", "text": "I'm thinking about going somewhere this weekend.", "audio": "/audio/keep-conversation-going/q4.mp3" },
+      { "id": "q5", "text": "I watched a really good movie recently.", "audio": "/audio/keep-conversation-going/q5.mp3" },
+      { "id": "q6", "text": "Something funny happened to me today.", "audio": "/audio/keep-conversation-going/q6.mp3" },
+      { "id": "q7", "text": "I've been trying to exercise more lately.", "audio": "/audio/keep-conversation-going/q7.mp3" },
+      { "id": "q8", "text": "I might take a trip soon.", "audio": "/audio/keep-conversation-going/q8.mp3" },
+      { "id": "q9", "text": "I'm really looking forward to this weekend.", "audio": "/audio/keep-conversation-going/q9.mp3" },
+      { "id": "q10", "text": "I finally finished something I've been working on.", "audio": "/audio/keep-conversation-going/q10.mp3" }
+    ]
+  },
+
+  "just-talk": {
+    "id": "just-talk",
+    "title": "Lesson 10 · Just Talk",
+    "turns": 5,
+    "openingQuestion": "Hey! How have you been?",
+    "questions": [
+      { "id": "q1", "text": "Hey! How have you been?", "audio": "/audio/just-talk/q1.mp3" },
+      { "id": "q2", "text": "What have you been up to lately?", "audio": "/audio/just-talk/q2.mp3" },
+      { "id": "q3", "text": "Tell me something about your week.", "audio": "/audio/just-talk/q3.mp3" },
+      { "id": "q4", "text": "Have you done anything fun recently?", "audio": "/audio/just-talk/q4.mp3" },
+      { "id": "q5", "text": "What are you into these days?", "audio": "/audio/just-talk/q5.mp3" },
+      { "id": "q6", "text": "Is there anything you're excited about?", "audio": "/audio/just-talk/q6.mp3" },
+      { "id": "q7", "text": "What have you been doing in your free time?", "audio": "/audio/just-talk/q7.mp3" },
+      { "id": "q8", "text": "Do you have any plans coming up?", "audio": "/audio/just-talk/q8.mp3" },
+      { "id": "q9", "text": "Tell me something good that happened recently.", "audio": "/audio/just-talk/q9.mp3" },
+      { "id": "q10", "text": "So, what are you doing after this?", "audio": "/audio/just-talk/q10.mp3" }
     ]
   }
 }
