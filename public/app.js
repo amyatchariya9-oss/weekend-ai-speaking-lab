@@ -29,7 +29,9 @@ let lastCorrected = "";
 let nextQuestion = "";
 let closingMessage = "";
 
-let currentQuestion = "Hey! How was your weekend?";
+let currentQuestion =
+  "Hey! How was your weekend?";
+
 let history = [];
 
 let currentAudio = null;
@@ -39,101 +41,62 @@ let pendingAnswer = null;
 
 
 // ==========================================
-// ELEVENLABS TTS
+// TTS AUDIO CACHE
 // ==========================================
 
-async function speak(text) {
-  try {
-    if (!text) return;
+// text -> Blob
+//
+// Example:
+// "Hey! How was your weekend?"
+// will only need ElevenLabs once
+// during this browser session.
 
-    if (currentAudio) {
-      currentAudio.pause();
-      currentAudio = null;
-    }
+const ttsAudioCache =
+  new Map();
 
-    const response = await fetch("/tts", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ text })
-    });
 
-    if (!response.ok) {
-      console.error("TTS failed");
+// ==========================================
+// GET TTS AUDIO
+// ==========================================
 
-      statusEl.textContent =
-        "Voice is unavailable right now.";
+async function getTTSAudio(text) {
 
-      return;
-    }
-
-    const audioBlob =
-      await response.blob();
-
-    const audioUrl =
-      URL.createObjectURL(audioBlob);
-
-    currentAudio =
-      new Audio(audioUrl);
-
-    currentAudio.onended = () => {
-      URL.revokeObjectURL(audioUrl);
-      currentAudio = null;
-    };
-
-    currentAudio.onerror = () => {
-      URL.revokeObjectURL(audioUrl);
-      currentAudio = null;
-    };
-
-    await currentAudio.play();
-
-  } catch (error) {
-    console.error("Speak error:", error);
+  if (!text) {
+    return null;
   }
-}
 
 
-// ==========================================
-// SPEECH TO TEXT
-// ==========================================
+  // ----------------------------------------
+  // ALREADY GENERATED
+  // Use cached audio.
+  // No ElevenLabs request.
+  // ----------------------------------------
 
-async function transcribeAudio(audioBlob) {
-  const response =
-    await fetch("/transcribe", {
-      method: "POST",
+  if (ttsAudioCache.has(text)) {
 
-      headers: {
-        "Content-Type":
-          audioBlob.type ||
-          "application/octet-stream"
-      },
-
-      body: audioBlob
-    });
-
-  const data =
-    await response.json();
-
-  if (!response.ok) {
-    throw new Error(
-      data?.error ||
-      "Could not transcribe audio"
+    console.log(
+      "Using cached voice:",
+      text
     );
+
+    return ttsAudioCache.get(text);
   }
 
-  return data.transcript || "";
-}
+
+  // ----------------------------------------
+  // FIRST TIME
+  // Generate through ElevenLabs.
+  // ----------------------------------------
+
+  console.log(
+    "Generating new voice:",
+    text
+  );
 
 
-// ==========================================
-// GEMINI
-// ==========================================
-
-async function getAICorrection(transcript) {
   const response =
-    await fetch("/correct", {
+    await fetch("/tts", {
+
       method: "POST",
 
       headers: {
@@ -142,47 +105,265 @@ async function getAICorrection(transcript) {
       },
 
       body: JSON.stringify({
-        transcript,
-        turn,
-        current_question:
-          currentQuestion,
-        history
+        text
       })
+
     });
 
-  const data =
-    await response.json();
 
   if (!response.ok) {
+
     throw new Error(
-      data?.error ||
-      "Could not get AI correction"
+      "TTS request failed"
     );
+
   }
 
-  return data;
+
+  const audioBlob =
+    await response.blob();
+
+
+  // Save the actual audio file
+  // in browser memory.
+
+  ttsAudioCache.set(
+    text,
+    audioBlob
+  );
+
+
+  return audioBlob;
 }
 
 
 // ==========================================
-// SAVE TURN ONCE
+// PLAY ELEVENLABS VOICE
+// ==========================================
+
+async function speak(text) {
+
+  try {
+
+    if (!text) {
+      return;
+    }
+
+
+    // Stop previous audio
+    if (currentAudio) {
+
+      currentAudio.pause();
+
+      currentAudio.currentTime =
+        0;
+
+      currentAudio =
+        null;
+
+    }
+
+
+    const audioBlob =
+      await getTTSAudio(text);
+
+
+    if (!audioBlob) {
+      return;
+    }
+
+
+    const audioUrl =
+      URL.createObjectURL(
+        audioBlob
+      );
+
+
+    currentAudio =
+      new Audio(audioUrl);
+
+
+    currentAudio.onended =
+      () => {
+
+        URL.revokeObjectURL(
+          audioUrl
+        );
+
+        currentAudio =
+          null;
+
+      };
+
+
+    currentAudio.onerror =
+      () => {
+
+        URL.revokeObjectURL(
+          audioUrl
+        );
+
+        currentAudio =
+          null;
+
+        statusEl.textContent =
+          "Voice is unavailable right now.";
+
+      };
+
+
+    await currentAudio.play();
+
+
+  } catch (error) {
+
+    console.error(
+      "Speak error:",
+      error
+    );
+
+    statusEl.textContent =
+      "Voice is unavailable right now.";
+
+  }
+
+}
+
+
+// ==========================================
+// SPEECH TO TEXT
+// ==========================================
+
+async function transcribeAudio(
+  audioBlob
+) {
+
+  const response =
+    await fetch(
+      "/transcribe",
+      {
+
+        method: "POST",
+
+        headers: {
+
+          "Content-Type":
+            audioBlob.type ||
+            "application/octet-stream"
+
+        },
+
+        body:
+          audioBlob
+
+      }
+    );
+
+
+  const data =
+    await response.json();
+
+
+  if (!response.ok) {
+
+    throw new Error(
+      data?.error ||
+      "Could not transcribe audio"
+    );
+
+  }
+
+
+  return data.transcript || "";
+
+}
+
+
+// ==========================================
+// GEMINI
+// ==========================================
+
+async function getAICorrection(
+  transcript
+) {
+
+  const response =
+    await fetch(
+      "/correct",
+      {
+
+        method: "POST",
+
+        headers: {
+
+          "Content-Type":
+            "application/json"
+
+        },
+
+        body:
+          JSON.stringify({
+
+            transcript,
+
+            turn,
+
+            current_question:
+              currentQuestion,
+
+            history
+
+          })
+
+      }
+    );
+
+
+  const data =
+    await response.json();
+
+
+  if (!response.ok) {
+
+    throw new Error(
+      data?.error ||
+      "Could not get AI correction"
+    );
+
+  }
+
+
+  return data;
+
+}
+
+
+// ==========================================
+// SAVE TURN
 // ==========================================
 
 function saveCurrentTurn(
   answer,
   correctedAnswer
 ) {
+
   history.push({
+
     question:
       currentQuestion,
 
     answer,
 
     corrected_answer:
-      correctedAnswer || answer
+      correctedAnswer ||
+      answer
+
   });
 
-  pendingAnswer = null;
+
+  pendingAnswer =
+    null;
+
 }
 
 
@@ -190,47 +371,63 @@ function saveCurrentTurn(
 // SHOW FEEDBACK
 // ==========================================
 
-async function showFeedback(transcript) {
+async function showFeedback(
+  transcript
+) {
 
   youSaid.textContent =
     transcript;
 
+
   better.textContent =
     "Checking…";
+
 
   why.textContent =
     "Looking at your answer…";
 
+
   feedback.style.display =
     "block";
+
 
   statusEl.textContent =
     "Checking your answer…";
 
+
   continueBtn.disabled =
     true;
+
 
   continueBtn.style.display =
     "block";
 
+
   continueBtn.textContent =
     "Checking…";
 
+
   try {
+
     const result =
       await getAICorrection(
         transcript
       );
 
+
     lastCorrected =
       result.corrected_sentence ||
       transcript;
 
+
     nextQuestion =
-      result.next_question || "";
+      result.next_question ||
+      "";
+
 
     closingMessage =
-      result.closing_message || "";
+      result.closing_message ||
+      "";
 
 
     // ======================================
@@ -238,102 +435,149 @@ async function showFeedback(transcript) {
     // ======================================
 
     if (
-      result.answer_relevant === false
+      result.answer_relevant ===
+      false
     ) {
 
       better.textContent =
         "Let's try that question again 💬";
 
+
       let explanation =
         result.relevance_explanation ||
         "คำตอบนี้ยังไม่ตรงกับคำถามค่ะ";
 
-      if (result.example_answer) {
+
+      if (
+        result.example_answer
+      ) {
+
         explanation +=
           `\n\nลองตอบแบบนี้ได้ เช่น: ${result.example_answer}`;
+
       }
+
 
       why.textContent =
         explanation;
 
+
       why.style.whiteSpace =
         "pre-line";
+
 
       statusEl.textContent =
         "Almost! Try answering this question.";
 
+
       continueBtn.style.display =
         "none";
+
 
       tryAgainBtn.textContent =
         "🎙️ Answer again";
 
+
       tryAgainBtn.style.fontWeight =
         "700";
 
-      pendingAnswer = null;
-      isRetrying = false;
+
+      pendingAnswer =
+        null;
+
+
+      isRetrying =
+        false;
+
 
       feedback.scrollIntoView({
-        behavior: "smooth",
-        block: "nearest"
+
+        behavior:
+          "smooth",
+
+        block:
+          "nearest"
+
       });
 
+
       return;
+
     }
 
 
     // ======================================
-    // RELEVANT + NEEDS CORRECTION
+    // RELEVANT + CORRECTION
     // ======================================
 
-    if (result.correction_needed) {
+    if (
+      result.correction_needed
+    ) {
 
       better.textContent =
         result.corrected_sentence;
+
 
       why.textContent =
         result.thai_explanation ||
         "ปรับนิดเดียวให้ฟังเป็นธรรมชาติมากขึ้นค่ะ";
 
+
       why.style.whiteSpace =
         "normal";
+
 
       statusEl.textContent =
         "Good answer! Try the corrected version ✨";
 
+
       pendingAnswer = {
+
         original:
           transcript,
 
         corrected:
           result.corrected_sentence ||
           transcript
+
       };
+
 
       tryAgainBtn.textContent =
         "🎙️ Try again";
 
+
       tryAgainBtn.style.fontWeight =
         "700";
 
+
       continueBtn.style.display =
         "block";
+
 
       continueBtn.textContent =
         turn >= 5
           ? "Finish →"
           : "Continue →";
 
+
       continueBtn.disabled =
         false;
 
+
       feedback.scrollIntoView({
-        behavior: "smooth",
-        block: "nearest"
+
+        behavior:
+          "smooth",
+
+        block:
+          "nearest"
+
       });
 
+
       return;
+
     }
 
 
@@ -344,13 +588,16 @@ async function showFeedback(transcript) {
     better.textContent =
       "Sounds good! ✅";
 
+
     why.textContent =
       isRetrying
         ? "ดีมากค่ะ รอบนี้ประโยคฟังเป็นธรรมชาติแล้ว"
         : "ประโยคนี้เป็นธรรมชาติและตอบคำถามได้ดีค่ะ";
 
+
     why.style.whiteSpace =
       "normal";
+
 
     statusEl.textContent =
       isRetrying
@@ -365,57 +612,79 @@ async function showFeedback(transcript) {
         transcript
       );
 
-      isRetrying = false;
+
+      isRetrying =
+        false;
 
     } else {
 
       saveCurrentTurn(
+
         transcript,
+
         result.corrected_sentence ||
         transcript
+
       );
+
     }
 
 
     tryAgainBtn.textContent =
       "🎙️ Try again";
 
+
     tryAgainBtn.style.fontWeight =
       "400";
 
+
     continueBtn.style.display =
       "block";
+
 
     continueBtn.textContent =
       turn >= 5
         ? "Finish →"
         : "Continue →";
 
+
     continueBtn.disabled =
       false;
+
 
   } catch (error) {
 
     console.error(error);
 
+
     better.textContent =
       "Let's try again.";
+
 
     why.textContent =
       "ระบบตรวจคำตอบมีปัญหาชั่วคราว ลองพูดอีกครั้งค่ะ";
 
+
     statusEl.textContent =
       "Something went wrong.";
 
+
     continueBtn.disabled =
       true;
+
   }
 
 
   feedback.scrollIntoView({
-    behavior: "smooth",
-    block: "nearest"
+
+    behavior:
+      "smooth",
+
+    block:
+      "nearest"
+
   });
+
 }
 
 
@@ -424,73 +693,100 @@ async function showFeedback(transcript) {
 // ==========================================
 
 async function startRecording() {
+
   try {
 
     feedback.style.display =
       "none";
 
+
     audioChunks = [];
+
 
     mediaStream =
       await navigator.mediaDevices
         .getUserMedia({
+
           audio: true
+
         });
+
 
     let options = {};
 
+
     if (
-      MediaRecorder.isTypeSupported(
-        "audio/webm;codecs=opus"
-      )
+      MediaRecorder
+        .isTypeSupported(
+          "audio/webm;codecs=opus"
+        )
     ) {
 
       options = {
+
         mimeType:
           "audio/webm;codecs=opus"
+
       };
 
-    } else if (
-      MediaRecorder.isTypeSupported(
-        "audio/webm"
-      )
+    }
+
+    else if (
+      MediaRecorder
+        .isTypeSupported(
+          "audio/webm"
+        )
     ) {
 
       options = {
+
         mimeType:
           "audio/webm"
+
       };
 
-    } else if (
-      MediaRecorder.isTypeSupported(
-        "audio/mp4"
-      )
+    }
+
+    else if (
+      MediaRecorder
+        .isTypeSupported(
+          "audio/mp4"
+        )
     ) {
 
       options = {
+
         mimeType:
           "audio/mp4"
+
       };
+
     }
 
 
     mediaRecorder =
       new MediaRecorder(
+
         mediaStream,
+
         options
+
       );
 
 
-    mediaRecorder.ondataavailable =
+    mediaRecorder
+      .ondataavailable =
       (event) => {
 
         if (
           event.data &&
           event.data.size > 0
         ) {
+
           audioChunks.push(
             event.data
           );
+
         }
 
       };
@@ -502,28 +798,36 @@ async function startRecording() {
 
     mediaRecorder.start();
 
+
     isRecording =
       true;
+
 
     micBtn.classList.add(
       "recording"
     );
 
+
     micBtn.textContent =
       "⏹️";
+
 
     statusEl.textContent =
       isRetrying
         ? "Try the sentence again. Take your time."
         : "Listening… take your time.";
 
+
   } catch (error) {
 
     console.error(error);
 
+
     statusEl.textContent =
       "Please allow microphone access and try again.";
+
   }
+
 }
 
 
@@ -538,24 +842,32 @@ function stopRecording() {
     mediaRecorder.state ===
       "inactive"
   ) {
+
     return;
+
   }
+
 
   isRecording =
     false;
+
 
   micBtn.classList.remove(
     "recording"
   );
 
+
   micBtn.textContent =
     "🎙️";
+
 
   micBtn.disabled =
     true;
 
+
   statusEl.textContent =
     "Got it! Checking your answer…";
+
 
   mediaRecorder.stop();
 
@@ -570,11 +882,12 @@ function stopRecording() {
       );
 
   }
+
 }
 
 
 // ==========================================
-// AFTER RECORDING
+// RECORDING FINISHED
 // ==========================================
 
 async function handleRecordingFinished() {
@@ -589,19 +902,25 @@ async function handleRecordingFinished() {
 
     const audioBlob =
       new Blob(
+
         audioChunks,
+
         {
-          type: mimeType
+          type:
+            mimeType
         }
+
       );
 
 
     if (
       audioBlob.size < 500
     ) {
+
       throw new Error(
         "Recording was too short"
       );
+
     }
 
 
@@ -611,15 +930,20 @@ async function handleRecordingFinished() {
       );
 
 
-    if (!transcript.trim()) {
+    if (
+      !transcript.trim()
+    ) {
 
       statusEl.textContent =
         "I couldn't hear that. Try again.";
 
+
       micBtn.disabled =
         false;
 
+
       return;
+
     }
 
 
@@ -636,16 +960,22 @@ async function handleRecordingFinished() {
 
     console.error(error);
 
+
     statusEl.textContent =
       "I couldn't process that. Please try again.";
+
 
   } finally {
 
     micBtn.disabled =
       false;
 
-    audioChunks = [];
+
+    audioChunks =
+      [];
+
   }
+
 }
 
 
@@ -658,9 +988,13 @@ micBtn.addEventListener(
   () => {
 
     if (isRecording) {
+
       stopRecording();
+
     } else {
+
       startRecording();
+
     }
 
   }
@@ -678,8 +1012,10 @@ listenBtn.addEventListener(
     listenBtn.disabled =
       true;
 
+
     const originalText =
       listenBtn.textContent;
+
 
     listenBtn.textContent =
       "Loading…";
@@ -692,6 +1028,7 @@ listenBtn.addEventListener(
 
     listenBtn.textContent =
       originalText;
+
 
     listenBtn.disabled =
       false;
@@ -708,15 +1045,22 @@ hearCorrectionBtn.addEventListener(
   "click",
   async () => {
 
-    if (!lastCorrected) {
+    if (
+      !lastCorrected
+    ) {
+
       return;
+
     }
+
 
     hearCorrectionBtn.disabled =
       true;
 
+
     const originalText =
       hearCorrectionBtn.textContent;
+
 
     hearCorrectionBtn.textContent =
       "Loading…";
@@ -729,6 +1073,7 @@ hearCorrectionBtn.addEventListener(
 
     hearCorrectionBtn.textContent =
       originalText;
+
 
     hearCorrectionBtn.disabled =
       false;
@@ -745,26 +1090,34 @@ tryAgainBtn.addEventListener(
   "click",
   () => {
 
-    if (pendingAnswer) {
+    if (
+      pendingAnswer
+    ) {
 
       isRetrying =
         true;
 
+
       feedback.style.display =
         "none";
+
 
       statusEl.textContent =
         "Now say the corrected sentence in your own voice.";
 
+
       return;
+
     }
 
 
     isRetrying =
       false;
 
+
     feedback.style.display =
       "none";
+
 
     statusEl.textContent =
       "Answer the same question again when you're ready.";
@@ -774,7 +1127,7 @@ tryAgainBtn.addEventListener(
 
 
 // ==========================================
-// SHOW COMPLETE SCREEN
+// COMPLETE SCREEN
 // ==========================================
 
 async function showCompleteScreen() {
@@ -782,23 +1135,35 @@ async function showCompleteScreen() {
   lessonCard.style.display =
     "none";
 
+
   completeScreen.style.display =
     "block";
+
 
   completedQuestions.textContent =
     "5";
 
+
   window.scrollTo({
+
     top: 0,
-    behavior: "smooth"
+
+    behavior:
+      "smooth"
+
   });
 
 
-  if (closingMessage) {
+  if (
+    closingMessage
+  ) {
+
     await speak(
       closingMessage
     );
+
   }
+
 }
 
 
@@ -810,64 +1175,75 @@ continueBtn.addEventListener(
   "click",
   async () => {
 
-    // Save corrected answer if learner
-    // chooses Continue without retrying.
-    if (pendingAnswer) {
+    if (
+      pendingAnswer
+    ) {
 
       saveCurrentTurn(
+
         pendingAnswer.original,
+
         pendingAnswer.corrected
+
       );
+
 
       isRetrying =
         false;
+
     }
 
 
-    // ======================================
-    // FINISH
-    // ======================================
-
-    if (turn >= 5) {
+    if (
+      turn >= 5
+    ) {
 
       await showCompleteScreen();
 
       return;
+
     }
 
 
-    // ======================================
-    // NEXT TURN
-    // ======================================
-
     turn += 1;
+
 
     turnEl.textContent =
       String(turn);
+
 
     currentQuestion =
       nextQuestion ||
       "Tell me a little more about your weekend.";
 
+
     questionEl.textContent =
       currentQuestion;
+
 
     feedback.style.display =
       "none";
 
+
     statusEl.textContent =
       "Your turn when you're ready.";
+
 
     lastCorrected =
       "";
 
+
     pendingAnswer =
       null;
+
 
     isRetrying =
       false;
 
 
+    // First play generates it.
+    // Any Listen clicks afterward
+    // reuse the cached audio.
     await speak(
       currentQuestion
     );
@@ -884,97 +1260,130 @@ practiceAgainBtn.addEventListener(
   "click",
   () => {
 
-    // Stop any playing audio
-    if (currentAudio) {
+    if (
+      currentAudio
+    ) {
+
       currentAudio.pause();
-      currentAudio = null;
+
+      currentAudio =
+        null;
+
     }
 
 
-    // Reset lesson state
-    turn = 1;
+    turn =
+      1;
+
 
     currentQuestion =
       "Hey! How was your weekend?";
 
-    history = [];
+
+    history =
+      [];
+
 
     nextQuestion =
       "";
 
+
     closingMessage =
       "";
+
 
     lastCorrected =
       "";
 
+
     pendingAnswer =
       null;
+
 
     isRetrying =
       false;
 
 
-    // Reset UI
     turnEl.textContent =
       "1";
+
 
     questionEl.textContent =
       currentQuestion;
 
+
     feedback.style.display =
       "none";
+
 
     completeScreen.style.display =
       "none";
 
+
     lessonCard.style.display =
       "block";
+
 
     micBtn.disabled =
       false;
 
+
     micBtn.style.opacity =
       "1";
 
+
     micBtn.textContent =
       "🎙️";
+
 
     micBtn.classList.remove(
       "recording"
     );
 
+
     tryAgainBtn.textContent =
       "🎙️ Try again";
+
 
     tryAgainBtn.style.fontWeight =
       "400";
 
+
     continueBtn.textContent =
       "Continue →";
+
 
     continueBtn.style.display =
       "block";
 
+
     continueBtn.disabled =
       false;
+
 
     statusEl.textContent =
       "Tap the microphone to answer.";
 
+
     youSaid.textContent =
       "—";
 
+
     better.textContent =
       "—";
+
 
     why.textContent =
       "—";
 
 
     window.scrollTo({
+
       top: 0,
-      behavior: "smooth"
+
+      behavior:
+        "smooth"
+
     });
 
   }
