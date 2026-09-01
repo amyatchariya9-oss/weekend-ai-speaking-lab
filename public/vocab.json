@@ -1,0 +1,36 @@
+{
+  "food-everyday-life": {
+    "q6": {
+      "questionThai": "เมนูประจำของคุณคืออะไร?",
+      "vocab": [
+        {
+          "text": "go-to meal",
+          "thai": "เมนูประจำ / เมนูที่มักเลือกกิน",
+          "type": "phrase",
+          "example": "Pizza is my go-to meal.",
+          "exampleThai": "พิซซ่าคือเมนูประจำของฉัน"
+        }
+      ]
+    },
+
+    "q9": {
+      "questionThai": "ช่วงนี้คุณอยากกินอะไรมากเป็นพิเศษ?",
+      "vocab": [
+        {
+          "text": "craving",
+          "thai": "อยากกินหรืออยากได้บางอย่างมาก ๆ",
+          "type": "verb",
+          "example": "I've been craving sushi.",
+          "exampleThai": "ช่วงนี้ฉันอยากกินซูชิมาก"
+        },
+        {
+          "text": "lately",
+          "thai": "ช่วงนี้ / ระยะนี้",
+          "type": "adverb",
+          "example": "I've been busy lately.",
+          "exampleThai": "ช่วงนี้ฉันยุ่ง"
+        }
+      ]
+    }
+  }
+}
