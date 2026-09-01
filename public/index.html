@@ -1000,10 +1000,7 @@
   <main class="phone">
 
 
-    <!-- ==============================
-         HEADER
-    ============================== -->
-
+    <!-- HEADER -->
 
     <header class="topbar">
 
@@ -1036,10 +1033,7 @@
 
 
 
-    <!-- ==============================
-         PROGRESS
-    ============================== -->
-
+    <!-- PROGRESS -->
 
     <div
       class="progress"
@@ -1112,10 +1106,7 @@
 
 
 
-    <!-- ==============================
-         LESSON
-    ============================== -->
-
+    <!-- LESSON -->
 
     <section id="lessonCard">
 
@@ -1126,12 +1117,18 @@
         <div class="coach-row">
 
 
-          <div class="avatar">
+          <div
+            class="avatar"
+            id="coachAvatar"
+          >
             A
           </div>
 
 
-          <div class="coach-name">
+          <div
+            class="coach-name"
+            id="coachName"
+          >
             Amy · Speaking Coach
           </div>
 
@@ -1167,10 +1164,7 @@
 
 
 
-      <!-- ==============================
-           FEEDBACK
-      ============================== -->
-
+      <!-- FEEDBACK -->
 
       <section
         class="feedback"
@@ -1262,10 +1256,7 @@
 
 
 
-      <!-- ==============================
-           RETRY
-      ============================== -->
-
+      <!-- RETRY -->
 
       <section id="retryView">
 
@@ -1293,10 +1284,7 @@
 
 
 
-      <!-- ==============================
-           MIC
-      ============================== -->
-
+      <!-- MIC -->
 
       <div class="speak-area">
 
@@ -1331,10 +1319,7 @@
 
 
 
-    <!-- ==============================
-         COMPLETE
-    ============================== -->
-
+    <!-- COMPLETE -->
 
     <section id="completeScreen">
 
@@ -1439,14 +1424,12 @@
 
 
 <!-- ==========================================
-     LESSON TITLE
-     Makes header + completion page dynamic
+     DYNAMIC LESSON NAME + COACH
 ========================================== -->
-
 
 <script>
 
-  async function setLessonNames() {
+  async function setupLessonPage() {
 
     try {
 
@@ -1470,6 +1453,11 @@
         );
 
 
+      if (!response.ok) {
+        return;
+      }
+
+
       const lessons =
         await response.json();
 
@@ -1483,6 +1471,10 @@
         return;
       }
 
+
+      /* ==============================
+         LESSON TITLE
+      ============================== */
 
       const title =
         lesson.title ||
@@ -1521,10 +1513,69 @@
         `${title} · Speaking Practice`;
 
 
+
+      /* ==============================
+         COACH
+      ============================== */
+
+      const coachAvatar =
+        document.getElementById(
+          "coachAvatar"
+        );
+
+
+      const coachName =
+        document.getElementById(
+          "coachName"
+        );
+
+
+      if (
+        lessonId ===
+        "introducing-yourself"
+      ) {
+
+        if (coachAvatar) {
+
+          coachAvatar.textContent =
+            "R";
+
+        }
+
+
+        if (coachName) {
+
+          coachName.textContent =
+            "Remy · Speaking Coach";
+
+        }
+
+      }
+
+      else {
+
+        if (coachAvatar) {
+
+          coachAvatar.textContent =
+            "A";
+
+        }
+
+
+        if (coachName) {
+
+          coachName.textContent =
+            "Amy · Speaking Coach";
+
+        }
+
+      }
+
+
     } catch (error) {
 
       console.log(
-        "Could not update lesson title:",
+        "Could not set up lesson page:",
         error
       );
 
@@ -1533,7 +1584,7 @@
   }
 
 
-  setLessonNames();
+  setupLessonPage();
 
 </script>
 
