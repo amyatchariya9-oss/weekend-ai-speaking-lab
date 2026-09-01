@@ -1,7 +1,7 @@
 {
   "weekend": {
     "id": "weekend",
-    "title": "My Weekend ",
+    "title": "Lesson 01 · My Weekend ",
     "turns": 5,
     "openingQuestion": "Hey! How was your weekend?",
 
@@ -61,7 +61,7 @@
 
   "my-day": {
     "id": "my-day",
-    "title": "My Day ",
+    "title": "Lesson 02 · My Day",
     "turns": 5,
     "openingQuestion": "Hey! How was your day?",
 
