@@ -1,5 +1,4 @@
-const $ = (id) =>
-  document.getElementById(id);
+const $ = (id) => document.getElementById(id);
 
 
 // ==========================================
@@ -59,11 +58,11 @@ const whyLabel =
     ".why-label"
   );
 
-// Optional.
-// Later we can add id="lessonTitle"
-// inside index.html.
 const lessonTitleEl =
   $("lessonTitle");
+
+const completedLessonTitleEl =
+  $("completedLessonTitle");
 
 
 // ==========================================
@@ -81,7 +80,6 @@ const urlParams =
 const requestedLessonId =
   urlParams.get("lesson") ||
   DEFAULT_LESSON_ID;
-
 
 let activeLesson = null;
 
@@ -113,7 +111,7 @@ let lastSuccessText = "";
 
 
 // ==========================================
-// SUCCESS DING 🔔
+// SUCCESS DING
 // ==========================================
 
 const successDing =
@@ -121,15 +119,18 @@ const successDing =
     "/audio/weekend/effects/clean-ding.mp3"
   );
 
-successDing.preload = "auto";
-successDing.volume = 0.55;
+successDing.preload =
+  "auto";
+
+successDing.volume =
+  0.55;
 
 let successDingUnlocked =
   false;
 
 
 // ==========================================
-// FINISH SOUND 🎉
+// FINISH SOUND
 // ==========================================
 
 const finishSound =
@@ -137,12 +138,15 @@ const finishSound =
     "/audio/weekend/effects/finish-cheer.mp3"
   );
 
-finishSound.preload = "auto";
-finishSound.volume = 0.75;
+finishSound.preload =
+  "auto";
+
+finishSound.volume =
+  0.75;
 
 
 // ==========================================
-// QUESTION AUDIO PLAYER 🔊
+// QUESTION AUDIO
 // ==========================================
 
 const questionPlayer =
@@ -178,6 +182,8 @@ let isRecording = false;
 let isRetrying = false;
 
 let pendingAnswer = null;
+
+let helpMode = false;
 
 
 // ==========================================
@@ -219,17 +225,12 @@ async function loadLesson() {
 
 
     let lesson =
-      lessons[requestedLessonId];
+      lessons[
+        requestedLessonId
+      ];
 
 
-    // If URL contains an unknown lesson,
-    // safely fall back to Weekend.
     if (!lesson) {
-
-      console.warn(
-        `Lesson "${requestedLessonId}" not found. Using Weekend.`
-      );
-
 
       lesson =
         lessons[
@@ -246,7 +247,7 @@ async function loadLesson() {
     if (!lesson) {
 
       throw new Error(
-        "Weekend lesson not found."
+        "Lesson not found."
       );
 
     }
@@ -256,7 +257,8 @@ async function loadLesson() {
       !Array.isArray(
         lesson.questions
       ) ||
-      lesson.questions.length === 0
+      lesson.questions.length ===
+        0
     ) {
 
       throw new Error(
@@ -289,13 +291,32 @@ async function loadLesson() {
       currentQuestion;
 
 
+    const title =
+      lesson.title ||
+      "Speaking Practice";
+
+
     if (lessonTitleEl) {
 
       lessonTitleEl.textContent =
-        lesson.title ||
-        "Speaking Lab";
+        title;
 
     }
+
+
+    if (
+      completedLessonTitleEl
+    ) {
+
+      completedLessonTitleEl
+        .textContent =
+          title;
+
+    }
+
+
+    document.title =
+      `${title} · Speaking Practice`;
 
 
     updateProgress();
@@ -305,15 +326,12 @@ async function loadLesson() {
       "Tap the mic to answer";
 
 
-    micBtn.disabled = false;
+    micBtn.disabled =
+      false;
 
-    listenBtn.disabled = false;
 
-
-    console.log(
-      "Lesson loaded:",
-      lessonId
-    );
+    listenBtn.disabled =
+      false;
 
 
   } catch (error) {
@@ -328,9 +346,12 @@ async function loadLesson() {
       "Could not load this lesson. Please refresh the page.";
 
 
-    micBtn.disabled = true;
+    micBtn.disabled =
+      true;
 
-    listenBtn.disabled = true;
+
+    listenBtn.disabled =
+      true;
 
   }
 
@@ -373,7 +394,6 @@ function getQuestionAudio(
   const match =
     questionBank.find(
       (item) =>
-
         normalizeQuestion(
           item.text
         ) === normalized
@@ -386,10 +406,6 @@ function getQuestionAudio(
 
 }
 
-
-// ==========================================
-// SAFE FALLBACK QUESTION
-// ==========================================
 
 function getFallbackQuestion() {
 
@@ -436,7 +452,7 @@ function getFallbackQuestion() {
 
 
 // ==========================================
-// PLAY QUESTION AUDIO 🔊
+// QUESTION AUDIO
 // ==========================================
 
 async function speakQuestion(
@@ -513,7 +529,7 @@ function stopQuestionAudio() {
 
 
 // ==========================================
-// UNLOCK SUCCESS DING
+// SUCCESS DING
 // ==========================================
 
 async function unlockSuccessDing() {
@@ -533,7 +549,8 @@ async function unlockSuccessDing() {
       successDing.volume;
 
 
-    successDing.volume = 0;
+    successDing.volume =
+      0;
 
 
     await successDing.play();
@@ -564,10 +581,6 @@ async function unlockSuccessDing() {
 }
 
 
-// ==========================================
-// PLAY SUCCESS DING
-// ==========================================
-
 function playSuccessDing() {
 
   try {
@@ -576,6 +589,7 @@ function playSuccessDing() {
 
     successDing.currentTime =
       0;
+
 
     successDing.volume =
       0.55;
@@ -607,10 +621,6 @@ function playSuccessDing() {
 }
 
 
-// ==========================================
-// PLAY FINISH SOUND
-// ==========================================
-
 function playFinishSound() {
 
   try {
@@ -625,6 +635,7 @@ function playFinishSound() {
 
     finishSound.currentTime =
       0;
+
 
     finishSound.volume =
       0.75;
@@ -657,7 +668,7 @@ function playFinishSound() {
 
 
 // ==========================================
-// SUCCESS TEXT PICKER
+// SUCCESS TEXT
 // ==========================================
 
 function pickSuccessText(
@@ -706,8 +717,7 @@ function pickSuccessText(
 
 
 // ==========================================
-// LUXURY CONFETTI ✨
-// TOP-DOWN ONLY
+// CONFETTI
 // ==========================================
 
 function launchConfetti() {
@@ -732,11 +742,20 @@ function launchConfetti() {
   Object.assign(
     container.style,
     {
-      position: "fixed",
-      inset: "0",
-      overflow: "hidden",
-      pointerEvents: "none",
-      zIndex: "99999"
+      position:
+        "fixed",
+
+      inset:
+        "0",
+
+      overflow:
+        "hidden",
+
+      pointerEvents:
+        "none",
+
+      zIndex:
+        "99999"
     }
   );
 
@@ -814,7 +833,8 @@ function launchConfetti() {
     Object.assign(
       piece.style,
       {
-        position: "absolute",
+        position:
+          "absolute",
 
         left:
           `${startX}px`,
@@ -832,7 +852,8 @@ function launchConfetti() {
           color,
 
         borderRadius:
-          Math.random() > 0.85
+          Math.random() >
+          0.85
             ? "50%"
             : "2px",
 
@@ -908,6 +929,7 @@ function launchConfetti() {
 
       {
         duration,
+
         delay,
 
         easing:
@@ -934,10 +956,6 @@ function launchConfetti() {
 }
 
 
-// ==========================================
-// CELEBRATE
-// ==========================================
-
 function celebrateCompletion() {
 
   playFinishSound();
@@ -950,6 +968,18 @@ function celebrateCompletion() {
 // ==========================================
 // FEEDBACK LAYOUTS
 // ==========================================
+
+function resetWhyLabel() {
+
+  if (whyLabel) {
+
+    whyLabel.textContent =
+      "🇹🇭 WHY?";
+
+  }
+
+}
+
 
 function showCorrectionLayout() {
 
@@ -964,18 +994,72 @@ function showCorrectionLayout() {
   whyDivider.style.display =
     "block";
 
+
   whyLabel.style.display =
     "block";
+
 
   why.style.display =
     "block";
 
 
+  resetWhyLabel();
+
+
   tryAgainBtn.style.display =
     "block";
 
+
   tryAgainBtn.style.gridColumn =
     "1 / -1";
+
+
+  continueBtn.style.display =
+    "none";
+
+}
+
+
+// ==========================================
+// HELP LAYOUT
+// ==========================================
+
+function showHelpLayout() {
+
+  correctionHeading.style.display =
+    "block";
+
+
+  correctionHeading.textContent =
+    "Let me help you";
+
+
+  whyDivider.style.display =
+    "block";
+
+
+  whyLabel.style.display =
+    "block";
+
+
+  why.style.display =
+    "block";
+
+
+  whyLabel.textContent =
+    "EXAMPLE";
+
+
+  tryAgainBtn.style.display =
+    "block";
+
+
+  tryAgainBtn.style.gridColumn =
+    "1 / -1";
+
+
+  tryAgainBtn.textContent =
+    "🎙 Answer the question";
 
 
   continueBtn.style.display =
@@ -993,8 +1077,10 @@ function showSuccessLayout() {
   whyDivider.style.display =
     "none";
 
+
   whyLabel.style.display =
     "none";
+
 
   why.style.display =
     "none";
@@ -1006,6 +1092,7 @@ function showSuccessLayout() {
 
   continueBtn.style.display =
     "block";
+
 
   continueBtn.style.gridColumn =
     "1 / -1";
@@ -1060,7 +1147,8 @@ function renderCorrectionDiff(
   correctedText
 ) {
 
-  better.innerHTML = "";
+  better.innerHTML =
+    "";
 
 
   const originalWords =
@@ -1088,8 +1176,10 @@ function renderCorrectionDiff(
   const dp =
     Array.from(
       {
-        length: m + 1
+        length:
+          m + 1
       },
+
       () =>
         Array(
           n + 1
@@ -1139,7 +1229,8 @@ function renderCorrectionDiff(
   }
 
 
-  const operations = [];
+  const operations =
+    [];
 
 
   let i = 0;
@@ -1162,7 +1253,9 @@ function renderCorrectionDiff(
     ) {
 
       operations.push({
-        type: "same",
+        type:
+          "same",
+
         text:
           correctedWords[j]
       });
@@ -1183,7 +1276,9 @@ function renderCorrectionDiff(
     ) {
 
       operations.push({
-        type: "removed",
+        type:
+          "removed",
+
         text:
           originalWords[i]
       });
@@ -1196,7 +1291,9 @@ function renderCorrectionDiff(
     else {
 
       operations.push({
-        type: "added",
+        type:
+          "added",
+
         text:
           correctedWords[j]
       });
@@ -1209,10 +1306,14 @@ function renderCorrectionDiff(
   }
 
 
-  while (i < m) {
+  while (
+    i < m
+  ) {
 
     operations.push({
-      type: "removed",
+      type:
+        "removed",
+
       text:
         originalWords[i]
     });
@@ -1223,10 +1324,14 @@ function renderCorrectionDiff(
   }
 
 
-  while (j < n) {
+  while (
+    j < n
+  ) {
 
     operations.push({
-      type: "added",
+      type:
+        "added",
+
       text:
         correctedWords[j]
     });
@@ -1279,7 +1384,8 @@ function renderCorrectionDiff(
 
       if (
         index <
-        operations.length - 1
+        operations.length -
+          1
       ) {
 
         better.appendChild(
@@ -1357,7 +1463,8 @@ async function transcribeAudio(
     await fetch(
       "/transcribe",
       {
-        method: "POST",
+        method:
+          "POST",
 
         headers: {
           "Content-Type":
@@ -1394,7 +1501,7 @@ async function transcribeAudio(
 
 
 // ==========================================
-// AI CORRECTION
+// AI
 // ==========================================
 
 async function getAICorrection(
@@ -1405,7 +1512,8 @@ async function getAICorrection(
     await fetch(
       "/correct",
       {
-        method: "POST",
+        method:
+          "POST",
 
         headers: {
           "Content-Type":
@@ -1470,7 +1578,8 @@ function saveCurrentTurn(
   });
 
 
-  pendingAnswer = null;
+  pendingAnswer =
+    null;
 
 }
 
@@ -1489,11 +1598,16 @@ function resetFeedbackUI() {
     "none";
 
 
-  youSaid.textContent = "—";
+  youSaid.textContent =
+    "—";
 
-  better.textContent = "—";
 
-  why.textContent = "—";
+  better.textContent =
+    "—";
+
+
+  why.textContent =
+    "—";
 
 
   correctionHeading.style.display =
@@ -1507,27 +1621,43 @@ function resetFeedbackUI() {
   whyDivider.style.display =
     "block";
 
+
   whyLabel.style.display =
     "block";
+
 
   why.style.display =
     "block";
 
 
+  resetWhyLabel();
+
+
   tryAgainBtn.style.display =
     "block";
+
 
   tryAgainBtn.style.gridColumn =
     "auto";
 
 
+  tryAgainBtn.textContent =
+    "🎙 Try again";
+
+
   continueBtn.style.display =
     "block";
+
 
   continueBtn.style.gridColumn =
     "auto";
 
+
   continueBtn.disabled =
+    false;
+
+
+  helpMode =
     false;
 
 }
@@ -1587,7 +1717,56 @@ async function showFeedback(
 
 
     // ======================================
-    // IRRELEVANT
+    // STUDENT ASKED FOR HELP
+    // ======================================
+
+    if (
+      result.help_requested ===
+      true
+    ) {
+
+      helpMode =
+        true;
+
+
+      pendingAnswer =
+        null;
+
+
+      isRetrying =
+        false;
+
+
+      showHelpLayout();
+
+
+      better.textContent =
+        result.help_explanation ||
+        result.relevance_explanation ||
+        "เดี๋ยวช่วยอธิบายคำถามนี้ให้ค่ะ";
+
+
+      why.textContent =
+        result.help_example ||
+        result.example_answer ||
+        "ลองตอบคำถามเดิมอีกครั้งค่ะ";
+
+
+      why.style.whiteSpace =
+        "pre-line";
+
+
+      return;
+
+    }
+
+
+    helpMode =
+      false;
+
+
+    // ======================================
+    // IRRELEVANT ANSWER
     // ======================================
 
     if (
@@ -1629,9 +1808,12 @@ async function showFeedback(
         "pre-line";
 
 
-      pendingAnswer = null;
+      pendingAnswer =
+        null;
 
-      isRetrying = false;
+
+      isRetrying =
+        false;
 
 
       tryAgainBtn.textContent =
@@ -1705,7 +1887,7 @@ async function showFeedback(
 
 
     // ======================================
-    // CORRECT ✅
+    // CORRECT
     // ======================================
 
     const wasRetry =
@@ -1734,7 +1916,12 @@ async function showFeedback(
     );
 
 
-    isRetrying = false;
+    isRetrying =
+      false;
+
+
+    helpMode =
+      false;
 
 
     continueBtn.textContent =
@@ -1757,6 +1944,10 @@ async function showFeedback(
       "Feedback error:",
       error
     );
+
+
+    helpMode =
+      false;
 
 
     showCorrectionLayout();
@@ -1787,7 +1978,7 @@ async function showFeedback(
 
 
 // ==========================================
-// START RECORDING 🎙
+// START RECORDING
 // ==========================================
 
 async function startRecording() {
@@ -1807,18 +1998,21 @@ async function startRecording() {
     unlockSuccessDing();
 
 
-    audioChunks = [];
+    audioChunks =
+      [];
 
 
     mediaStream =
       await navigator
         .mediaDevices
         .getUserMedia({
-          audio: true
+          audio:
+            true
         });
 
 
-    let options = {};
+    let options =
+      {};
 
 
     if (
@@ -1871,21 +2065,23 @@ async function startRecording() {
       );
 
 
-    mediaRecorder.ondataavailable =
-      (event) => {
+    mediaRecorder
+      .ondataavailable =
+        (event) => {
 
-        if (
-          event.data &&
-          event.data.size > 0
-        ) {
+          if (
+            event.data &&
+            event.data.size >
+              0
+          ) {
 
-          audioChunks.push(
-            event.data
-          );
+            audioChunks.push(
+              event.data
+            );
 
-        }
+          }
 
-      };
+        };
 
 
     mediaRecorder.onstop =
@@ -1895,7 +2091,8 @@ async function startRecording() {
     mediaRecorder.start();
 
 
-    isRecording = true;
+    isRecording =
+      true;
 
 
     micBtn.classList.add(
@@ -1921,7 +2118,8 @@ async function startRecording() {
     );
 
 
-    isRecording = false;
+    isRecording =
+      false;
 
 
     micBtn.classList.remove(
@@ -1962,7 +2160,8 @@ function stopRecording() {
   }
 
 
-  isRecording = false;
+  isRecording =
+    false;
 
 
   micBtn.classList.remove(
@@ -2017,13 +2216,15 @@ async function handleRecordingFinished() {
       new Blob(
         audioChunks,
         {
-          type: mimeType
+          type:
+            mimeType
         }
       );
 
 
     if (
-      audioBlob.size < 500
+      audioBlob.size <
+      500
     ) {
 
       throw new Error(
@@ -2083,7 +2284,8 @@ async function handleRecordingFinished() {
       false;
 
 
-    audioChunks = [];
+    audioChunks =
+      [];
 
   }
 
@@ -2098,7 +2300,9 @@ micBtn.addEventListener(
   "click",
   () => {
 
-    if (isRecording) {
+    if (
+      isRecording
+    ) {
 
       stopRecording();
 
@@ -2115,7 +2319,7 @@ micBtn.addEventListener(
 
 
 // ==========================================
-// LISTEN 🔊
+// LISTEN
 // ==========================================
 
 listenBtn.addEventListener(
@@ -2153,7 +2357,7 @@ listenBtn.addEventListener(
 
 
 // ==========================================
-// TRY AGAIN
+// TRY AGAIN / ANSWER QUESTION
 // ==========================================
 
 tryAgainBtn.addEventListener(
@@ -2168,9 +2372,39 @@ tryAgainBtn.addEventListener(
       "none";
 
 
+    // Student asked for help
+    if (helpMode) {
+
+      helpMode =
+        false;
+
+
+      isRetrying =
+        false;
+
+
+      pendingAnswer =
+        null;
+
+
+      retryView.style.display =
+        "none";
+
+
+      statusEl.textContent =
+        "Tap the mic and answer the question.";
+
+
+      return;
+
+    }
+
+
+    // Grammar correction retry
     if (pendingAnswer) {
 
-      isRetrying = true;
+      isRetrying =
+        true;
 
 
       retryView.style.display =
@@ -2190,7 +2424,9 @@ tryAgainBtn.addEventListener(
     }
 
 
-    isRetrying = false;
+    // Irrelevant answer
+    isRetrying =
+      false;
 
 
     retryView.style.display =
@@ -2205,7 +2441,7 @@ tryAgainBtn.addEventListener(
 
 
 // ==========================================
-// COMPLETE 🎉
+// COMPLETE
 // ==========================================
 
 function showCompleteScreen() {
@@ -2238,8 +2474,11 @@ function showCompleteScreen() {
 
 
   window.scrollTo({
-    top: 0,
-    behavior: "smooth"
+    top:
+      0,
+
+    behavior:
+      "smooth"
   });
 
 
@@ -2256,16 +2495,15 @@ continueBtn.addEventListener(
   "click",
   async () => {
 
-    if (pendingAnswer) {
+    if (
+      pendingAnswer ||
+      helpMode
+    ) {
 
       return;
 
     }
 
-
-    // ======================================
-    // FINISH
-    // ======================================
 
     if (
       turn >= totalTurns
@@ -2284,11 +2522,8 @@ continueBtn.addEventListener(
       0;
 
 
-    // ======================================
-    // NEXT TURN
-    // ======================================
-
-    turn += 1;
+    turn +=
+      1;
 
 
     updateProgress();
@@ -2303,11 +2538,20 @@ continueBtn.addEventListener(
       currentQuestion;
 
 
-    nextQuestion = "";
+    nextQuestion =
+      "";
 
-    pendingAnswer = null;
 
-    isRetrying = false;
+    pendingAnswer =
+      null;
+
+
+    isRetrying =
+      false;
+
+
+    helpMode =
+      false;
 
 
     resetFeedbackUI();
@@ -2359,29 +2603,42 @@ practiceAgainBtn.addEventListener(
       0;
 
 
-    turn = 1;
+    turn =
+      1;
 
 
     currentQuestion =
-      activeLesson.openingQuestion ||
+      activeLesson
+        .openingQuestion ||
       questionBank[0].text;
 
 
-    nextQuestion = "";
+    nextQuestion =
+      "";
 
 
-    history = [];
+    history =
+      [];
 
 
-    pendingAnswer = null;
+    pendingAnswer =
+      null;
 
 
-    isRetrying = false;
+    isRetrying =
+      false;
 
-    isRecording = false;
+
+    isRecording =
+      false;
 
 
-    lastSuccessText = "";
+    helpMode =
+      false;
+
+
+    lastSuccessText =
+      "";
 
 
     questionEl.textContent =
@@ -2444,8 +2701,11 @@ practiceAgainBtn.addEventListener(
 
 
     window.scrollTo({
-      top: 0,
-      behavior: "smooth"
+      top:
+        0,
+
+      behavior:
+        "smooth"
     });
 
   }
