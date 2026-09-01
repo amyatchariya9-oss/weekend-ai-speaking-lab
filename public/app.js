@@ -1,77 +1,141 @@
-const $ = (id) => document.getElementById(id);
+const $ = (id) =>
+  document.getElementById(id);
+
+
+// ==========================================
+// ELEMENTS
+// ==========================================
 
 const micBtn = $("mic");
 const statusEl = $("status");
+
 const feedback = $("feedback");
 const youSaid = $("youSaid");
 const better = $("better");
 const why = $("why");
+
 const questionEl = $("question");
 const turnEl = $("turn");
 const listenBtn = $("listen");
-const hearCorrectionBtn = $("hearCorrection");
+
 const tryAgainBtn = $("tryAgain");
 const continueBtn = $("continueBtn");
 
 const lessonCard = $("lessonCard");
-const completeScreen = $("completeScreen");
-const practiceAgainBtn = $("practiceAgain");
-const completedQuestions = $("completedQuestions");
+
+const completeScreen =
+  $("completeScreen");
+
+const practiceAgainBtn =
+  $("practiceAgain");
+
+const completedQuestions =
+  $("completedQuestions");
+
+const progressBar =
+  $("progressBar");
+
+const retryView =
+  $("retryView");
+
+const retrySentence =
+  $("retrySentence");
 
 
 // ==========================================
-// QUESTION BANK + SAVED AUDIO
+// QUESTION BANK AUDIO
 // ==========================================
 //
-// These files already exist in:
+// These are STATIC MP3 files.
+//
+// They DO NOT call ElevenLabs.
 //
 // public/audio/weekend/q1.mp3
 // ...
 // public/audio/weekend/q10.mp3
-//
-// Tutor questions DO NOT use ElevenLabs TTS.
 
 const QUESTION_AUDIO = [
+
   {
-    text: "Hey! How was your weekend?",
-    audio: "/audio/weekend/q1.mp3"
+    text:
+      "Hey! How was your weekend?",
+
+    audio:
+      "/audio/weekend/q1.mp3"
   },
+
   {
-    text: "What did you do?",
-    audio: "/audio/weekend/q2.mp3"
+    text:
+      "What did you do?",
+
+    audio:
+      "/audio/weekend/q2.mp3"
   },
+
   {
-    text: "Tell me more about it.",
-    audio: "/audio/weekend/q3.mp3"
+    text:
+      "Tell me more about it.",
+
+    audio:
+      "/audio/weekend/q3.mp3"
   },
+
   {
-    text: "Where did you go?",
-    audio: "/audio/weekend/q4.mp3"
+    text:
+      "Where did you go?",
+
+    audio:
+      "/audio/weekend/q4.mp3"
   },
+
   {
-    text: "Who were you with?",
-    audio: "/audio/weekend/q5.mp3"
+    text:
+      "Who were you with?",
+
+    audio:
+      "/audio/weekend/q5.mp3"
   },
+
   {
-    text: "What happened next?",
-    audio: "/audio/weekend/q6.mp3"
+    text:
+      "What happened next?",
+
+    audio:
+      "/audio/weekend/q6.mp3"
   },
+
   {
-    text: "How did you feel?",
-    audio: "/audio/weekend/q7.mp3"
+    text:
+      "How did you feel?",
+
+    audio:
+      "/audio/weekend/q7.mp3"
   },
+
   {
-    text: "What did you like about it?",
-    audio: "/audio/weekend/q8.mp3"
+    text:
+      "What did you like about it?",
+
+    audio:
+      "/audio/weekend/q8.mp3"
   },
+
   {
-    text: "What was the best part?",
-    audio: "/audio/weekend/q9.mp3"
+    text:
+      "What was the best part?",
+
+    audio:
+      "/audio/weekend/q9.mp3"
   },
+
   {
-    text: "Would you do it again?",
-    audio: "/audio/weekend/q10.mp3"
+    text:
+      "Would you do it again?",
+
+    audio:
+      "/audio/weekend/q10.mp3"
   }
+
 ];
 
 
@@ -81,41 +145,58 @@ const QUESTION_AUDIO = [
 
 let turn = 1;
 
-let mediaRecorder = null;
-let mediaStream = null;
-let audioChunks = [];
-let isRecording = false;
-
-let lastCorrected = "";
-let nextQuestion = "";
-let closingMessage = "";
-
 let currentQuestion =
   "Hey! How was your weekend?";
 
+let nextQuestion = "";
+
 let history = [];
+
+
+let mediaRecorder = null;
+let mediaStream = null;
+
+let audioChunks = [];
+
+let isRecording = false;
 
 let currentAudio = null;
 
+
+// True when learner pressed
+// Try again after a correction.
 let isRetrying = false;
 
+
+// Keeps the correction until
+// learner retries or continues.
 let pendingAnswer = null;
 
 
 // ==========================================
-// HELPERS
+// NORMALIZE QUESTION
 // ==========================================
 
-function normalizeQuestion(text = "") {
+function normalizeQuestion(
+  text = ""
+) {
+
   return text
     .toLowerCase()
     .replace(/[.,!?;:'"]/g, "")
     .replace(/\s+/g, " ")
     .trim();
+
 }
 
 
-function getQuestionAudio(text) {
+// ==========================================
+// FIND STATIC AUDIO
+// ==========================================
+
+function getQuestionAudio(
+  text
+) {
 
   const normalized =
     normalizeQuestion(text);
@@ -124,14 +205,17 @@ function getQuestionAudio(text) {
   const match =
     QUESTION_AUDIO.find(
       (item) =>
-        normalizeQuestion(item.text) ===
-        normalized
+
+        normalizeQuestion(
+          item.text
+        ) === normalized
     );
 
 
   return match
     ? match.audio
     : null;
+
 }
 
 
@@ -158,31 +242,42 @@ function stopCurrentAudio() {
 
 
 // ==========================================
-// PLAY SAVED QUESTION AUDIO
+// PLAY STATIC QUESTION AUDIO
 // ==========================================
 //
-// NO ElevenLabs API.
-// Plays our MP3 directly.
+// IMPORTANT:
+//
+// This does NOT call /tts.
+//
+// Therefore tutor questions
+// do not spend ElevenLabs TTS credits.
 
-async function speakQuestion(text) {
+async function speakQuestion(
+  text
+) {
 
   try {
 
     const audioPath =
-      getQuestionAudio(text);
+      getQuestionAudio(
+        text
+      );
 
 
     if (!audioPath) {
 
       console.error(
-        "Question audio not found:",
+        "No saved audio for:",
         text
       );
 
+
       statusEl.textContent =
-        "Question voice unavailable.";
+        "Question audio unavailable.";
+
 
       return;
+
     }
 
 
@@ -190,7 +285,9 @@ async function speakQuestion(text) {
 
 
     currentAudio =
-      new Audio(audioPath);
+      new Audio(
+        audioPath
+      );
 
 
     currentAudio.onended =
@@ -206,15 +303,17 @@ async function speakQuestion(text) {
       () => {
 
         console.error(
-          "Could not load:",
+          "Could not play:",
           audioPath
         );
+
 
         currentAudio =
           null;
 
+
         statusEl.textContent =
-          "Question voice unavailable.";
+          "Question audio unavailable.";
 
       };
 
@@ -235,189 +334,48 @@ async function speakQuestion(text) {
 
 
 // ==========================================
-// DYNAMIC TTS CACHE
-// ==========================================
-//
-// Correction sentences / closing message
-// can still use ElevenLabs.
-//
-// If the exact same text is played again
-// during this browser session,
-// reuse the audio.
-
-const dynamicTTSCache =
-  new Map();
-
-
-// ==========================================
-// DYNAMIC ELEVENLABS TTS
+// UPDATE PROGRESS
 // ==========================================
 
-async function getDynamicTTSAudio(text) {
+function updateProgress() {
 
-  if (!text) {
-    return null;
-  }
-
-
-  const cleanText =
-    text.trim();
-
-
-  if (
-    dynamicTTSCache.has(
-      cleanText
-    )
-  ) {
-
-    console.log(
-      "Using cached dynamic voice:",
-      cleanText
+  const steps =
+    progressBar.querySelectorAll(
+      ".progress-step"
     );
 
 
-    return dynamicTTSCache.get(
-      cleanText
-    );
+  steps.forEach(
+    (step) => {
 
-  }
+      const stepNumber =
+        Number(
+          step.dataset.step
+        );
 
 
-  const response =
-    await fetch(
-      "/tts",
-      {
+      if (
+        stepNumber === turn
+      ) {
 
-        method:
-          "POST",
+        step.classList.add(
+          "active"
+        );
 
-        headers: {
+      } else {
 
-          "Content-Type":
-            "application/json"
-
-        },
-
-        body:
-          JSON.stringify({
-            text:
-              cleanText
-          })
+        step.classList.remove(
+          "active"
+        );
 
       }
-    );
 
-
-  if (!response.ok) {
-
-    throw new Error(
-      "TTS request failed"
-    );
-
-  }
-
-
-  const audioBlob =
-    await response.blob();
-
-
-  dynamicTTSCache.set(
-    cleanText,
-    audioBlob
+    }
   );
 
 
-  return audioBlob;
-
-}
-
-
-// ==========================================
-// PLAY DYNAMIC TTS
-// ==========================================
-//
-// Used ONLY for things like:
-// corrected learner sentence
-// closing message
-//
-// Tutor questions use saved MP3 instead.
-
-async function speakDynamic(text) {
-
-  try {
-
-    if (!text) {
-      return;
-    }
-
-
-    stopCurrentAudio();
-
-
-    const audioBlob =
-      await getDynamicTTSAudio(
-        text
-      );
-
-
-    if (!audioBlob) {
-      return;
-    }
-
-
-    const audioUrl =
-      URL.createObjectURL(
-        audioBlob
-      );
-
-
-    currentAudio =
-      new Audio(
-        audioUrl
-      );
-
-
-    currentAudio.onended =
-      () => {
-
-        URL.revokeObjectURL(
-          audioUrl
-        );
-
-        currentAudio =
-          null;
-
-      };
-
-
-    currentAudio.onerror =
-      () => {
-
-        URL.revokeObjectURL(
-          audioUrl
-        );
-
-        currentAudio =
-          null;
-
-      };
-
-
-    await currentAudio.play();
-
-
-  } catch (error) {
-
-    console.error(
-      "Dynamic voice error:",
-      error
-    );
-
-
-    statusEl.textContent =
-      "Voice is unavailable right now.";
-
-  }
+  turnEl.textContent =
+    String(turn);
 
 }
 
@@ -467,13 +425,15 @@ async function transcribeAudio(
   }
 
 
-  return data.transcript || "";
+  return (
+    data.transcript || ""
+  );
 
 }
 
 
 // ==========================================
-// GEMINI
+// GEMINI CORRECTION
 // ==========================================
 
 async function getAICorrection(
@@ -521,7 +481,7 @@ async function getAICorrection(
 
     throw new Error(
       data?.error ||
-      "Could not get AI correction"
+      "Could not check answer"
     );
 
   }
@@ -562,12 +522,48 @@ function saveCurrentTurn(
 
 
 // ==========================================
+// RESET FEEDBACK DISPLAY
+// ==========================================
+
+function resetFeedbackUI() {
+
+  feedback.style.display =
+    "none";
+
+
+  retryView.style.display =
+    "none";
+
+
+  youSaid.textContent =
+    "—";
+
+
+  better.textContent =
+    "—";
+
+
+  why.textContent =
+    "—";
+
+}
+
+
+// ==========================================
 // SHOW FEEDBACK
 // ==========================================
 
 async function showFeedback(
   transcript
 ) {
+
+  retryView.style.display =
+    "none";
+
+
+  feedback.style.display =
+    "block";
+
 
   youSaid.textContent =
     transcript;
@@ -578,11 +574,7 @@ async function showFeedback(
 
 
   why.textContent =
-    "Looking at your answer…";
-
-
-  feedback.style.display =
-    "block";
+    "กำลังตรวจคำตอบของคุณ…";
 
 
   statusEl.textContent =
@@ -609,23 +601,12 @@ async function showFeedback(
       );
 
 
-    lastCorrected =
-      result.corrected_sentence ||
-      transcript;
-
-
     nextQuestion =
-      result.next_question ||
-      "";
-
-
-    closingMessage =
-      result.closing_message ||
-      "";
+      result.next_question || "";
 
 
     // ======================================
-    // ANSWER DOESN'T MATCH QUESTION
+    // ANSWER NOT RELEVANT
     // ======================================
 
     if (
@@ -647,7 +628,7 @@ async function showFeedback(
       ) {
 
         explanation +=
-          `\n\nลองตอบแบบนี้ได้ เช่น: ${result.example_answer}`;
+          `\n\nตัวอย่าง: ${result.example_answer}`;
 
       }
 
@@ -661,19 +642,7 @@ async function showFeedback(
 
 
       statusEl.textContent =
-        "Almost! Try answering this question.";
-
-
-      continueBtn.style.display =
-        "none";
-
-
-      tryAgainBtn.textContent =
-        "🎙️ Answer again";
-
-
-      tryAgainBtn.style.fontWeight =
-        "700";
+        "Try answering the same question again.";
 
 
       pendingAnswer =
@@ -682,6 +651,14 @@ async function showFeedback(
 
       isRetrying =
         false;
+
+
+      continueBtn.style.display =
+        "none";
+
+
+      tryAgainBtn.textContent =
+        "🎙 Answer again";
 
 
       feedback.scrollIntoView({
@@ -701,7 +678,7 @@ async function showFeedback(
 
 
     // ======================================
-    // RELEVANT + CORRECTION NEEDED
+    // CORRECTION NEEDED
     // ======================================
 
     if (
@@ -714,7 +691,7 @@ async function showFeedback(
 
       why.textContent =
         result.thai_explanation ||
-        "ปรับนิดเดียวให้ฟังเป็นธรรมชาติมากขึ้นค่ะ";
+        "ปรับนิดเดียวให้ประโยคฟังเป็นธรรมชาติมากขึ้นค่ะ";
 
 
       why.style.whiteSpace =
@@ -722,7 +699,7 @@ async function showFeedback(
 
 
       statusEl.textContent =
-        "Good answer! Try the corrected version ✨";
+        "Nice try! Let's make it even better ✨";
 
 
       pendingAnswer = {
@@ -738,11 +715,7 @@ async function showFeedback(
 
 
       tryAgainBtn.textContent =
-        "🎙️ Try again";
-
-
-      tryAgainBtn.style.fontWeight =
-        "700";
+        "🎙 Try again";
 
 
       continueBtn.style.display =
@@ -776,7 +749,7 @@ async function showFeedback(
 
 
     // ======================================
-    // RELEVANT + CORRECT
+    // CORRECT ANSWER
     // ======================================
 
     better.textContent =
@@ -785,7 +758,9 @@ async function showFeedback(
 
     why.textContent =
       isRetrying
-        ? "ดีมากค่ะ รอบนี้ประโยคฟังเป็นธรรมชาติแล้ว"
+
+        ? "ดีมากค่ะ รอบนี้ประโยคถูกต้องและฟังเป็นธรรมชาติแล้ว"
+
         : "ประโยคนี้เป็นธรรมชาติและตอบคำถามได้ดีค่ะ";
 
 
@@ -795,9 +770,15 @@ async function showFeedback(
 
     statusEl.textContent =
       isRetrying
-        ? "Nice! That sounds better."
+
+        ? "Great! That sounds natural 👏"
+
         : "Nice! Your answer works well.";
 
+
+    // --------------------------------------
+    // SAVE ONLY ONE FINAL ANSWER
+    // --------------------------------------
 
     if (
       isRetrying
@@ -829,11 +810,7 @@ async function showFeedback(
 
 
     tryAgainBtn.textContent =
-      "🎙️ Try again";
-
-
-    tryAgainBtn.style.fontWeight =
-      "400";
+      "🎙 Try again";
 
 
     continueBtn.style.display =
@@ -852,7 +829,9 @@ async function showFeedback(
 
   } catch (error) {
 
-    console.error(error);
+    console.error(
+      error
+    );
 
 
     better.textContent =
@@ -893,10 +872,6 @@ async function showFeedback(
 async function startRecording() {
 
   try {
-
-    feedback.style.display =
-      "none";
-
 
     audioChunks =
       [];
@@ -1010,18 +985,39 @@ async function startRecording() {
 
 
     micBtn.textContent =
-      "⏹️";
+      "■";
 
 
-    statusEl.textContent =
+    if (
       isRetrying
-        ? "Try the sentence again. Take your time."
-        : "Listening… take your time.";
+    ) {
+
+      retryView.style.display =
+        "block";
+
+
+      feedback.style.display =
+        "none";
+
+
+      statusEl.textContent =
+        "Listening… say the corrected sentence.";
+
+    }
+
+    else {
+
+      statusEl.textContent =
+        "Listening… take your time.";
+
+    }
 
 
   } catch (error) {
 
-    console.error(error);
+    console.error(
+      error
+    );
 
 
     statusEl.textContent =
@@ -1059,7 +1055,7 @@ function stopRecording() {
 
 
   micBtn.textContent =
-    "🎙️";
+    "🎙";
 
 
   micBtn.disabled =
@@ -1067,7 +1063,7 @@ function stopRecording() {
 
 
   statusEl.textContent =
-    "Got it! Checking your answer…";
+    "Checking your answer…";
 
 
   mediaRecorder.stop();
@@ -1121,7 +1117,7 @@ async function handleRecordingFinished() {
     ) {
 
       throw new Error(
-        "Recording was too short"
+        "Recording too short"
       );
 
     }
@@ -1150,10 +1146,6 @@ async function handleRecordingFinished() {
     }
 
 
-    statusEl.textContent =
-      "Checking your answer…";
-
-
     await showFeedback(
       transcript.trim()
     );
@@ -1161,7 +1153,9 @@ async function handleRecordingFinished() {
 
   } catch (error) {
 
-    console.error(error);
+    console.error(
+      error
+    );
 
 
     statusEl.textContent =
@@ -1212,9 +1206,9 @@ micBtn.addEventListener(
 // LISTEN TO QUESTION
 // ==========================================
 //
-// IMPORTANT:
-// Plays saved MP3.
-// NO ElevenLabs TTS.
+// STATIC MP3.
+//
+// NO ElevenLabs TTS charge.
 
 listenBtn.addEventListener(
   "click",
@@ -1229,7 +1223,7 @@ listenBtn.addEventListener(
 
 
     listenBtn.textContent =
-      "Loading…";
+      "…";
 
 
     await speakQuestion(
@@ -1249,60 +1243,16 @@ listenBtn.addEventListener(
 
 
 // ==========================================
-// LISTEN TO CORRECTION
-// ==========================================
-//
-// Correction sentence is personalized,
-// so this still uses ElevenLabs.
-
-hearCorrectionBtn.addEventListener(
-  "click",
-  async () => {
-
-    if (
-      !lastCorrected
-    ) {
-
-      return;
-
-    }
-
-
-    hearCorrectionBtn.disabled =
-      true;
-
-
-    const originalText =
-      hearCorrectionBtn.textContent;
-
-
-    hearCorrectionBtn.textContent =
-      "Loading…";
-
-
-    await speakDynamic(
-      lastCorrected
-    );
-
-
-    hearCorrectionBtn.textContent =
-      originalText;
-
-
-    hearCorrectionBtn.disabled =
-      false;
-
-  }
-);
-
-
-// ==========================================
 // TRY AGAIN
 // ==========================================
 
 tryAgainBtn.addEventListener(
   "click",
   () => {
+
+    // ======================================
+    // RETRY A CORRECTED SENTENCE
+    // ======================================
 
     if (
       pendingAnswer
@@ -1316,14 +1266,26 @@ tryAgainBtn.addEventListener(
         "none";
 
 
+      retryView.style.display =
+        "block";
+
+
+      retrySentence.textContent =
+        pendingAnswer.corrected;
+
+
       statusEl.textContent =
-        "Now say the corrected sentence in your own voice.";
+        "Tap the mic and say it again.";
 
 
       return;
 
     }
 
+
+    // ======================================
+    // WRONG TOPIC / ANSWER AGAIN
+    // ======================================
 
     isRetrying =
       false;
@@ -1333,8 +1295,12 @@ tryAgainBtn.addEventListener(
       "none";
 
 
+    retryView.style.display =
+      "none";
+
+
     statusEl.textContent =
-      "Answer the same question again when you're ready.";
+      "Answer the same question again.";
 
   }
 );
@@ -1344,9 +1310,16 @@ tryAgainBtn.addEventListener(
 // COMPLETE SCREEN
 // ==========================================
 
-async function showCompleteScreen() {
+function showCompleteScreen() {
+
+  stopCurrentAudio();
+
 
   lessonCard.style.display =
+    "none";
+
+
+  progressBar.style.display =
     "none";
 
 
@@ -1369,17 +1342,11 @@ async function showCompleteScreen() {
   });
 
 
-  // Closing message is dynamic for now,
-  // so ElevenLabs may still be used here.
-  if (
-    closingMessage
-  ) {
-
-    await speakDynamic(
-      closingMessage
-    );
-
-  }
+  // IMPORTANT:
+  //
+  // No ElevenLabs TTS here.
+  //
+  // This keeps the ending free too.
 
 }
 
@@ -1391,6 +1358,12 @@ async function showCompleteScreen() {
 continueBtn.addEventListener(
   "click",
   async () => {
+
+    // --------------------------------------
+    // Learner had correction
+    // but chose Continue instead.
+    // Save it once.
+    // --------------------------------------
 
     if (
       pendingAnswer
@@ -1419,7 +1392,7 @@ continueBtn.addEventListener(
       turn >= 5
     ) {
 
-      await showCompleteScreen();
+      showCompleteScreen();
 
       return;
 
@@ -1427,15 +1400,14 @@ continueBtn.addEventListener(
 
 
     // ======================================
-    // NEXT QUESTION
+    // NEXT TURN
     // ======================================
 
     turn +=
       1;
 
 
-    turnEl.textContent =
-      String(turn);
+    updateProgress();
 
 
     currentQuestion =
@@ -1447,15 +1419,7 @@ continueBtn.addEventListener(
       currentQuestion;
 
 
-    feedback.style.display =
-      "none";
-
-
-    statusEl.textContent =
-      "Your turn when you're ready.";
-
-
-    lastCorrected =
+    nextQuestion =
       "";
 
 
@@ -1467,9 +1431,17 @@ continueBtn.addEventListener(
       false;
 
 
-    // IMPORTANT:
-    // Play our saved MP3.
-    // Not ElevenLabs API.
+    resetFeedbackUI();
+
+
+    statusEl.textContent =
+      "Tap the mic to answer";
+
+
+    // --------------------------------------
+    // Static saved MP3
+    // --------------------------------------
+
     await speakQuestion(
       currentQuestion
     );
@@ -1497,20 +1469,12 @@ practiceAgainBtn.addEventListener(
       "Hey! How was your weekend?";
 
 
-    history =
-      [];
-
-
     nextQuestion =
       "";
 
 
-    closingMessage =
-      "";
-
-
-    lastCorrected =
-      "";
+    history =
+      [];
 
 
     pendingAnswer =
@@ -1521,16 +1485,16 @@ practiceAgainBtn.addEventListener(
       false;
 
 
-    turnEl.textContent =
-      "1";
+    isRecording =
+      false;
 
 
     questionEl.textContent =
       currentQuestion;
 
 
-    feedback.style.display =
-      "none";
+    progressBar.style.display =
+      "flex";
 
 
     completeScreen.style.display =
@@ -1541,33 +1505,20 @@ practiceAgainBtn.addEventListener(
       "block";
 
 
+    resetFeedbackUI();
+
+
     micBtn.disabled =
       false;
 
 
-    micBtn.style.opacity =
-      "1";
-
-
     micBtn.textContent =
-      "🎙️";
+      "🎙";
 
 
     micBtn.classList.remove(
       "recording"
     );
-
-
-    tryAgainBtn.textContent =
-      "🎙️ Try again";
-
-
-    tryAgainBtn.style.fontWeight =
-      "400";
-
-
-    continueBtn.textContent =
-      "Continue →";
 
 
     continueBtn.style.display =
@@ -1578,20 +1529,19 @@ practiceAgainBtn.addEventListener(
       false;
 
 
+    continueBtn.textContent =
+      "Continue →";
+
+
+    tryAgainBtn.textContent =
+      "🎙 Try again";
+
+
     statusEl.textContent =
-      "Tap the microphone to answer.";
+      "Tap the mic to answer";
 
 
-    youSaid.textContent =
-      "—";
-
-
-    better.textContent =
-      "—";
-
-
-    why.textContent =
-      "—";
+    updateProgress();
 
 
     window.scrollTo({
@@ -1606,3 +1556,10 @@ practiceAgainBtn.addEventListener(
 
   }
 );
+
+
+// ==========================================
+// INITIAL UI
+// ==========================================
+
+updateProgress();
