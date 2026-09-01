@@ -1,0 +1,61 @@
+{
+  "weekend": {
+    "id": "weekend",
+    "title": "My Weekend ✨",
+    "turns": 5,
+    "openingQuestion": "Hey! How was your weekend?",
+
+    "questions": [
+      {
+        "id": "Q1",
+        "text": "Hey! How was your weekend?",
+        "audio": "/audio/weekend/q1.mp3"
+      },
+      {
+        "id": "Q2",
+        "text": "What did you do?",
+        "audio": "/audio/weekend/q2.mp3"
+      },
+      {
+        "id": "Q3",
+        "text": "Tell me more about it.",
+        "audio": "/audio/weekend/q3.mp3"
+      },
+      {
+        "id": "Q4",
+        "text": "Where did you go?",
+        "audio": "/audio/weekend/q4.mp3"
+      },
+      {
+        "id": "Q5",
+        "text": "Who were you with?",
+        "audio": "/audio/weekend/q5.mp3"
+      },
+      {
+        "id": "Q6",
+        "text": "What happened next?",
+        "audio": "/audio/weekend/q6.mp3"
+      },
+      {
+        "id": "Q7",
+        "text": "How did you feel?",
+        "audio": "/audio/weekend/q7.mp3"
+      },
+      {
+        "id": "Q8",
+        "text": "What did you like about it?",
+        "audio": "/audio/weekend/q8.mp3"
+      },
+      {
+        "id": "Q9",
+        "text": "What was the best part?",
+        "audio": "/audio/weekend/q9.mp3"
+      },
+      {
+        "id": "Q10",
+        "text": "Would you do it again?",
+        "audio": "/audio/weekend/q10.mp3"
+      }
+    ]
+  }
+}
