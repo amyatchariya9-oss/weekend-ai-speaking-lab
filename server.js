@@ -1,9 +1,7 @@
 import "dotenv/config";
 
 import express from "express";
-
 import fs from "fs";
-
 import path from "path";
 
 import {
@@ -63,11 +61,7 @@ function loadLessons() {
       );
 
 
-    const lessons =
-      JSON.parse(raw);
-
-
-    return lessons;
+    return JSON.parse(raw);
 
   }
 
@@ -318,7 +312,7 @@ function getAvailableQuestionIds(
 
 
 // ==========================================
-// HEALTH CHECK
+// HEALTH
 // ==========================================
 
 app.get(
@@ -326,12 +320,14 @@ app.get(
   (req, res) => {
 
     res.json({
+
       ok: true,
 
       lessons:
         Object.keys(
           LESSONS
         )
+
     });
 
   }
@@ -404,8 +400,7 @@ app.post(
         )
       ) {
 
-        extension =
-          "mp4";
+        extension = "mp4";
 
       }
 
@@ -418,8 +413,7 @@ app.post(
         )
       ) {
 
-        extension =
-          "mp3";
+        extension = "mp3";
 
       }
 
@@ -429,8 +423,7 @@ app.post(
         )
       ) {
 
-        extension =
-          "wav";
+        extension = "wav";
 
       }
 
@@ -440,8 +433,7 @@ app.post(
         )
       ) {
 
-        extension =
-          "m4a";
+        extension = "m4a";
 
       }
 
@@ -473,10 +465,10 @@ app.post(
       );
 
 
-      formData.append(
-        "language_code",
-        "eng"
-      );
+      // IMPORTANT:
+      // Do NOT force language_code="eng".
+      // Students may speak Thai
+      // when asking for help.
 
 
       formData.append(
@@ -564,8 +556,7 @@ app.post(
 
 
 // ==========================================
-// AI CORRECTION
-// GEMINI
+// AI CORRECTION + HELP
 // ==========================================
 
 app.post(
@@ -576,6 +567,7 @@ app.post(
     try {
 
       const {
+
         lesson_id =
           "weekend",
 
@@ -590,6 +582,7 @@ app.post(
 
         history =
           []
+
       } =
         req.body || {};
 
@@ -616,7 +609,7 @@ app.post(
 
 
       // ======================================
-      // GET LESSON
+      // LESSON
       // ======================================
 
       const lesson =
@@ -641,8 +634,7 @@ app.post(
         !Array.isArray(
           lesson.questions
         ) ||
-        lesson.questions.length ===
-          0
+        lesson.questions.length === 0
       ) {
 
         return res
@@ -678,7 +670,7 @@ app.post(
 
 
       // ======================================
-      // LESSON INFO
+      // LESSON STATE
       // ======================================
 
       const totalTurns =
@@ -717,8 +709,7 @@ app.post(
 
 
       const availableQuestionList =
-        availableQuestionIds.length >
-        0
+        availableQuestionIds.length > 0
           ? availableQuestionIds
               .map(
                 (id) => {
@@ -730,7 +721,9 @@ app.post(
                     );
 
 
-                  return `${id}: ${question?.text || ""}`;
+                  return (
+                    `${id}: ${question?.text || ""}`
+                  );
 
                 }
               )
@@ -742,6 +735,7 @@ app.post(
       const historyText =
         Array.isArray(history) &&
         history.length > 0
+
           ? history
               .map(
                 (
@@ -763,11 +757,11 @@ app.post(
           : "No previous turns.";
 
 
-      // ======================================
-      // PROMPT
-      // ======================================
+// ==========================================
+// GEMINI PROMPT
+// ==========================================
 
-      const prompt = `
+const prompt = `
 You are a friendly English speaking coach for Thai beginner learners.
 
 COURSE:
@@ -775,9 +769,6 @@ Real English: Everyday Conversations
 
 CURRENT LESSON:
 ${lesson.title || lesson_id}
-
-THIS IS SPOKEN ENGLISH.
-Evaluate what the learner SAID, not written punctuation or formatting.
 
 CURRENT TURN:
 ${turn} of ${totalTurns}
@@ -789,11 +780,11 @@ LEARNER SAID:
 ${cleanTranscript}
 
 
-QUESTION BANK FOR THIS LESSON:
+QUESTION BANK:
 ${questionList}
 
 
-QUESTIONS STILL AVAILABLE FOR THE NEXT TURN:
+QUESTIONS AVAILABLE FOR THE NEXT TURN:
 ${availableQuestionList}
 
 
@@ -801,32 +792,182 @@ PREVIOUS CONVERSATION:
 ${historyText}
 
 
-YOUR JOB:
+================================================
+VERY IMPORTANT: HELP REQUESTS
+================================================
 
-1. Decide whether the learner's answer is relevant to the CURRENT QUESTION.
+The learner is a Thai beginner.
 
-2. If it is NOT relevant:
-- answer_relevant = false
-- explain briefly in Thai what the current question is asking
-- give ONE very simple English example answer
-- correction_needed = false
-- corrected_sentence = learner's original transcript
-- next_question_id = ""
-- The learner must answer the SAME question again.
+The learner may ask for help in ENGLISH OR THAI.
 
-3. If the answer IS relevant:
-- answer_relevant = true
-- check only meaningful SPOKEN English problems.
+Examples include, but are NOT limited to:
 
-Correct things such as:
+English:
+- I don't understand.
+- I don't get it.
+- What does that mean?
+- What does "what kind" mean?
+- Can you explain?
+- Can you explain the question?
+- I don't know how to answer.
+- I don't know what to say.
+- I can't answer.
+- What should I say?
+- How do I answer this?
+
+Thai:
+- ไม่เข้าใจ
+- ไม่เข้าใจคำถาม
+- แปลว่าอะไร
+- หมายความว่าอะไร
+- คำถามนี้แปลว่าอะไร
+- คำถามนี้หมายความว่าอะไร
+- ตอบยังไง
+- ต้องตอบว่าอะไร
+- ไม่รู้จะตอบอะไร
+- ไม่รู้จะตอบยังไง
+- พูดยังไง
+- ไม่รู้พูดว่าอะไร
+
+The learner may also mix Thai and English.
+
+Examples:
+- what kind แปลว่าอะไร
+- question นี้หมายความว่าอะไร
+- I don't understand คำถาม
+- คำนี้แปลว่าอะไร
+
+Do NOT require an exact phrase.
+
+Use the meaning and intention of what the learner said.
+
+If the learner is clearly:
+- asking what the question means
+- asking what a word or phrase means
+- asking how to answer
+- saying they do not understand
+- saying they do not know what to say
+
+then:
+
+help_requested = true
+
+THIS IS NOT A WRONG ANSWER.
+
+When help_requested = true:
+
+1. Explain the CURRENT QUESTION in simple Thai.
+
+2. If the learner asked about a specific English word or phrase,
+explain that word or phrase in Thai.
+
+3. If there is an important phrase in the question that a beginner
+may not understand, explain it briefly.
+
+4. Give ONE simple English example answer.
+
+5. Keep the explanation short and beginner-friendly.
+
+6. Do NOT change to another question.
+
+7. next_question_id MUST be "".
+
+8. correction_needed MUST be false.
+
+9. answer_relevant MUST be false.
+
+10. corrected_sentence must remain the learner's original transcript.
+
+The learner will answer the SAME question again.
+
+
+EXAMPLE:
+
+CURRENT QUESTION:
+What kind of food do you like?
+
+LEARNER:
+what kind แปลว่าอะไร
+
+GOOD HELP:
+
+help_explanation:
+คำถามนี้หมายถึง “คุณชอบอาหารประเภทไหน?”
+“What kind of” แปลว่า “ประเภทไหน / แบบไหน”
+
+help_example:
+I like Thai food.
+
+
+ANOTHER EXAMPLE:
+
+CURRENT QUESTION:
+How would you describe yourself?
+
+LEARNER:
+ไม่รู้จะตอบยังไง
+
+GOOD HELP:
+
+help_explanation:
+คำถามนี้ถามว่า “คุณจะอธิบายว่าตัวเองเป็นคนแบบไหน?”
+ลองพูดถึงนิสัยของตัวเอง เช่น friendly, shy, funny หรือ hardworking
+
+help_example:
+I'm friendly and a little shy.
+
+
+================================================
+NORMAL ANSWERS
+================================================
+
+If the learner is NOT asking for help:
+
+help_requested = false
+help_explanation = ""
+help_example = ""
+
+
+Decide whether the learner actually answered the CURRENT QUESTION.
+
+If the answer is NOT relevant:
+
+answer_relevant = false
+correction_needed = false
+corrected_sentence = learner's original transcript
+next_question_id = ""
+
+Give a short Thai explanation of what the question is asking.
+
+Give ONE simple English example answer.
+
+
+================================================
+SPOKEN ENGLISH CORRECTION
+================================================
+
+If the answer IS relevant:
+
+answer_relevant = true
+
+This is SPOKEN English.
+
+Evaluate what the learner SAID,
+not written punctuation or formatting.
+
+Correct meaningful spoken problems such as:
+
 - incorrect tense
 - incorrect verb form
-- missing important subject or verb
-- clearly incorrect sentence structure
+- missing important subject
+- missing important verb
+- incorrect sentence structure
 - clearly unnatural word choice
 - mistakes that make the meaning confusing
 
+
 DO NOT correct:
+
 - punctuation
 - capitalization
 - commas
@@ -834,14 +975,18 @@ DO NOT correct:
 - question marks
 - transcript formatting
 - harmless spoken-English informality
-- natural conversational fragments when the meaning is clear
+- natural conversational fragments
+  when the meaning is clear
+
 
 IMPORTANT:
+
 Preserve the learner's intended meaning.
 
-NEVER invent details the learner did not say.
+NEVER invent information.
 
-Do not invent:
+Do NOT invent:
+
 - colors
 - places
 - people
@@ -853,65 +998,86 @@ Do not invent:
 - opinions
 - events
 
-If the learner's sentence is already natural spoken English:
-- correction_needed = false
-- corrected_sentence = the learner's original transcript
-- thai_explanation = ""
+
+If the learner's spoken English is already natural:
+
+correction_needed = false
+corrected_sentence = learner's original transcript
+thai_explanation = ""
+
 
 If a meaningful correction is needed:
-- correction_needed = true
-- corrected_sentence = a natural corrected version
-- thai_explanation = a SHORT, beginner-friendly explanation in Thai
-- next_question_id = ""
 
-Do not give punctuation or capitalization advice.
+correction_needed = true
+corrected_sentence = a natural corrected version
+thai_explanation = a SHORT beginner-friendly Thai explanation
+next_question_id = ""
 
-Do not say a word was "added" if the learner already said that word.
+
+Do not give punctuation advice.
+
+Do not give capitalization advice.
+
+Do not claim you added a word
+if the learner already said that word.
 
 Use friendly neutral Thai.
+
 Do not use "ครับ".
 
 
-NEXT QUESTION RULES:
+================================================
+NEXT QUESTION
+================================================
 
-Only choose a next question when ALL are true:
+Only choose a next question if ALL are true:
+
+- help_requested = false
 - answer_relevant = true
 - correction_needed = false
 - this is NOT the final turn
-- at least one unused question is available
+- an unused question is available
 
-The next question MUST be chosen ONLY from:
+
+The next question MUST be selected ONLY from:
+
 ${availableQuestionIds.join(", ") || "NONE"}
 
-Choose the question that follows the conversation most naturally.
 
-Do NOT ask for information the learner has already clearly given.
+Choose the question that follows the conversation naturally.
 
-Do NOT create your own question.
+Do NOT ask something the learner has already clearly answered.
+
+Do NOT invent a question.
 
 Do NOT rewrite a question.
 
-Return only its exact question ID.
+Return only the exact question ID.
+
 
 If:
-- the answer is irrelevant
+- help was requested
+- the answer was irrelevant
 - correction is needed
 - this is the final turn
-- or no unused questions remain
+- no question is available
 
-then next_question_id MUST be "".
+then:
+
+next_question_id = ""
 `;
 
 
-      // ======================================
-      // GEMINI REQUEST
-      // ======================================
+// ==========================================
+// GEMINI REQUEST
+// ==========================================
 
       const geminiResponse =
         await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${apiKey}`,
           {
-            method: "POST",
+            method:
+              "POST",
 
             headers: {
               "Content-Type":
@@ -920,9 +1086,11 @@ then next_question_id MUST be "".
 
             body:
               JSON.stringify({
+
                 contents: [
                   {
-                    role: "user",
+                    role:
+                      "user",
 
                     parts: [
                       {
@@ -934,6 +1102,7 @@ then next_question_id MUST be "".
                 ],
 
                 generationConfig: {
+
                   temperature:
                     0.2,
 
@@ -941,10 +1110,26 @@ then next_question_id MUST be "".
                     "application/json",
 
                   responseSchema: {
+
                     type:
                       "OBJECT",
 
                     properties: {
+
+                      help_requested: {
+                        type:
+                          "BOOLEAN"
+                      },
+
+                      help_explanation: {
+                        type:
+                          "STRING"
+                      },
+
+                      help_example: {
+                        type:
+                          "STRING"
+                      },
 
                       answer_relevant: {
                         type:
@@ -984,13 +1169,21 @@ then next_question_id MUST be "".
                     },
 
                     required: [
+
+                      "help_requested",
+                      "help_explanation",
+                      "help_example",
+
                       "answer_relevant",
                       "relevance_explanation",
                       "example_answer",
+
                       "correction_needed",
                       "corrected_sentence",
                       "thai_explanation",
+
                       "next_question_id"
+
                     ]
                   }
                 }
@@ -1024,9 +1217,9 @@ then next_question_id MUST be "".
       }
 
 
-      // ======================================
-      // READ GEMINI JSON
-      // ======================================
+// ==========================================
+// READ GEMINI JSON
+// ==========================================
 
       const modelText =
         geminiData
@@ -1074,17 +1267,31 @@ then next_question_id MUST be "".
       }
 
 
-      // ======================================
-      // NORMALIZE RESULT
-      // ======================================
+// ==========================================
+// NORMALIZE
+// ==========================================
 
-      result.answer_relevant =
-        result.answer_relevant ===
+      result.help_requested =
+        result.help_requested ===
         true;
 
 
-      result.correction_needed =
-        result.correction_needed ===
+      result.help_explanation =
+        String(
+          result.help_explanation ||
+          ""
+        ).trim();
+
+
+      result.help_example =
+        String(
+          result.help_example ||
+          ""
+        ).trim();
+
+
+      result.answer_relevant =
+        result.answer_relevant ===
         true;
 
 
@@ -1100,6 +1307,11 @@ then next_question_id MUST be "".
           result.example_answer ||
           ""
         ).trim();
+
+
+      result.correction_needed =
+        result.correction_needed ===
+        true;
 
 
       result.corrected_sentence =
@@ -1123,12 +1335,52 @@ then next_question_id MUST be "".
         ).trim();
 
 
-      // ======================================
-      // HARD SAFETY:
-      // PUNCTUATION / CASE ONLY
-      // ======================================
+// ==========================================
+// HELP SAFETY
+// ==========================================
 
       if (
+        result.help_requested
+      ) {
+
+        result.answer_relevant =
+          false;
+
+
+        result.correction_needed =
+          false;
+
+
+        result.corrected_sentence =
+          cleanTranscript;
+
+
+        result.next_question_id =
+          "";
+
+
+        // Backwards compatibility:
+        // Current app.js already knows how
+        // to display these fields.
+
+        result.relevance_explanation =
+          result.help_explanation ||
+          "คำถามนี้ยังไม่เข้าใจใช่ไหมคะ เดี๋ยวช่วยอธิบายให้ค่ะ";
+
+
+        result.example_answer =
+          result.help_example ||
+          "";
+
+      }
+
+
+// ==========================================
+// PUNCTUATION / CASE SAFETY
+// ==========================================
+
+      if (
+        !result.help_requested &&
         result.answer_relevant &&
         result.correction_needed
       ) {
@@ -1166,11 +1418,12 @@ then next_question_id MUST be "".
       }
 
 
-      // ======================================
-      // IRRELEVANT ANSWER SAFETY
-      // ======================================
+// ==========================================
+// IRRELEVANT SAFETY
+// ==========================================
 
       if (
+        !result.help_requested &&
         !result.answer_relevant
       ) {
 
@@ -1188,9 +1441,9 @@ then next_question_id MUST be "".
       }
 
 
-      // ======================================
-      // CORRECTION SAFETY
-      // ======================================
+// ==========================================
+// CORRECTION SAFETY
+// ==========================================
 
       if (
         result.correction_needed
@@ -1202,9 +1455,9 @@ then next_question_id MUST be "".
       }
 
 
-      // ======================================
-      // FINAL TURN SAFETY
-      // ======================================
+// ==========================================
+// FINAL TURN
+// ==========================================
 
       if (isFinalTurn) {
 
@@ -1214,9 +1467,9 @@ then next_question_id MUST be "".
       }
 
 
-      // ======================================
-      // NEXT QUESTION VALIDATION
-      // ======================================
+// ==========================================
+// NEXT QUESTION VALIDATION
+// ==========================================
 
       let nextQuestionId =
         result.next_question_id;
@@ -1230,7 +1483,7 @@ then next_question_id MUST be "".
       ) {
 
         console.warn(
-          "Gemini selected invalid or used question:",
+          "Invalid next question:",
           nextQuestionId
         );
 
@@ -1241,17 +1494,17 @@ then next_question_id MUST be "".
       }
 
 
-      // ======================================
-      // SAFE FALLBACK
-      // ======================================
+// ==========================================
+// SAFE FALLBACK
+// ==========================================
 
       if (
+        !result.help_requested &&
         result.answer_relevant &&
         !result.correction_needed &&
         !isFinalTurn &&
         !nextQuestionId &&
-        availableQuestionIds.length >
-          0
+        availableQuestionIds.length > 0
       ) {
 
         nextQuestionId =
@@ -1260,9 +1513,9 @@ then next_question_id MUST be "".
       }
 
 
-      // ======================================
-      // MAP ID -> EXACT QUESTION
-      // ======================================
+// ==========================================
+// ID -> QUESTION
+// ==========================================
 
       let nextQuestion =
         "";
@@ -1270,7 +1523,7 @@ then next_question_id MUST be "".
 
       if (nextQuestionId) {
 
-        const nextQuestionObject =
+        const object =
           getQuestionById(
             lesson,
             nextQuestionId
@@ -1278,19 +1531,28 @@ then next_question_id MUST be "".
 
 
         nextQuestion =
-          nextQuestionObject?.text ||
+          object?.text ||
           "";
 
       }
 
 
-      // ======================================
-      // RETURN TO FRONTEND
-      // ======================================
+// ==========================================
+// RETURN
+// ==========================================
 
       res.json({
 
         lesson_id,
+
+        help_requested:
+          result.help_requested,
+
+        help_explanation:
+          result.help_explanation,
+
+        help_example:
+          result.help_example,
 
         answer_relevant:
           result.answer_relevant,
