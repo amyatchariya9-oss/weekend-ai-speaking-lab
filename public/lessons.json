@@ -125,7 +125,7 @@
     "questions": [
       {
         "id": "Q1",
-        "text": "Hey! Tell me a little about yourself.",
+        "text": "Hi! How are you?",
         "audio": "/audio/introducing-yourself/q1.mp3"
       },
       {
