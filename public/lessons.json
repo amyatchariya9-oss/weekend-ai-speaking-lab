@@ -1,10 +1,9 @@
 {
   "weekend": {
     "id": "weekend",
-    "title": "Lesson 01 · My Weekend ",
+    "title": "Lesson 01 · My Weekend",
     "turns": 5,
     "openingQuestion": "Hey! How was your weekend?",
-
     "questions": [
       {
         "id": "Q1",
@@ -64,7 +63,6 @@
     "title": "Lesson 02 · My Day",
     "turns": 5,
     "openingQuestion": "Hey! How was your day?",
-
     "questions": [
       {
         "id": "Q1",
@@ -115,6 +113,65 @@
         "id": "Q10",
         "text": "What are you going to do tonight?",
         "audio": "/audio/my-day/q10.mp3"
+      }
+    ]
+  },
+
+  "introducing-yourself": {
+    "id": "introducing-yourself",
+    "title": "Lesson 03 · Introducing Yourself",
+    "turns": 5,
+    "openingQuestion": "Hey! Tell me a little about yourself.",
+    "questions": [
+      {
+        "id": "Q1",
+        "text": "Hey! Tell me a little about yourself.",
+        "audio": "/audio/introducing-yourself/q1.mp3"
+      },
+      {
+        "id": "Q2",
+        "text": "What's your name?",
+        "audio": "/audio/introducing-yourself/q2.mp3"
+      },
+      {
+        "id": "Q3",
+        "text": "Where are you from?",
+        "audio": "/audio/introducing-yourself/q3.mp3"
+      },
+      {
+        "id": "Q4",
+        "text": "Where do you live now?",
+        "audio": "/audio/introducing-yourself/q4.mp3"
+      },
+      {
+        "id": "Q5",
+        "text": "What do you do?",
+        "audio": "/audio/introducing-yourself/q5.mp3"
+      },
+      {
+        "id": "Q6",
+        "text": "What do you like to do in your free time?",
+        "audio": "/audio/introducing-yourself/q6.mp3"
+      },
+      {
+        "id": "Q7",
+        "text": "What kind of music do you like?",
+        "audio": "/audio/introducing-yourself/q7.mp3"
+      },
+      {
+        "id": "Q8",
+        "text": "What's your favorite food?",
+        "audio": "/audio/introducing-yourself/q8.mp3"
+      },
+      {
+        "id": "Q9",
+        "text": "How would you describe yourself?",
+        "audio": "/audio/introducing-yourself/q9.mp3"
+      },
+      {
+        "id": "Q10",
+        "text": "Tell me one fun fact about yourself.",
+        "audio": "/audio/introducing-yourself/q10.mp3"
       }
     ]
   }
