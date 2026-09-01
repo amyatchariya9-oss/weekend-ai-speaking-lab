@@ -39,12 +39,27 @@ const retryView =
 const retrySentence =
   $("retrySentence");
 
-
-// NEW:
-// เอาไว้ซ่อน/แสดงพื้นที่ไมค์ทั้งก้อน
 const speakArea =
   document.querySelector(
     ".speak-area"
+  );
+
+
+// NEW:
+// เอาไว้เปลี่ยนหน้าตา feedback
+const correctionHeading =
+  document.querySelector(
+    ".correction-heading"
+  );
+
+const whyDivider =
+  document.querySelector(
+    ".why-divider"
+  );
+
+const whyLabel =
+  document.querySelector(
+    ".why-label"
   );
 
 
@@ -168,6 +183,67 @@ function getQuestionAudio(text) {
 
 
 // ==========================================
+// FEEDBACK LAYOUTS
+// ==========================================
+
+function showCorrectionLayout() {
+
+  correctionHeading.style.display =
+    "block";
+
+  correctionHeading.textContent =
+    "Better ✨";
+
+  whyDivider.style.display =
+    "block";
+
+  whyLabel.style.display =
+    "block";
+
+  why.style.display =
+    "block";
+
+  tryAgainBtn.style.display =
+    "block";
+
+  continueBtn.style.gridColumn =
+    "auto";
+
+}
+
+
+function showSuccessLayout() {
+
+  // ไม่มี Better
+  correctionHeading.style.display =
+    "none";
+
+  // ไม่มี WHY
+  whyDivider.style.display =
+    "none";
+
+  whyLabel.style.display =
+    "none";
+
+  why.style.display =
+    "none";
+
+  // ประโยคถูกแล้ว
+  // ไม่ต้อง Try again
+  tryAgainBtn.style.display =
+    "none";
+
+  // Continue เต็มความกว้าง
+  continueBtn.style.display =
+    "block";
+
+  continueBtn.style.gridColumn =
+    "1 / -1";
+
+}
+
+
+// ==========================================
 // CORRECTION DIFF
 // ==========================================
 
@@ -234,11 +310,7 @@ function renderCorrectionDiff(
 
   const dp =
     Array.from(
-      {
-        length:
-          m + 1
-      },
-
+      { length: m + 1 },
       () =>
         Array(
           n + 1
@@ -262,7 +334,6 @@ function renderCorrectionDiff(
         normalizeWord(
           originalWords[i]
         );
-
 
       const correctedNormalized =
         normalizeWord(
@@ -309,7 +380,6 @@ function renderCorrectionDiff(
         originalWords[i]
       );
 
-
     const correctedNormalized =
       normalizeWord(
         correctedWords[j]
@@ -323,8 +393,7 @@ function renderCorrectionDiff(
 
       operations.push({
         type: "same",
-        text:
-          correctedWords[j]
+        text: correctedWords[j]
       });
 
       i++;
@@ -341,8 +410,7 @@ function renderCorrectionDiff(
 
       operations.push({
         type: "removed",
-        text:
-          originalWords[i]
+        text: originalWords[i]
       });
 
       i++;
@@ -351,8 +419,7 @@ function renderCorrectionDiff(
 
       operations.push({
         type: "added",
-        text:
-          correctedWords[j]
+        text: correctedWords[j]
       });
 
       j++;
@@ -366,8 +433,7 @@ function renderCorrectionDiff(
 
     operations.push({
       type: "removed",
-      text:
-        originalWords[i]
+      text: originalWords[i]
     });
 
     i++;
@@ -379,8 +445,7 @@ function renderCorrectionDiff(
 
     operations.push({
       type: "added",
-      text:
-        correctedWords[j]
+      text: correctedWords[j]
     });
 
     j++;
@@ -518,9 +583,6 @@ async function speakQuestion(text) {
         currentAudio =
           null;
 
-        statusEl.textContent =
-          "Question audio unavailable.";
-
       };
 
 
@@ -602,11 +664,9 @@ async function transcribeAudio(
         method: "POST",
 
         headers: {
-
           "Content-Type":
             audioBlob.type ||
             "application/octet-stream"
-
         },
 
         body:
@@ -650,13 +710,12 @@ async function getAICorrection(
       "/correct",
       {
 
-        method: "POST",
+        method:
+          "POST",
 
         headers: {
-
           "Content-Type":
             "application/json"
-
         },
 
         body:
@@ -734,21 +793,30 @@ function resetFeedbackUI() {
   feedback.style.display =
     "none";
 
-
   retryView.style.display =
     "none";
-
 
   youSaid.textContent =
     "—";
 
-
   better.textContent =
     "—";
 
-
   why.textContent =
     "—";
+
+
+  // reset ปุ่ม
+  showCorrectionLayout();
+
+  continueBtn.style.display =
+    "block";
+
+  continueBtn.disabled =
+    false;
+
+  continueBtn.style.gridColumn =
+    "auto";
 
 }
 
@@ -761,7 +829,6 @@ async function showFeedback(
   transcript
 ) {
 
-  // NEW:
   // พอตอบเสร็จ ซ่อนไมค์
   speakArea.style.display =
     "none";
@@ -791,14 +858,6 @@ async function showFeedback(
     true;
 
 
-  continueBtn.style.display =
-    "block";
-
-
-  continueBtn.textContent =
-    "Checking…";
-
-
   try {
 
     const result =
@@ -820,8 +879,15 @@ async function showFeedback(
       false
     ) {
 
+      showCorrectionLayout();
+
+
+      correctionHeading.textContent =
+        "Try again 💬";
+
+
       better.textContent =
-        "Let's try that question again 💬";
+        "Answer the question above.";
 
 
       let explanation =
@@ -859,6 +925,10 @@ async function showFeedback(
         "none";
 
 
+      tryAgainBtn.style.display =
+        "block";
+
+
       tryAgainBtn.textContent =
         "🎙 Answer again";
 
@@ -869,19 +939,19 @@ async function showFeedback(
 
 
     // ======================================
-    // CORRECTION NEEDED
+    // NEEDS CORRECTION
     // ======================================
 
     if (
       result.correction_needed
     ) {
 
+      showCorrectionLayout();
+
+
       renderCorrectionDiff(
-
         transcript,
-
         result.corrected_sentence
-
       );
 
 
@@ -914,6 +984,10 @@ async function showFeedback(
         "block";
 
 
+      continueBtn.style.gridColumn =
+        "auto";
+
+
       continueBtn.textContent =
         turn >= 5
           ? "Finish →"
@@ -930,19 +1004,19 @@ async function showFeedback(
 
 
     // ======================================
-    // CORRECT
+    // PERFECT / NATURAL ANSWER
     // ======================================
 
+    showSuccessLayout();
+
+
     better.textContent =
-      "Sounds good! ✅";
+      "Well done! ✅";
 
 
-    why.textContent =
-      isRetrying
-
-        ? "ดีมากค่ะ รอบนี้ประโยคถูกต้องและฟังเป็นธรรมชาติแล้ว"
-
-        : "ประโยคนี้เป็นธรรมชาติและตอบคำถามได้ดีค่ะ";
+    // ไม่มี WHY
+    // ไม่มี Try again
+    // มีแค่ Continue
 
 
     if (
@@ -963,23 +1037,11 @@ async function showFeedback(
     else {
 
       saveCurrentTurn(
-
         transcript,
-
-        result.corrected_sentence ||
         transcript
-
       );
 
     }
-
-
-    tryAgainBtn.textContent =
-      "🎙 Try again";
-
-
-    continueBtn.style.display =
-      "block";
 
 
     continueBtn.textContent =
@@ -997,6 +1059,9 @@ async function showFeedback(
     console.error(
       error
     );
+
+
+    showCorrectionLayout();
 
 
     better.textContent =
@@ -1126,21 +1191,10 @@ async function startRecording() {
       "■";
 
 
-    if (
+    statusEl.textContent =
       isRetrying
-    ) {
-
-      statusEl.textContent =
-        "Listening… say the corrected sentence.";
-
-    }
-
-    else {
-
-      statusEl.textContent =
-        "Listening… take your time.";
-
-    }
+        ? "Listening… say it again."
+        : "Listening… take your time.";
 
 
   } catch (error) {
@@ -1264,6 +1318,10 @@ async function handleRecordingFinished() {
         "I couldn't hear that. Try again.";
 
 
+      speakArea.style.display =
+        "block";
+
+
       return;
 
     }
@@ -1283,6 +1341,10 @@ async function handleRecordingFinished() {
 
     statusEl.textContent =
       "I couldn't process that. Please try again.";
+
+
+    speakArea.style.display =
+      "block";
 
 
   } finally {
@@ -1357,15 +1419,9 @@ tryAgainBtn.addEventListener(
   "click",
   () => {
 
-    // NEW:
-    // กด Try again → เอาไมค์กลับมา
     speakArea.style.display =
       "block";
 
-
-    // ======================================
-    // CORRECTED SENTENCE RETRY
-    // ======================================
 
     if (
       pendingAnswer
@@ -1395,10 +1451,6 @@ tryAgainBtn.addEventListener(
 
     }
 
-
-    // ======================================
-    // WRONG TOPIC
-    // ======================================
 
     isRetrying =
       false;
@@ -1517,8 +1569,6 @@ continueBtn.addEventListener(
     resetFeedbackUI();
 
 
-    // NEW:
-    // ข้อใหม่ → ไมค์กลับมา
     speakArea.style.display =
       "block";
 
@@ -1588,8 +1638,6 @@ practiceAgainBtn.addEventListener(
     resetFeedbackUI();
 
 
-    // NEW:
-    // เริ่มบทใหม่ → แสดงไมค์
     speakArea.style.display =
       "block";
 
