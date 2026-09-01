@@ -1,11 +1,143 @@
 {
+  "weekend": {
+    "q1": {
+      "questionThai": "สุดสัปดาห์ของคุณเป็นยังไงบ้าง?",
+      "vocab": [
+        {
+          "text": "weekend",
+          "thai": "วันหยุดสุดสัปดาห์ / เสาร์-อาทิตย์",
+          "type": "noun",
+          "example": "I had a great weekend.",
+          "exampleThai": "ฉันมีวันหยุดสุดสัปดาห์ที่ดีมาก"
+        }
+      ]
+    },
+
+    "q2": {
+      "questionThai": "คุณทำอะไรมา?",
+      "vocab": [
+        {
+          "text": "did you do",
+          "thai": "คุณทำอะไรมา",
+          "type": "phrase",
+          "example": "What did you do yesterday?",
+          "exampleThai": "เมื่อวานคุณทำอะไรมา?"
+        }
+      ]
+    },
+
+    "q3": {
+      "questionThai": "เล่าให้ฟังเพิ่มอีกหน่อยสิ",
+      "vocab": [
+        {
+          "text": "Tell me more",
+          "thai": "เล่าให้ฟังเพิ่มอีกหน่อย / เล่าต่อสิ",
+          "type": "phrase",
+          "example": "That sounds fun. Tell me more!",
+          "exampleThai": "ฟังดูสนุกนะ เล่าให้ฟังเพิ่มอีกหน่อยสิ"
+        }
+      ]
+    },
+
+    "q4": {
+      "questionThai": "คุณไปที่ไหนมา?",
+      "vocab": [
+        {
+          "text": "did you go",
+          "thai": "คุณไป...มา",
+          "type": "phrase",
+          "example": "Where did you go last night?",
+          "exampleThai": "เมื่อคืนคุณไปที่ไหนมา?"
+        }
+      ]
+    },
+
+    "q5": {
+      "questionThai": "คุณไปกับใคร?",
+      "vocab": [
+        {
+          "text": "Who were you with",
+          "thai": "คุณอยู่กับใคร / คุณไปกับใคร",
+          "type": "phrase",
+          "example": "Who were you with at the party?",
+          "exampleThai": "คุณอยู่กับใครที่งานปาร์ตี้?"
+        }
+      ]
+    },
+
+    "q6": {
+      "questionThai": "แล้วหลังจากนั้นเกิดอะไรขึ้น?",
+      "vocab": [
+        {
+          "text": "happened next",
+          "thai": "เกิดอะไรขึ้นต่อ / หลังจากนั้นเกิดอะไรขึ้น",
+          "type": "phrase",
+          "example": "What happened next?",
+          "exampleThai": "แล้วหลังจากนั้นเกิดอะไรขึ้น?"
+        }
+      ]
+    },
+
+    "q7": {
+      "questionThai": "ตอนนั้นคุณรู้สึกยังไง?",
+      "vocab": [
+        {
+          "text": "How did you feel",
+          "thai": "คุณรู้สึกยังไง",
+          "type": "phrase",
+          "example": "How did you feel after that?",
+          "exampleThai": "หลังจากนั้นคุณรู้สึกยังไง?"
+        }
+      ]
+    },
+
+    "q8": {
+      "questionThai": "คุณชอบอะไรเกี่ยวกับมัน?",
+      "vocab": [
+        {
+          "text": "What did you like about it",
+          "thai": "คุณชอบอะไรเกี่ยวกับมัน",
+          "type": "phrase",
+          "example": "What did you like about the trip?",
+          "exampleThai": "คุณชอบอะไรเกี่ยวกับทริปนี้?"
+        }
+      ]
+    },
+
+    "q9": {
+      "questionThai": "ส่วนที่ดีที่สุดคืออะไร?",
+      "vocab": [
+        {
+          "text": "the best part",
+          "thai": "ส่วนที่ดีที่สุด / ช่วงที่ดีที่สุด",
+          "type": "phrase",
+          "example": "The food was the best part.",
+          "exampleThai": "อาหารคือส่วนที่ดีที่สุด"
+        }
+      ]
+    },
+
+    "q10": {
+      "questionThai": "คุณอยากทำแบบนั้นอีกไหม?",
+      "vocab": [
+        {
+          "text": "Would you do it again",
+          "thai": "คุณจะทำมันอีกไหม / คุณอยากทำแบบนั้นอีกไหม",
+          "type": "phrase",
+          "example": "Yes, I would do it again.",
+          "exampleThai": "ใช่ ฉันอยากทำแบบนั้นอีก"
+        }
+      ]
+    }
+  },
+
   "food-everyday-life": {
     "q1": {
       "questionThai": "วันนี้คุณกินอะไรมา?",
       "vocab": [
         {
           "text": "did you eat",
-          "thai": "คุณกิน...มา / คุณได้กิน...ไหม",
+          "thai": "คุณกิน...มา / คุณได้กิน...",
           "type": "phrase",
           "example": "What did you eat for lunch?",
           "exampleThai": "คุณกินอะไรเป็นมื้อกลางวัน?"
