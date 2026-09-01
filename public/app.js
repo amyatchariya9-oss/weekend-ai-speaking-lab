@@ -371,14 +371,12 @@ function pickSuccessText(
 function launchConfetti() {
 
   const colors = [
-    "#FF6B6B",
-    "#FFD93D",
-    "#6BCB77",
-    "#4D96FF",
-    "#B983FF",
-    "#FF8FAB",
-    "#56CFE1",
-    "#FF9F1C"
+    "#E7C873", // soft gold
+    "#F4E8C1", // champagne
+    "#F3C6C6", // blush
+    "#D9D2F2", // soft lavender
+    "#BFD8D2", // muted mint
+    "#FFFFFF"  // white
   ];
 
 
@@ -391,20 +389,11 @@ function launchConfetti() {
   Object.assign(
     container.style,
     {
-      position:
-        "fixed",
-
-      inset:
-        "0",
-
-      overflow:
-        "hidden",
-
-      pointerEvents:
-        "none",
-
-      zIndex:
-        "99999"
+      position: "fixed",
+      inset: "0",
+      overflow: "hidden",
+      pointerEvents: "none",
+      zIndex: "99999"
     }
   );
 
@@ -414,6 +403,174 @@ function launchConfetti() {
   );
 
 
+  // ========================================
+  // LUXURY CONFETTI
+  // ========================================
+
+  const totalPieces =
+    48;
+
+
+  for (
+    let i = 0;
+    i < totalPieces;
+    i++
+  ) {
+
+    const piece =
+      document.createElement(
+        "div"
+      );
+
+
+    const width =
+      5 +
+      Math.random() * 5;
+
+
+    const height =
+      9 +
+      Math.random() * 8;
+
+
+    const startX =
+      Math.random() *
+      window.innerWidth;
+
+
+    const drift =
+      -120 +
+      Math.random() * 240;
+
+
+    const rotation =
+      -540 +
+      Math.random() * 1080;
+
+
+    const duration =
+      4300 +
+      Math.random() * 2400;
+
+
+    const delay =
+      Math.random() * 1200;
+
+
+    const color =
+      colors[
+        Math.floor(
+          Math.random() *
+          colors.length
+        )
+      ];
+
+
+    Object.assign(
+      piece.style,
+      {
+        position: "absolute",
+
+        left:
+          `${startX}px`,
+
+        top:
+          "-30px",
+
+        width:
+          `${width}px`,
+
+        height:
+          `${height}px`,
+
+        background:
+          color,
+
+        borderRadius:
+          Math.random() > 0.75
+            ? "50%"
+            : "2px",
+
+        opacity:
+          "0",
+
+        boxShadow:
+          color === "#FFFFFF"
+            ? "0 0 6px rgba(255,255,255,.5)"
+            : "none",
+
+        willChange:
+          "transform, opacity"
+      }
+    );
+
+
+    container.appendChild(
+      piece
+    );
+
+
+    piece.animate(
+      [
+        {
+          transform:
+            "translate3d(0,-20px,0) rotate(0deg)",
+
+          opacity: 0
+        },
+
+        {
+          transform:
+            `translate3d(${drift * 0.25}px, ${window.innerHeight * 0.25}px, 0) rotate(${rotation * 0.25}deg)`,
+
+          opacity: 1,
+
+          offset: 0.25
+        },
+
+        {
+          transform:
+            `translate3d(${drift * 0.7}px, ${window.innerHeight * 0.65}px, 0) rotate(${rotation * 0.7}deg)`,
+
+          opacity: 0.95,
+
+          offset: 0.7
+        },
+
+        {
+          transform:
+            `translate3d(${drift}px, ${window.innerHeight + 80}px, 0) rotate(${rotation}deg)`,
+
+          opacity: 0
+        }
+      ],
+
+      {
+        duration,
+        delay,
+
+        easing:
+          "cubic-bezier(0.22, 0.61, 0.36, 1)",
+
+        fill:
+          "forwards"
+      }
+    );
+
+  }
+
+
+  setTimeout(
+    () => {
+
+      container.remove();
+
+    },
+
+    8500
+  );
+
+}
   // ========================================
   // CREATE ONE CONFETTI PIECE
   // ========================================
@@ -702,23 +859,9 @@ function celebrateCompletion() {
 
   playFinishSound();
 
-
   launchConfetti();
 
-
-  // Second smaller burst
-  setTimeout(
-    () => {
-
-      launchConfetti();
-
-    },
-
-    380
-  );
-
 }
-
 
 // ==========================================
 // QUESTION AUDIO
