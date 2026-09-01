@@ -57,5 +57,65 @@
         "audio": "/audio/weekend/q10.mp3"
       }
     ]
+  },
+
+  "my-day": {
+    "id": "my-day",
+    "title": "My Day ☀️",
+    "turns": 5,
+    "openingQuestion": "Hey! How was your day?",
+
+    "questions": [
+      {
+        "id": "Q1",
+        "text": "Hey! How was your day?",
+        "audio": "/audio/my-day/q1.mp3"
+      },
+      {
+        "id": "Q2",
+        "text": "What did you do today?",
+        "audio": "/audio/my-day/q2.mp3"
+      },
+      {
+        "id": "Q3",
+        "text": "What time did you wake up?",
+        "audio": "/audio/my-day/q3.mp3"
+      },
+      {
+        "id": "Q4",
+        "text": "What did you do in the morning?",
+        "audio": "/audio/my-day/q4.mp3"
+      },
+      {
+        "id": "Q5",
+        "text": "What did you have for lunch?",
+        "audio": "/audio/my-day/q5.mp3"
+      },
+      {
+        "id": "Q6",
+        "text": "Did you go anywhere today?",
+        "audio": "/audio/my-day/q6.mp3"
+      },
+      {
+        "id": "Q7",
+        "text": "Who did you talk to today?",
+        "audio": "/audio/my-day/q7.mp3"
+      },
+      {
+        "id": "Q8",
+        "text": "What was the best part of your day?",
+        "audio": "/audio/my-day/q8.mp3"
+      },
+      {
+        "id": "Q9",
+        "text": "How are you feeling now?",
+        "audio": "/audio/my-day/q9.mp3"
+      },
+      {
+        "id": "Q10",
+        "text": "What are you going to do tonight?",
+        "audio": "/audio/my-day/q10.mp3"
+      }
+    ]
   }
 }
