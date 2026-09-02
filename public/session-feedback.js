@@ -1,7 +1,7 @@
 // public/session-feedback.js
-// Session Feedback for AI Speaking Lab
-// ใช้ข้อมูลจาก /correct ที่มีอยู่แล้ว
-// ไม่เรียก Gemini เพิ่ม = ไม่เพิ่มค่า API
+// Friendly Session Feedback for AI Speaking Lab
+// Uses data from existing /correct calls.
+// No extra Gemini request = no extra AI cost.
 
 (() => {
   const originalFetch =
@@ -109,8 +109,8 @@
           .thai_explanation
       );
 
-    // ไม่เก็บ help request
-    // และไม่เก็บคำตอบที่ไม่เกี่ยวข้อง
+    // Help requests and unrelated answers
+    // are not counted as completed turns.
     if (
       responseData
         .help_requested ||
@@ -120,8 +120,7 @@
       return;
     }
 
-    // ถ้ามี meaningful correction
-    // เก็บ correction ไว้
+    // Save meaningful correction.
     if (
       responseData
         .correction_needed === true
@@ -143,8 +142,7 @@
       return;
     }
 
-    // ถ้าตอบผ่านแล้ว
-    // ถือเป็น final accepted answer
+    // Relevant answer that passed.
     acceptedAnswers.set(
       turn,
       {
@@ -162,7 +160,7 @@
   }
 
   // ==========================================
-  // WATCH /correct
+  // WATCH EXISTING /correct CALLS
   // ==========================================
 
   window.fetch =
@@ -268,7 +266,7 @@
 
       .session-feedback-text {
         font-size: 14px;
-        line-height: 1.6;
+        line-height: 1.65;
         color: #595c72;
       }
 
@@ -289,26 +287,46 @@
       }
 
       .session-feedback-correction {
-        margin-top: 10px;
-        padding: 12px;
-        border-radius: 14px;
+        display: grid;
+        gap: 10px;
+        margin-top: 12px;
+        padding: 13px;
+        border-radius: 15px;
         background: #ffffff;
+      }
+
+      .session-feedback-mini-label {
+        margin-bottom: 4px;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 0.07em;
+        color: #9294a8;
       }
 
       .session-feedback-old {
         font-size: 14px;
         line-height: 1.5;
-        color: #8a6470;
-        text-decoration: line-through;
-        text-decoration-thickness: 1px;
+        color: #696c80;
       }
 
       .session-feedback-new {
-        margin-top: 5px;
+        padding: 9px 10px;
+        border-radius: 11px;
+        background: #f1f8f3;
         font-size: 14px;
         line-height: 1.5;
         color: #3f6858;
         font-weight: 800;
+      }
+
+      .session-feedback-ending {
+        margin-top: 18px;
+        padding-top: 15px;
+        border-top: 1px solid rgba(72, 72, 98, 0.09);
+        text-align: center;
+        font-size: 14px;
+        font-weight: 800;
+        color: #706da6;
       }
 
       @media (max-width: 520px) {
@@ -405,7 +423,7 @@
   }
 
   // ==========================================
-  // WHAT YOU DID WELL
+  // FRIENDLY STRENGTH MESSAGE
   // ==========================================
 
   function getStrengthText() {
@@ -420,8 +438,8 @@
       correctionCount === 0
     ) {
       return (
-        "คุณตอบครบทุกข้อได้ชัดเจน " +
-        "และวันนี้ไม่มีข้อผิดพลาดสำคัญที่ต้องให้แก้เลย"
+        "เก่งมาก! คุณตอบครบทั้ง 5 ข้อและสื่อสารได้ชัดเจนตลอด session 💛 " +
+        "วันนี้ไม่มีจุดสำคัญที่ต้องแก้เลย"
       );
     }
 
@@ -430,8 +448,8 @@
       correctionCount > 0
     ) {
       return (
-        "คุณตอบครบทุกข้อ และตอนที่มีจุดต้องแก้ " +
-        "คุณลองพูดใหม่จนผ่านได้ — นี่คือการฝึกที่ดีมาก"
+        "เก่งมาก! คุณตอบครบทั้ง 5 ข้อและสื่อสารความหมายได้ชัดเจน 🌷 " +
+        "มีบางจุดที่ลองปรับนิดหน่อย แล้วคุณก็พูดใหม่จนผ่านได้ดีมาก"
       );
     }
 
@@ -439,18 +457,18 @@
       completed > 0
     ) {
       return (
-        `คุณสื่อสารคำตอบได้สำเร็จ ${completed} ช่วง ` +
-        "และพยายามตอบด้วยประโยคของตัวเอง"
+        `ทำได้ดีมาก! คุณสื่อสารคำตอบได้สำเร็จ ${completed} ช่วง 💛 ` +
+        "และพยายามใช้ประโยคของตัวเองในการตอบ"
       );
     }
 
     return (
-      "คุณฝึกพูดจนจบ session ได้สำเร็จ"
+      "ทำได้ดีมากที่ฝึกพูดจนจบ session นี้ 💛"
     );
   }
 
   // ==========================================
-  // ONE THING TO IMPROVE
+  // ONE THING TO TRY NEXT
   // ==========================================
 
   function getImprovementData() {
@@ -460,8 +478,6 @@
     if (
       list.length > 0
     ) {
-      // ใช้ correction ล่าสุด
-      // ที่เกิดขึ้นจริงใน session
       return {
         type:
           "correction",
@@ -477,9 +493,9 @@
         "tip",
 
       explanation:
-        "วันนี้ไม่มีข้อผิดพลาดสำคัญที่ระบบต้องให้แก้ " +
-        "ครั้งต่อไปลองเพิ่มรายละเอียดอีก 1 ประโยค " +
-        "เพื่อให้คำตอบเป็นธรรมชาติและต่อเนื่องขึ้น"
+        "วันนี้ไม่มีจุดสำคัญที่ต้องแก้เลยค่ะ 💛 " +
+        "ครั้งหน้าลองเพิ่มรายละเอียดอีก 1 ประโยค " +
+        "เพื่อให้คำตอบฟังเป็นธรรมชาติและต่อเนื่องขึ้นอีกนิด"
     };
   }
 
@@ -523,7 +539,7 @@
   }
 
   // ==========================================
-  // RENDER FEEDBACK
+  // RENDER
   // ==========================================
 
   function renderSessionFeedback() {
@@ -566,6 +582,10 @@
     card.className =
       "session-feedback-card";
 
+    // ======================================
+    // HEADER
+    // ======================================
+
     const eyebrow =
       document.createElement(
         "div"
@@ -598,14 +618,14 @@
 
     card.appendChild(
       makeSection(
-        "✅",
+        "💛",
         "What you did well",
         strengthText
       )
     );
 
     // ======================================
-    // NICE PHRASES YOU USED
+    // NICE PHRASES
     // ======================================
 
     const phrasesWrap =
@@ -653,7 +673,7 @@
         "session-feedback-text";
 
       fallback.textContent =
-        "ลองพูดอีกครั้งเพื่อเก็บประโยคเด่นจาก session นี้";
+        "ทุกครั้งที่ลองพูด คุณกำลังสร้างความมั่นใจเพิ่มขึ้นค่ะ 💜";
 
       phrasesWrap.appendChild(
         fallback
@@ -669,7 +689,7 @@
     );
 
     // ======================================
-    // ONE THING TO IMPROVE
+    // ONE THING TO TRY NEXT
     // ======================================
 
     const improvement =
@@ -688,13 +708,39 @@
     explanation.className =
       "session-feedback-text";
 
-    explanation.textContent =
-      improvement.explanation ||
-      "ลองขยายคำตอบให้มีรายละเอียดเพิ่มขึ้นอีกนิด";
+    if (
+      improvement.type ===
+        "correction"
+    ) {
+      const originalExplanation =
+        improvement.explanation ||
+        "";
+
+      explanation.textContent =
+        originalExplanation
+          ? (
+              "ประโยคเดิมเข้าใจได้แล้วนะ 💛 " +
+              "ถ้าอยากให้ฟังเป็นธรรมชาติขึ้นอีกนิด ลองแบบนี้ค่ะ " +
+              originalExplanation
+            )
+          : (
+              "ประโยคเดิมเข้าใจได้แล้วนะ 💛 " +
+              "ถ้าอยากให้ฟังเป็นธรรมชาติขึ้นอีกนิด ลองแบบนี้ค่ะ"
+            );
+    }
+
+    else {
+      explanation.textContent =
+        improvement.explanation;
+    }
 
     improvementWrap.appendChild(
       explanation
     );
+
+    // ======================================
+    // FRIENDLY CORRECTION BOX
+    // ======================================
 
     if (
       improvement.type ===
@@ -712,6 +758,24 @@
       correctionBox.className =
         "session-feedback-correction";
 
+      // YOU SAID
+
+      const oldWrap =
+        document.createElement(
+          "div"
+        );
+
+      const oldLabel =
+        document.createElement(
+          "div"
+        );
+
+      oldLabel.className =
+        "session-feedback-mini-label";
+
+      oldLabel.textContent =
+        "YOU SAID";
+
       const oldSentence =
         document.createElement(
           "div"
@@ -723,6 +787,32 @@
       oldSentence.textContent =
         improvement.original;
 
+      oldWrap.appendChild(
+        oldLabel
+      );
+
+      oldWrap.appendChild(
+        oldSentence
+      );
+
+      // TRY THIS
+
+      const newWrap =
+        document.createElement(
+          "div"
+        );
+
+      const newLabel =
+        document.createElement(
+          "div"
+        );
+
+      newLabel.className =
+        "session-feedback-mini-label";
+
+      newLabel.textContent =
+        "TRY THIS ✨";
+
       const newSentence =
         document.createElement(
           "div"
@@ -732,14 +822,22 @@
         "session-feedback-new";
 
       newSentence.textContent =
-        `→ ${improvement.corrected}`;
+        improvement.corrected;
 
-      correctionBox.appendChild(
-        oldSentence
+      newWrap.appendChild(
+        newLabel
+      );
+
+      newWrap.appendChild(
+        newSentence
       );
 
       correctionBox.appendChild(
-        newSentence
+        oldWrap
+      );
+
+      correctionBox.appendChild(
+        newWrap
       );
 
       improvementWrap.appendChild(
@@ -749,14 +847,33 @@
 
     card.appendChild(
       makeSection(
-        "✨",
-        "One thing to improve",
+        "🌱",
+        "One thing to try next",
         improvementWrap
       )
     );
 
     // ======================================
-    // INSERT BEFORE PRACTICE AGAIN BUTTON
+    // ENDING MESSAGE
+    // ======================================
+
+    const ending =
+      document.createElement(
+        "div"
+      );
+
+    ending.className =
+      "session-feedback-ending";
+
+    ending.textContent =
+      "You’re doing great — keep speaking! 💜";
+
+    card.appendChild(
+      ending
+    );
+
+    // ======================================
+    // INSERT BEFORE PRACTICE AGAIN
     // ======================================
 
     const practiceAgain =
