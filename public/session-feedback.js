@@ -1,7 +1,6 @@
 // public/session-feedback.js
-// Friendly Session Feedback for AI Speaking Lab
-// Uses data from existing /correct calls.
-// No extra Gemini request = no extra AI cost.
+// Friendly Session Feedback
+// No extra Gemini/API request.
 
 (() => {
   const originalFetch =
@@ -17,19 +16,55 @@
     false;
 
   // ==========================================
+  // ICONS
+  // ==========================================
+
+  function iconSVG(name) {
+    const icons = {
+      check: `
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="9"></circle>
+          <path d="m8.5 12 2.3 2.3 4.8-5"></path>
+        </svg>
+      `,
+
+      message: `
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"></path>
+        </svg>
+      `,
+
+      grow: `
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 18 10 12l4 4 6-8"></path>
+          <path d="M15 8h5v5"></path>
+        </svg>
+      `,
+
+      finish: `
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="m5 12 4 4L19 6"></path>
+        </svg>
+      `,
+
+      retry: `
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M3 12a9 9 0 1 0 3-6.7"></path>
+          <path d="M3 4v6h6"></path>
+        </svg>
+      `
+    };
+
+    return icons[name] || "";
+  }
+
+  // ==========================================
   // HELPERS
   // ==========================================
 
-  function cleanText(
-    value = ""
-  ) {
-    return String(
-      value || ""
-    )
-      .replace(
-        /\s+/g,
-        " "
-      )
+  function cleanText(value = "") {
+    return String(value || "")
+      .replace(/\s+/g, " ")
       .trim();
   }
 
@@ -47,9 +82,7 @@
       return JSON.parse(
         options.body
       );
-    }
-
-    catch {
+    } catch {
       return {};
     }
   }
@@ -68,7 +101,7 @@
   }
 
   // ==========================================
-  // SAVE EACH TURN
+  // SAVE TURN DATA
   // ==========================================
 
   function saveTurnFeedback(
@@ -103,24 +136,20 @@
         transcript
       );
 
-    const thaiExplanation =
+    const explanation =
       cleanText(
         responseData
           .thai_explanation
       );
 
-    // Help requests and unrelated answers
-    // are not counted as completed turns.
     if (
-      responseData
-        .help_requested ||
-      responseData
-        .answer_relevant !== true
+      responseData.help_requested ||
+      responseData.answer_relevant !==
+        true
     ) {
       return;
     }
 
-    // Save meaningful correction.
     if (
       responseData
         .correction_needed === true
@@ -131,18 +160,15 @@
           original:
             transcript,
 
-          corrected:
-            corrected,
+          corrected,
 
-          explanation:
-            thaiExplanation
+          explanation
         }
       );
 
       return;
     }
 
-    // Relevant answer that passed.
     acceptedAnswers.set(
       turn,
       {
@@ -191,9 +217,7 @@
           .clone()
           .json()
           .then(
-            (
-              responseData
-            ) => {
+            (responseData) => {
               saveTurnFeedback(
                 requestData,
                 responseData
@@ -257,11 +281,31 @@
       .session-feedback-title {
         display: flex;
         align-items: center;
-        gap: 7px;
+        gap: 8px;
         margin-bottom: 7px;
         font-size: 14px;
         font-weight: 800;
         color: #292b40;
+      }
+
+      .session-feedback-icon {
+        width: 18px;
+        height: 18px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: #7773aa;
+        flex-shrink: 0;
+      }
+
+      .session-feedback-icon svg {
+        width: 17px;
+        height: 17px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
       }
 
       .session-feedback-text {
@@ -329,6 +373,57 @@
         color: #706da6;
       }
 
+      .session-finish-btn {
+        width: 100%;
+        min-height: 54px;
+        margin-top: 16px;
+        border: 0;
+        border-radius: 15px;
+        background: #163f7d;
+        color: #ffffff;
+        font: inherit;
+        font-size: 15px;
+        font-weight: 800;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+      }
+
+      .session-finish-btn svg,
+      #practiceAgain svg {
+        width: 18px;
+        height: 18px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      #practiceAgain.session-practice-again {
+        margin-top: 10px !important;
+        background: #ffffff !important;
+        color: #163f7d !important;
+        border: 1px solid #d9dfeb !important;
+        box-shadow: none !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+      }
+
+      .complete-icon svg {
+        width: 48px;
+        height: 48px;
+        fill: none;
+        stroke: #6f6ca8;
+        stroke-width: 1.5;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
       @media (max-width: 520px) {
         .session-feedback-card {
           padding: 16px;
@@ -348,15 +443,11 @@
 
   function getAcceptedList() {
     return [
-      ...acceptedAnswers
-        .entries()
+      ...acceptedAnswers.entries()
     ]
       .sort(
-        (
-          [turnA],
-          [turnB]
-        ) =>
-          turnA - turnB
+        ([a], [b]) =>
+          a - b
       )
       .map(
         ([, item]) =>
@@ -366,25 +457,17 @@
 
   function getCorrectionList() {
     return [
-      ...corrections
-        .entries()
+      ...corrections.entries()
     ]
       .sort(
-        (
-          [turnA],
-          [turnB]
-        ) =>
-          turnA - turnB
+        ([a], [b]) =>
+          a - b
       )
       .map(
         ([, item]) =>
           item
       );
   }
-
-  // ==========================================
-  // NICE PHRASES
-  // ==========================================
 
   function chooseNicePhrases() {
     const answers =
@@ -399,31 +482,24 @@
 
     const useful =
       answers.filter(
-        (answer) => {
-          const words =
-            answer
-              .split(
-                /\s+/
-              )
-              .length;
-
-          return words >= 3;
-        }
+        (answer) =>
+          answer
+            .split(/\s+/)
+            .length >= 3
       );
 
-    const pool =
-      useful.length > 0
+    return (
+      useful.length
         ? useful
-        : answers;
-
-    return pool.slice(
+        : answers
+    ).slice(
       0,
       2
     );
   }
 
   // ==========================================
-  // FRIENDLY STRENGTH MESSAGE
+  // FRIENDLY MESSAGES
   // ==========================================
 
   function getStrengthText() {
@@ -438,7 +514,7 @@
       correctionCount === 0
     ) {
       return (
-        "เก่งมาก! คุณตอบครบทั้ง 5 ข้อและสื่อสารได้ชัดเจนตลอด session 💛 " +
+        "เก่งมาก! คุณตอบครบทั้ง 5 ข้อและสื่อสารได้ชัดเจนตลอด session " +
         "วันนี้ไม่มีจุดสำคัญที่ต้องแก้เลย"
       );
     }
@@ -448,7 +524,7 @@
       correctionCount > 0
     ) {
       return (
-        "เก่งมาก! คุณตอบครบทั้ง 5 ข้อและสื่อสารความหมายได้ชัดเจน 🌷 " +
+        "เก่งมาก! คุณตอบครบทั้ง 5 ข้อและสื่อสารความหมายได้ชัดเจน " +
         "มีบางจุดที่ลองปรับนิดหน่อย แล้วคุณก็พูดใหม่จนผ่านได้ดีมาก"
       );
     }
@@ -457,19 +533,15 @@
       completed > 0
     ) {
       return (
-        `ทำได้ดีมาก! คุณสื่อสารคำตอบได้สำเร็จ ${completed} ช่วง 💛 ` +
+        `ทำได้ดีมาก! คุณสื่อสารคำตอบได้สำเร็จ ${completed} ช่วง ` +
         "และพยายามใช้ประโยคของตัวเองในการตอบ"
       );
     }
 
     return (
-      "ทำได้ดีมากที่ฝึกพูดจนจบ session นี้ 💛"
+      "ทำได้ดีมากที่ฝึกพูดจนจบ session นี้"
     );
   }
-
-  // ==========================================
-  // ONE THING TO TRY NEXT
-  // ==========================================
 
   function getImprovementData() {
     const list =
@@ -493,18 +565,18 @@
         "tip",
 
       explanation:
-        "วันนี้ไม่มีจุดสำคัญที่ต้องแก้เลยค่ะ 💛 " +
+        "วันนี้ไม่มีจุดสำคัญที่ต้องแก้เลยค่ะ " +
         "ครั้งหน้าลองเพิ่มรายละเอียดอีก 1 ประโยค " +
         "เพื่อให้คำตอบฟังเป็นธรรมชาติและต่อเนื่องขึ้นอีกนิด"
     };
   }
 
   // ==========================================
-  // SECTION CREATOR
+  // SECTION
   // ==========================================
 
   function makeSection(
-    icon,
+    iconName,
     title,
     contentNode
   ) {
@@ -524,8 +596,34 @@
     heading.className =
       "session-feedback-title";
 
-    heading.textContent =
-      `${icon} ${title}`;
+    const icon =
+      document.createElement(
+        "span"
+      );
+
+    icon.className =
+      "session-feedback-icon";
+
+    icon.innerHTML =
+      iconSVG(
+        iconName
+      );
+
+    const text =
+      document.createElement(
+        "span"
+      );
+
+    text.textContent =
+      title;
+
+    heading.appendChild(
+      icon
+    );
+
+    heading.appendChild(
+      text
+    );
 
     section.appendChild(
       heading
@@ -539,7 +637,145 @@
   }
 
   // ==========================================
-  // RENDER
+  // FINISH LESSON
+  // ==========================================
+
+  function finishLesson() {
+    const params =
+      new URLSearchParams(
+        window.location.search
+      );
+
+    const returnUrl =
+      params.get(
+        "return"
+      );
+
+    // Later, Tevello can pass its course URL:
+    // ?lesson=weekend&return=https://...
+    if (
+      returnUrl
+    ) {
+      window.location.href =
+        returnUrl;
+
+      return;
+    }
+
+    // Normally returns student
+    // to the course page they came from.
+    const referrer =
+      document.referrer;
+
+    if (
+      referrer &&
+      referrer !==
+        window.location.href
+    ) {
+      window.location.href =
+        referrer;
+
+      return;
+    }
+
+    if (
+      window.history.length >
+        1
+    ) {
+      window.history.back();
+
+      return;
+    }
+
+    // Fallback only.
+    window.location.href =
+      "/";
+  }
+
+  function setupFinishButtons() {
+    const completeScreen =
+      document.getElementById(
+        "completeScreen"
+      );
+
+    const practiceAgain =
+      document.getElementById(
+        "practiceAgain"
+      );
+
+    if (
+      !completeScreen ||
+      !practiceAgain
+    ) {
+      return;
+    }
+
+    practiceAgain.classList.add(
+      "session-practice-again"
+    );
+
+    practiceAgain.innerHTML =
+      `${iconSVG("retry")}<span>Practice again</span>`;
+
+    let finishButton =
+      document.getElementById(
+        "finishLessonBtn"
+      );
+
+    if (
+      !finishButton
+    ) {
+      finishButton =
+        document.createElement(
+          "button"
+        );
+
+      finishButton.id =
+        "finishLessonBtn";
+
+      finishButton.type =
+        "button";
+
+      finishButton.className =
+        "session-finish-btn";
+
+      finishButton.innerHTML =
+        `${iconSVG("finish")}<span>Finish lesson</span>`;
+
+      finishButton.addEventListener(
+        "click",
+        finishLesson
+      );
+
+      completeScreen.insertBefore(
+        finishButton,
+        practiceAgain
+      );
+    }
+  }
+
+  // ==========================================
+  // COMPLETION ICON
+  // ==========================================
+
+  function replaceCompletionEmoji() {
+    const completeIcon =
+      document.querySelector(
+        ".complete-icon"
+      );
+
+    if (
+      completeIcon
+    ) {
+      completeIcon.innerHTML =
+        iconSVG(
+          "check"
+        );
+    }
+  }
+
+  // ==========================================
+  // RENDER FEEDBACK
   // ==========================================
 
   function renderSessionFeedback() {
@@ -560,16 +796,11 @@
       return;
     }
 
-    const existing =
-      document.getElementById(
+    document
+      .getElementById(
         "sessionFeedbackCard"
-      );
-
-    if (
-      existing
-    ) {
-      existing.remove();
-    }
+      )
+      ?.remove();
 
     const card =
       document.createElement(
@@ -581,10 +812,6 @@
 
     card.className =
       "session-feedback-card";
-
-    // ======================================
-    // HEADER
-    // ======================================
 
     const eyebrow =
       document.createElement(
@@ -601,9 +828,7 @@
       eyebrow
     );
 
-    // ======================================
     // WHAT YOU DID WELL
-    // ======================================
 
     const strengthText =
       document.createElement(
@@ -618,15 +843,13 @@
 
     card.appendChild(
       makeSection(
-        "💛",
+        "check",
         "What you did well",
         strengthText
       )
     );
 
-    // ======================================
     // NICE PHRASES
-    // ======================================
 
     const phrasesWrap =
       document.createElement(
@@ -673,7 +896,7 @@
         "session-feedback-text";
 
       fallback.textContent =
-        "ทุกครั้งที่ลองพูด คุณกำลังสร้างความมั่นใจเพิ่มขึ้นค่ะ 💜";
+        "ทุกครั้งที่ลองพูด คุณกำลังสร้างความมั่นใจเพิ่มขึ้นค่ะ";
 
       phrasesWrap.appendChild(
         fallback
@@ -682,15 +905,13 @@
 
     card.appendChild(
       makeSection(
-        "💬",
+        "message",
         "Nice phrases you used",
         phrasesWrap
       )
     );
 
-    // ======================================
     // ONE THING TO TRY NEXT
-    // ======================================
 
     const improvement =
       getImprovementData();
@@ -719,12 +940,12 @@
       explanation.textContent =
         originalExplanation
           ? (
-              "ประโยคเดิมเข้าใจได้แล้วนะ 💛 " +
+              "ประโยคเดิมเข้าใจได้แล้วนะ " +
               "ถ้าอยากให้ฟังเป็นธรรมชาติขึ้นอีกนิด ลองแบบนี้ค่ะ " +
               originalExplanation
             )
           : (
-              "ประโยคเดิมเข้าใจได้แล้วนะ 💛 " +
+              "ประโยคเดิมเข้าใจได้แล้วนะ " +
               "ถ้าอยากให้ฟังเป็นธรรมชาติขึ้นอีกนิด ลองแบบนี้ค่ะ"
             );
     }
@@ -737,10 +958,6 @@
     improvementWrap.appendChild(
       explanation
     );
-
-    // ======================================
-    // FRIENDLY CORRECTION BOX
-    // ======================================
 
     if (
       improvement.type ===
@@ -757,8 +974,6 @@
 
       correctionBox.className =
         "session-feedback-correction";
-
-      // YOU SAID
 
       const oldWrap =
         document.createElement(
@@ -795,8 +1010,6 @@
         oldSentence
       );
 
-      // TRY THIS
-
       const newWrap =
         document.createElement(
           "div"
@@ -811,7 +1024,7 @@
         "session-feedback-mini-label";
 
       newLabel.textContent =
-        "TRY THIS ✨";
+        "TRY THIS";
 
       const newSentence =
         document.createElement(
@@ -847,15 +1060,13 @@
 
     card.appendChild(
       makeSection(
-        "🌱",
+        "grow",
         "One thing to try next",
         improvementWrap
       )
     );
 
-    // ======================================
     // ENDING MESSAGE
-    // ======================================
 
     const ending =
       document.createElement(
@@ -866,15 +1077,11 @@
       "session-feedback-ending";
 
     ending.textContent =
-      "You’re doing great — keep speaking! 💜";
+      "You’re doing great — keep speaking!";
 
     card.appendChild(
       ending
     );
-
-    // ======================================
-    // INSERT BEFORE PRACTICE AGAIN
-    // ======================================
 
     const practiceAgain =
       document.getElementById(
@@ -898,20 +1105,20 @@
       );
     }
 
+    setupFinishButtons();
+
     feedbackRendered =
       true;
   }
 
   // ==========================================
-  // COMPLETION CHECK
+  // CHECK COMPLETION
   // ==========================================
 
   function isVisible(
     element
   ) {
-    if (
-      !element
-    ) {
+    if (!element) {
       return false;
     }
 
@@ -940,6 +1147,7 @@
         completeScreen
       )
     ) {
+      replaceCompletionEmoji();
       renderSessionFeedback();
     }
   }
@@ -950,7 +1158,6 @@
 
   function resetSessionFeedback() {
     acceptedAnswers.clear();
-
     corrections.clear();
 
     feedbackRendered =
@@ -959,6 +1166,12 @@
     document
       .getElementById(
         "sessionFeedbackCard"
+      )
+      ?.remove();
+
+    document
+      .getElementById(
+        "finishLessonBtn"
       )
       ?.remove();
   }
@@ -1006,9 +1219,7 @@
     practiceAgain
       ?.addEventListener(
         "click",
-        () => {
-          resetSessionFeedback();
-        }
+        resetSessionFeedback
       );
 
     checkCompletion();
