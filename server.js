@@ -32,6 +32,51 @@ function loadLessons() {
 
 const LESSONS = loadLessons();
 
+// ==========================================
+// CORS — SHOPIFY / TEVELLO
+// ==========================================
+
+const ALLOWED_ORIGINS = new Set([
+  "https://4demgz-pn.myshopify.com",
+  "https://weekend-ai-speaking-lab.onrender.com",
+  "http://localhost:3000"
+]);
+
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+
+  if (
+    origin &&
+    ALLOWED_ORIGINS.has(origin)
+  ) {
+    res.setHeader(
+      "Access-Control-Allow-Origin",
+      origin
+    );
+
+    res.setHeader(
+      "Vary",
+      "Origin"
+    );
+  }
+
+  res.setHeader(
+    "Access-Control-Allow-Methods",
+    "GET, POST, OPTIONS"
+  );
+
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "Content-Type"
+  );
+
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(204);
+  }
+
+  next();
+});
+
 app.use(
   express.static(PUBLIC_DIR)
 );
